@@ -1,44 +1,43 @@
+# ANN & Deep Learning — Deliverables
+
+Individual deliverables for the *Artificial Neural Networks and Deep Learning* course (Insper, 2026.2).
+
+**Published site:** https://gabrielfmendesm.github.io/ann-dl
+
 ## Setup
 
-Para utilizar o código deste repositório, siga as instruções a seguir:
-
-Crie um ambiente virtual do Python:
+Create and activate a virtual environment, then install the dependencies:
 
 ``` shell
 python3 -m venv env
-```
-
-Ative o ambiente virtual (**você deve fazer isso sempre que for executar algum script deste repositório**):
-
-``` shell
 source ./env/bin/activate
-```
-
-Instale as dependências com:
-
-``` shell
 python3 -m pip install -r requirements.txt --upgrade
 ```
 
-## Deployment
+## Local preview
 
-O material utiliza o [mkdocs](https://www.mkdocs.org/) para gerar a documentação. Para visualizar a documentação, execute o comando:
+The site is built with [MkDocs](https://www.mkdocs.org/) + Material. To preview locally:
 
 ``` shell
 mkdocs serve -o
 ```
 
-Para subir ao GitHub Pages, execute o comando:
+Every push to `main` publishes the site automatically via GitHub Actions (`mkdocs gh-deploy`).
 
-``` shell
-mkdocs gh-deploy
+## Layout
+
 ```
-
-
-## Notebooks
-
-Para subir notebooks no mkdocs, podemos utilizar a biblioteca do [mkdocs-jupyter](https://github.com/danielfrg/mkdocs-jupyter).
-
-Instalação, utilização e exemplos podem ser vistos na [documentação oficial](https://github.com/danielfrg/mkdocs-jupyter).
-
-O arquivo `mkdocs.yml` tem anotações nos nós modificados de exemplo.
+docs/
+  index.md                # landing page
+  exercises/
+    data/
+      index.md            # the report
+      code/               # the sources actually run
+      figures/            # the figures the report shows
+    perceptron/
+    mlp/
+    vae/
+  projects/
+mkdocs.yml
+requirements.txt
+```

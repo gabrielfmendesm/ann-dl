@@ -1,8 +1,8 @@
-site_name: Template de Entrega
-site_author: Sandmann, H.
-site_url: https://hsandmann.github.io/documentation.template
-repo_url: https://github.com/hsandmann/documentation.template
-repo_name: github/documentation.template
+site_name: ANN & Deep Learning — Gabriel Mendes
+site_author: Mendes, G.
+site_url: https://gabrielfmendesm.github.io/ann-dl
+repo_url: https://github.com/gabrielfmendesm/ann-dl
+repo_name: gabrielfmendesm/ann-dl
 
 theme:
   name: material
@@ -110,7 +110,7 @@ plugins:
       enable_creation_date: true
   - git-authors
   - git-committers:
-      repository: hsandmann/documentation.template
+      repository: gabrielfmendesm/ann-dl
       branch: main
   - search
   - badges
@@ -141,11 +141,9 @@ extra_javascript:
 
 nav:
   - Home: index.md
-  - This documentation: ./thisdocumentation/index.md
-  - Roteiros:
-    - Roteiro 1: ./roteiro1/index.md
-    - Roteiro 2: ./roteiro2/index.md
-    - Roteiro 3: ./roteiro3/index.md
-    - Roteiro 4: ./roteiro4/index.md
-    - Notebook 1: ./notebook1/ex1_data.ipynb
-  - Projeto: ./projeto/index.md
+  - Exercises:
+    - Data: ./exercises/data/index.md
+    - Perceptron: ./exercises/perceptron/index.md
+    - MLP: ./exercises/mlp/index.md
+    - VAE: ./exercises/vae/index.md
+  - Projects: ./projects/index.md
