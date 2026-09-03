@@ -126,6 +126,7 @@ plugins:
 
 # mkdocs-jupyter
   - mkdocs-jupyter:
+      include: ["*.ipynb"]
       execute: false
       allow_errors: false
 
