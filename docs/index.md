@@ -4,7 +4,7 @@
 
     2026.2
 
-**Gabriel Mendes** — Insper
+**Gabriel Fernando Missaka Mendes** — Insper
 
 This site gathers my individual deliverables for the *Artificial Neural Networks and Deep Learning* course (2026.2), taught by Prof. Humberto Sandmann. It is built with MkDocs + Material and published automatically on every push.
 
