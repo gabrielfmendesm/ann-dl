@@ -5,7 +5,7 @@ ai_use: "Claude assisted with the code implementation and the drafting of this r
 
 # Exercise 1 — Data
 
-Data preparation and analysis for neural networks. All results below use a single fixed random generator, `rng = np.random.default_rng(42)`, shared across the whole activity, so every number and figure is reproducible.
+Data preparation and analysis for neural networks. Every script in this activity fixes the random seed with `rng = np.random.default_rng(42)` and consumes the generator in a fixed, documented order, so every number and figure below is exactly reproducible.
 
 ## Exercise 1
 
