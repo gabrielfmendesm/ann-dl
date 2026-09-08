@@ -40,4 +40,10 @@ docs/
   projects/
 mkdocs.yml
 requirements.txt
+data/
+  spaceship-titanic/train.csv   # Kaggle Spaceship Titanic training file (Exercise 3)
 ```
+
+## Data
+
+`data/spaceship-titanic/train.csv` is the training file of the [Spaceship Titanic](https://www.kaggle.com/competitions/spaceship-titanic) Kaggle competition, committed so the Exercise 3 script runs from a clean checkout.

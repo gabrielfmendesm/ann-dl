@@ -152,6 +152,103 @@ The threshold 3.5 is the midpoint between the two mean radii (2.0 and 5.0), 3.75
 --8<-- "docs/exercises/data/code/exercise2.py"
 ```
 
+## Exercise 3
+
+### A — Get to know the data
+
+**Source.** Spaceship Titanic (Kaggle), file `train.csv` — the only labeled file. It is committed under `data/spaceship-titanic/train.csv` so the script runs from a clean checkout. The file has **8 693 passengers × 14 columns**.
+
+**Goal and target.** The dataset comes from a fictional accident: the Spaceship Titanic collided with a spacetime anomaly and part of the passengers were "transported to an alternate dimension". The column `Transported` is the boolean target — `True` if the passenger was transported — and the goal is to predict it from the passenger records (a binary classification problem). The classes are almost perfectly **balanced**: 4 378 `True` (**50.36%**) and 4 315 `False` (49.64%), so no class-imbalance treatment is needed and 50% is the baseline of a trivial classifier.
+
+**Features by type.**
+
+| Type | Columns |
+|---|---|
+| Numerical (6) | `Age`, `RoomService`, `FoodCourt`, `ShoppingMall`, `Spa`, `VRDeck` (the last five are amounts spent on board) |
+| Categorical (5) | `HomePlanet` (Earth / Europa / Mars), `CryoSleep` (True / False), `Destination` (TRAPPIST-1e / 55 Cancri e / PSO J318.5-22), `VIP` (True / False), `Cabin` (a deck/number/side code with 6 560 distinct values) |
+| Identifiers (2) | `PassengerId`, `Name` |
+| Target | `Transported` (boolean) |
+
+**Missing values per column** (absolute count and percentage of 8 693 rows):
+
+| Column | Missing | % |
+|---|---|---|
+| PassengerId | 0 | 0.00% |
+| HomePlanet | 201 | 2.31% |
+| CryoSleep | 217 | 2.50% |
+| Cabin | 199 | 2.29% |
+| Destination | 182 | 2.09% |
+| Age | 179 | 2.06% |
+| VIP | 203 | 2.34% |
+| RoomService | 181 | 2.08% |
+| FoodCourt | 183 | 2.11% |
+| ShoppingMall | 208 | 2.39% |
+| Spa | 183 | 2.11% |
+| VRDeck | 188 | 2.16% |
+| Name | 200 | 2.30% |
+| Transported | 0 | 0.00% |
+
+Every feature has about 2% of missing entries; the identifier and the target are complete. Since the gaps are small and spread over all columns, imputation is preferable to dropping rows (dropping any row with a missing value would discard far more than 2% of the data).
+
+**Spending columns** (mean, median and maximum on the full `train.csv`; the skewness is added to support the reading):
+
+| Column | Mean | Median | Maximum | Skewness |
+|---|---|---|---|---|
+| RoomService | 224.69 | 0.0 | 14 327 | 6.33 |
+| FoodCourt | 458.08 | 0.0 | 29 813 | 7.10 |
+| ShoppingMall | 173.73 | 0.0 | 23 492 | 12.63 |
+| Spa | 311.14 | 0.0 | 22 408 | 7.64 |
+| VRDeck | 304.85 | 0.0 | 24 133 | 7.82 |
+
+**Mean × median.** In all five columns the median is **0** while the mean is in the hundreds: more than half of the passengers spent nothing, and the mean is pulled up by a minority of big spenders (maxima between 14 327 and 29 813 credits, i.e. 30 to 130 times the mean). A mean far above the median is the signature of a strongly **right-skewed** distribution with a **heavy tail** (skewness between 6.3 and 12.6 — a Gaussian has 0): the spread is enormous relative to the typical value, and the mean is not a representative "typical passenger". These are exactly the features that need the log transformation in item C.
+
+### B — Split before you transform
+
+The data was split **80/20, stratified by `Transported`, with the fixed seed** — using the seeded generator `rng` to shuffle the rows of each class separately and send 20% of each class to the test set. Result: **6 954 training rows (80.0%) and 1 739 test rows (20.0%)**, with a positive share of 0.5036 in the training set and 0.5037 in the test set, against 0.5036 in the full file — the stratification preserves the class balance in both parts. No statistic was computed before this point (item A only described the raw file).
+
+**Why the split comes before imputation and scaling.** Every value used by the transformations — the medians and modes for imputation, the categories of the encoder, the minimum and maximum of the scaler — is a statistic estimated from data. If they were estimated on the full dataset, information from the test rows (their averages, their extreme values, their categories) would leak into the transformed training data, and the test set would no longer be an honest sample of unseen data: the performance measured on it would be optimistically biased. Fitting every transformation on the training split alone and only *applying* it to the test split reproduces the real situation of deployment, where new data arrives after the preprocessing has been fixed.
+
+On the training set, before any transformation, `FoodCourt` has **mean 465.35, median 0.00 and maximum 29 813** (Results summary, item 11).
+
+### C — Preprocess
+
+All five steps below are **fitted on the training set only** and then applied, unchanged, to the test set. The tanh activation outputs values in [−1, 1], so the goal is a feature matrix on a compatible, bounded scale.
+
+**1. Missing data.** Numerical columns are imputed with the **training median**: Age → 27.0; RoomService, FoodCourt, ShoppingMall, Spa, VRDeck → 0.0. The median is robust to the heavy tails just described (the mean would fill the gaps of a majority-zero column with a value of several hundred, inventing spenders that do not exist) and, for the spending columns, it coincides with the typical passenger. Categorical columns are imputed with the **training mode**: HomePlanet → Earth, CryoSleep → False, Destination → TRAPPIST-1e, VIP → False. The mode keeps every imputed entry inside the set of valid categories and, with ~2% of gaps per column, its bias towards the majority class is negligible. The learned medians and modes are stored and reused on the test set.
+
+**2. Categorical features → numbers.** `HomePlanet`, `CryoSleep`, `Destination` and `VIP` are **one-hot encoded** with scikit-learn's `OneHotEncoder`, fitted on the training categories, producing 10 binary columns: `HomePlanet_{Earth, Europa, Mars}`, `CryoSleep_{False, True}`, `Destination_{55 Cancri e, PSO J318.5-22, TRAPPIST-1e}`, `VIP_{False, True}`. One-hot is the right choice because these categories have no order (encoding Earth = 0, Europa = 1, Mars = 2 would invent one). **Unseen categories:** the encoder is created with `handle_unknown="ignore"`, so a category that appears in the test set but not in the training set produces an all-zero row for that feature instead of raising an error — the network simply sees "none of the known categories". In this split no such category occurs (the script checks: the sets of test categories minus training categories are all empty), but the mechanism is in place for genuinely new data. The 0/1 columns already lie inside [−1, 1] and need no further scaling.
+
+**3. Feature engineering.** `TotalSpend` = `RoomService + FoodCourt + ShoppingMall + Spa + VRDeck`, computed after imputation so it never contains NaN. `Cabin`, `Name` and `PassengerId` are dropped: the last two are identifiers with no predictive content, and `Cabin` is a free-form code with 6 560 distinct values — one-hot encoding it would create thousands of nearly-empty columns (it could be decomposed into deck/side features, but that is beyond this exercise).
+
+**4. Heavy tails → log(1 + x).** The transformation is applied to the five spending columns and to `TotalSpend` (which inherits their tail). On the training set, `FoodCourt` goes from mean 465.35 / median 0 / max 29 813 (skewness 7.26) to mean 1.910 / median 0 / max 10.303 (skewness 1.14): the tail that spanned five orders of magnitude is compressed to a range of about 10 units, while zeros stay at zero (log(1 + 0) = 0). **Why this helps a tanh network:** tanh saturates — its derivative is close to zero for inputs beyond roughly ±2–3, so units driven by huge inputs stop learning. Without the log, scaling to [−1, 1] would be dictated by the 29 813 maximum, squashing the 0-to-500 range where most passengers live into a sliver of width ≈ 0.03 next to −1: the network would be unable to distinguish "spent nothing" from "spent 500", while a handful of outliers would dominate the weights. After the log, the bulk of the distribution occupies the available range and the gradient flows for the typical passenger, not only for the outliers (Figure 6).
+
+**5. Scaling → normalization to [−1, 1].** The seven numerical columns (`Age`, the five log-spending columns and `log(1 + TotalSpend)`) are scaled with min–max normalization to **[−1, 1]** (`MinMaxScaler(feature_range=(-1, 1))`), fitted on the training set. I chose normalization over standardization because it maps the features exactly onto the output range of tanh and yields a bounded, predictable scale; standardization would leave values roughly in [−2, 4] with no guaranteed bounds. Min–max is normally vulnerable to outliers, but step 4 has already removed the extreme tails, so the range is no longer dictated by a single passenger. **Resulting minimum and maximum:** training set **−1.0000 / 1.0000** (by construction), test set **−1.0000 / 1.1383**. The single value above 1 comes from `ShoppingMall`: one test passenger spent more than any training passenger, and since the scaler knows only the training range, its log-value maps slightly beyond 1. This is the expected — and correct — behavior of a leakage-free pipeline; the exceedance is mild (14% on one feature, after the log) and harmless for tanh, whose inputs are weighted sums anyway. Clipping the test set to [−1, 1] would be an acceptable alternative; I preferred to report the honest value.
+
+### D — Verify and visualize
+
+**Figure 6** shows `FoodCourt` on the training set before and after preprocessing, split by class: raw values (left; the y-axis is logarithmic so the tail up to 29 813 credits is visible), after log(1 + x) (center) and after log(1 + x) followed by scaling to [−1, 1] (right).
+
+![Figure 6 — FoodCourt before and after preprocessing](figures/fig6.png)
+/// caption
+Figure 6 — Histogram of FoodCourt on the training set: raw (left, log-scale counts), after log(1 + x) (center) and after log(1 + x) + min–max scaling to [−1, 1] (right), colored by Transported.
+///
+
+The raw histogram is a spike at zero followed by a tail thousands of credits long; after the log the same data occupies a compact range of about 10 units, with the zero spike (4 513 of the 6 954 training passengers, 64.9%, spent nothing at the FoodCourt) and a broad hump between 5 and 8 corresponding to the passengers who did spend. The scaled panel is the same shape mapped onto [−1, 1]. The colors also reveal a strong signal: the zero-spend bar is dominated by `Transported = True`, while the spenders lean `False`.
+
+**Final checks (explicitly reported).**
+
+- **No remaining NaN:** 0 in the training matrix, 0 in the test matrix.
+- **Final shape of the feature matrix:** training **(6 954, 17)**, test **(1 739, 17)** — 7 scaled numerical columns (`Age`, `RoomService`, `FoodCourt`, `ShoppingMall`, `Spa`, `VRDeck`, `TotalSpend`) + 10 one-hot columns.
+- **Value range compatible with tanh:** training set exactly in [−1.0000, 1.0000]; test set in [−1.0000, 1.1383] (one feature, `ShoppingMall`, slightly above 1 as explained in step 5); the one-hot columns are in {0, 1}. All inputs are within or very near the [−1, 1] range in which tanh operates without saturating.
+
+**Reflection.** The decision I expect to matter most for training is the **log(1 + x) transformation of the spending columns** — and it matters precisely because of what Figure 6 shows: the spending features carry a strong class signal (passengers who spent nothing are mostly transported, big spenders mostly not), but in their raw form that signal is unusable by a tanh network. Any bounded scaling of the raw values would compress the informative 0-to-1 000 range into a few hundredths next to −1, so the first layer would see almost identical inputs for the vast majority of passengers and receive gradients dominated by a few dozen outliers with saturated units; with the log, the differences that distinguish "no spend", "moderate spend" and "big spend" are spread over the whole input range, the activations stay in tanh's sensitive region and the optimization is well conditioned. The leakage-free split (item B) is the decision that most affects how *trustworthy* the measured performance is, but it does not change what the network learns; imputation and encoding are necessary but low-impact here (2% gaps, few categories). The log is the choice that changes whether the most informative features can be learned at all.
+
+### Code
+
+``` python
+--8<-- "docs/exercises/data/code/exercise3.py"
+```
+
 ## Results summary
 
 | # | Item | Your value |
@@ -165,7 +262,7 @@ The threshold 3.5 is the midpoint between the two mean radii (2.0 and 5.0), 3.75
 | 7 | Distance between centers — Dataset II | 0.266 (sample means, 5D; theoretical 0) |
 | 8 | Explained variance PC1 + PC2 — Dataset I | 67.04% (51.27% + 15.77%) |
 | 9 | Explained variance PC1 + PC2 — Dataset II | 42.91% (21.59% + 21.32%) |
-| 10 | Share of the positive class in Transported | *(Exercise 3 — pending)* |
-| 11 | Mean and median of FoodCourt (training set, before transforming) | *(Exercise 3 — pending)* |
-| 12 | Final shape of the training feature matrix | *(Exercise 3 — pending)* |
-| 13 | Min and max of the training and test sets after scaling | *(Exercise 3 — pending)* |
+| 10 | Share of the positive class in Transported | 50.36% (4 378 of 8 693 are True) |
+| 11 | Mean and median of FoodCourt (training set, before transforming) | mean = 465.35, median = 0.00 |
+| 12 | Final shape of the training feature matrix | (6 954, 17) — test: (1 739, 17) |
+| 13 | Min and max of the training and test sets after scaling | training: −1.0000 / 1.0000; test: −1.0000 / 1.1383 |
