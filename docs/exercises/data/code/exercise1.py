@@ -72,7 +72,7 @@ for ax, s in zip(axes.flat, SCALES):
     X, y = datasets[s]
     scatter_by_class(ax, X, y, marker_size=8)
     ax.set(title=f"s = {s}", xlabel="$x_1$", ylabel="$x_2$")
-axes[0, 0].legend(loc="upper left", fontsize=8)
+    ax.legend(loc="upper left", fontsize=8)
 fig.suptitle("Figure 2 — The same four classes under scale factors s ∈ {0.5, 1, 2, 4} (shared axes)")
 fig.tight_layout()
 fig.savefig(FIGURES_DIR / "fig2.png", dpi=150)

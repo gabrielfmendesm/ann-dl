@@ -3,7 +3,7 @@ exercise: data
 ai_use: "Claude assisted with the code implementation and the drafting of this report; all results and analyses were reviewed and validated by me."
 ---
 
-# Exercise 1 — Data
+# Data — Preparation and Analysis for Neural Networks
 
 Data preparation and analysis for neural networks. Every script in this activity fixes the random seed with `rng = np.random.default_rng(42)` and consumes the generator in a fixed, documented order, so every number and figure below is exactly reproducible.
 
