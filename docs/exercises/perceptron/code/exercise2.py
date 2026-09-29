@@ -20,20 +20,46 @@ ETA = 0.01
 CENTER = (np.array(MEAN0) + np.array(MEAN1)) / 2  # (3.5, 3.5): the middle of the data cloud
 
 
-def best_line_accuracy(X, y, n_angles=3600):
-    """Highest accuracy reached by any straight line, found by exhaustive search.
+def best_line_accuracy(X, y):
+    """Exact accuracy of the best straight line for (X, y): a benchmark, not a model.
 
-    This is a benchmark, not a model: for each of n_angles directions u it tries
-    every threshold t on the projection u . x at once (predict 1 when u . x >= t),
-    using cumulative counts of each class along the sorted projections.
+    Every line classifies by thresholding a projection u . x (predict 1 when
+    u . x >= t). For a fixed direction u the best threshold comes from cumulative
+    counts along the sorted projections. The sorted order only changes at the
+    directions where two points project to the same value, so rotating u once
+    around the circle through all of those directions, swapping one adjacent pair
+    at each, visits every possible ordering: the best count seen is the optimum.
     """
-    best = 0.0
-    for theta in np.linspace(0.0, 2 * np.pi, n_angles, endpoint=False):
-        ys = y[np.argsort(X @ np.array([np.cos(theta), np.sin(theta)]))]
-        correct0_below = np.concatenate([[0], np.cumsum(ys == 0)])                  # predicted 0 and right
-        correct1_above = np.concatenate([np.cumsum((ys == 1)[::-1])[::-1], [0]])    # predicted 1 and right
-        best = max(best, float(np.max(correct0_below + correct1_above)) / len(y))
-    return best
+    n = len(y)
+    i, j = np.triu_indices(n, 1)
+    d = X[i] - X[j]
+    swap = np.arctan2(d[:, 1], d[:, 0]) + np.pi / 2           # u perpendicular to x_i - x_j
+    angles = np.concatenate([swap, swap + np.pi]) % (2 * np.pi)
+    first, second = np.concatenate([i, i]), np.concatenate([j, j])
+    events = np.argsort(angles)
+    angles, first, second = angles[events], first[events], second[events]
+
+    # Start between the first two events, then rotate once around the circle
+    theta = (angles[0] + angles[1]) / 2
+    order = np.argsort(X @ np.array([np.cos(theta), np.sin(theta)]))
+    ys = y[order]
+    score = (np.concatenate([[0], np.cumsum(ys == 0)])                   # Class 0 below the threshold
+             + np.concatenate([np.cumsum((ys == 1)[::-1])[::-1], [0]]))  # Class 1 above it
+    best = int(score.max())
+    order, score, labels = order.tolist(), score.tolist(), y.tolist()
+    pos = [0] * n
+    for k, point in enumerate(order):
+        pos[point] = k
+    for a, b in zip(np.roll(first, -1).tolist(), np.roll(second, -1).tolist()):
+        k = min(pos[a], pos[b])
+        assert abs(pos[a] - pos[b]) == 1, "points swapping order must be adjacent"
+        low, high = order[k], order[k + 1]          # positions k and k + 1 swap
+        order[k], order[k + 1] = high, low
+        pos[high], pos[low] = k, k + 1
+        if labels[low] != labels[high]:             # only a swap between classes changes a count
+            score[k + 1] += 2 if labels[high] == 0 else -2
+            best = max(best, score[k + 1])
+    return best / n
 
 
 def bayes_accuracy():
@@ -126,7 +152,7 @@ def run(rng):
 
     # --- D: analysis -----------------------------------------------------------------------------
     print("\nItem D:")
-    print(f"  best straight line for this sample (exhaustive search, 3600 directions): {best_line:.2%}; "
+    print(f"  best straight line for this sample (exact): {best_line:.2%} ({round(best_line * len(y))} of {len(y)}); "
           f"optimal accuracy for these two distributions: {bayes_accuracy():.2%}")
 
     # How far b and w move per mistake
