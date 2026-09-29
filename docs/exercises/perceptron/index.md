@@ -20,7 +20,7 @@ The generator is consumed in a fixed order: the Exercise 1 data (Class 0, Class 
 - *Matching the update rule to the labels.* With labels in {0, 1} the rule must be driven by the error y − ŷ; the textbook form w ← w + η y x belongs to labels in {−1, +1} and would never correct a false positive.
 - *Changing "nothing else" when comparing learning rates.* The η = 1.0 run of Exercise 1 must start from the same weights, and see the samples in the same order, as the η = 0.01 run. The initial weights are therefore drawn once and passed to both runs, and the presentation order is fixed.
 - *The statement does not fix the presentation order*, and on non-separable data the final weights depend on it. We use the standard choice, shuffling once, and report the class-sorted order as a side check in Exercise 2, item D.
-- *Explaining a moving target.* On overlapping data the weights change about 770 times per epoch. To analyse where the boundary goes, the weights after every single update are rebuilt from the training log (they are cumulative sums of η e x), without adding anything to the model.
+- *Explaining a moving target.* On overlapping data the weights change 766 times per epoch on average. To analyse where the boundary goes, the weights after every single update are rebuilt from the training log (they are cumulative sums of η e x), without adding anything to the model.
 
 ``` python title="code/main.py"
 --8<-- "docs/exercises/perceptron/code/main.py"
