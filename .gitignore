@@ -2,5 +2,6 @@ site/
 env/
 .cache/
 .vscode/
-target/__pycache__/
+target/
+__pycache__/
 *.pyc
