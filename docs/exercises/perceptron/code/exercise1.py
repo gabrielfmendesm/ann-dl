@@ -40,7 +40,7 @@ def summary(name, X, y, r):
 def run(rng):
     print("=" * 72 + "\nEXERCISE 1 — separable data\n" + "=" * 72)
 
-    # --- A: generate the data ----------------------------------------------------------------
+    # --- A: generate the data --------------------------------------------------------------------
     X_gen, y_gen, order = two_gaussians(rng, MEAN0, MEAN1, COV)
     X, y = X_gen[order], y_gen[order]  # fixed presentation order, classes interleaved
     for k in (0, 1):
@@ -58,11 +58,11 @@ def run(rng):
     ax.legend(loc="upper left")
     save(fig, "fig1.png")
 
-    # --- B: initial weights, drawn once and shared by the eta = 0.01 and eta = 1.0 runs ---------
+    # --- B: initial weights, drawn once and shared by the eta = 0.01 and eta = 1.0 runs ----------
     w0, b0 = pc.init_weights(rng)
     print(f"\nInitial weights: w0 = {np.round(w0, 6).tolist()}, ||w0|| = {np.linalg.norm(w0):.4f}, b0 = {b0}")
 
-    # --- C: train with eta = 0.01 --------------------------------------------------------------
+    # --- C: train with eta = 0.01 ----------------------------------------------------------------
     res = pc.train(X, y, w0, b0, eta=ETA)
     acc = res["history"]["accuracy"]
     print(f"\nTraining with eta = {ETA}:")
@@ -70,14 +70,14 @@ def run(rng):
     print(f"  accuracy after each epoch (epoch 0 = initial weights): {[f'{a:.2%}' for a in acc]}")
 
     # Figure 2: decision boundary over the data, misclassified points marked
-    fig, ax = plt.subplots(figsize=(7, 6))
+    fig, ax = plt.subplots(figsize=(9, 6))
     scatter_classes(ax, X, y)
     draw_boundary(ax, res["w"], res["b"], xlim, color="black", lw=1.5, label="boundary $w \\cdot x + b = 0$")
     n_wrong = mark_misclassified(ax, X, y, res["w"], res["b"])
     ax.set(title=f"Figure 2 — Decision boundary after training (η = {ETA})\n"
                  f"accuracy {acc[-1]:.2%}, {n_wrong} misclassified points",
            xlabel="$x_1$", ylabel="$x_2$", xlim=xlim, ylim=ylim)
-    ax.legend(loc="upper left")
+    ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), borderaxespad=0)  # outside: covers no data
     save(fig, "fig2.png")
 
     # Figure 3: accuracy x epoch, each point annotated with the updates made during that epoch

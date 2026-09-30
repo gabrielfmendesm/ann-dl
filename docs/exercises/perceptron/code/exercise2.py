@@ -89,7 +89,7 @@ def describe(name, X, y, w, b):
 def run(rng):
     print("\n" + "=" * 72 + "\nEXERCISE 2 — overlapping data\n" + "=" * 72)
 
-    # --- A: generate the data ----------------------------------------------------------------
+    # --- A: generate the data --------------------------------------------------------------------
     X_gen, y_gen, order = two_gaussians(rng, MEAN0, MEAN1, COV)
     X, y = X_gen[order], y_gen[order]  # fixed presentation order, classes interleaved
     for k in (0, 1):
@@ -104,7 +104,7 @@ def run(rng):
     ax.legend(loc="upper left")
     save(fig, "fig4.png")
 
-    # --- B: train the unchanged perceptron, with the pocket copy switched on -------------------
+    # --- B: train the unchanged perceptron, with the pocket copy switched on ---------------------
     w0, b0 = pc.init_weights(rng)
     print(f"\nInitial weights: w0 = {np.round(w0, 6).tolist()}, b0 = {b0}")
     res = pc.train(X, y, w0, b0, eta=ETA, pocket=True)
@@ -116,12 +116,15 @@ def run(rng):
     describe("final weights ", X, y, final_w, final_b)
     describe(f"pocket weights (best found in epoch {pocket['epoch']})", X, y, pocket["w"], pocket["b"])
 
-    # --- C: figures ----------------------------------------------------------------------------
+    # --- C: figures ------------------------------------------------------------------------------
     # Figure 5: both boundaries over the data; each panel marks the points its own weights get wrong
     fig, axes = plt.subplots(1, 2, figsize=(14, 6.2), sharex=True, sharey=True)
-    panels = [(f"Final weights (end of epoch {res['epochs']})", final_w, final_b, "tab:red", pocket["w"], pocket["b"], "tab:green", "pocket"),
-              (f"Pocket weights (best, found in epoch {pocket['epoch']})", pocket["w"], pocket["b"], "tab:green",
-               final_w, final_b, "tab:red", "final")]
+    panels = [
+        (f"Final weights (end of epoch {res['epochs']})", final_w, final_b, "tab:red",
+         pocket["w"], pocket["b"], "tab:green", "pocket"),
+        (f"Pocket weights (best, found in epoch {pocket['epoch']})", pocket["w"], pocket["b"], "tab:green",
+         final_w, final_b, "tab:red", "final"),
+    ]
     for ax, (title, w, b, color, w_other, b_other, color_other, other) in zip(axes, panels):
         scatter_classes(ax, X, y, size=6, alpha=0.35)
         n_wrong = mark_misclassified(ax, X, y, w, b, size=12)
@@ -129,14 +132,14 @@ def run(rng):
         draw_boundary(ax, w_other, b_other, xlim, color=color_other, lw=1.3, ls="--", label=f"{other} boundary")
         ax.set(title=f"{title}\naccuracy {pc.accuracy(X, y, w, b):.2%}, {n_wrong} misclassified",
                xlabel="$x_1$", ylabel="$x_2$", xlim=xlim, ylim=ylim)
-        ax.legend(loc="upper left", fontsize=9)
+        ax.legend(loc="lower left", fontsize=9)  # the corner that covers no point and no boundary
     fig.suptitle(f"Figure 5 — Final vs. pocket decision boundaries (η = {ETA})")
     save(fig, "fig5.png")
 
     # Figure 6: accuracy of the current weights and best-so-far (pocket) accuracy, per epoch
     best_line = best_line_accuracy(X, y)
     epochs = np.arange(len(hist["accuracy"]))
-    fig, ax = plt.subplots(figsize=(9, 5))
+    fig, ax = plt.subplots(figsize=(12, 5))
     ax.plot(epochs, hist["accuracy"], color="tab:red", lw=1.2, label="current weights (end of each epoch)")
     ax.plot(epochs, hist["pocket_accuracy"], color="tab:green", lw=2, label="pocket (best so far)")
     ax.plot(pocket["epoch"], pocket["accuracy"], "o", color="tab:green",
@@ -147,7 +150,7 @@ def run(rng):
            xlabel="epoch", ylabel="accuracy", xlim=(0, epochs[-1]), ylim=(0.45, 0.78))
     ax.yaxis.set_major_formatter(PercentFormatter(1.0))
     ax.grid(alpha=0.3)
-    ax.legend(loc="lower right", fontsize=9)
+    ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize=9)  # outside: covers no curve
     save(fig, "fig6.png")
 
     # --- D: analysis -----------------------------------------------------------------------------
@@ -157,7 +160,8 @@ def run(rng):
 
     # How far b and w move per mistake
     mean_norm = float(np.linalg.norm(X, axis=1).mean())
-    print(f"  mean ||x|| = {mean_norm:.3f}: per mistake b moves eta = {ETA}, w moves eta*||x|| = {ETA * mean_norm:.4f} on average")
+    print(f"  mean ||x|| = {mean_norm:.3f}: per mistake b moves eta = {ETA}, "
+          f"w moves eta*||x|| = {ETA * mean_norm:.4f} on average")
 
     # Rebuild (w, b) after every update from the update log: on a mistake the error is +1 for a
     # Class 1 sample and -1 for a Class 0 sample, so the weights are cumulative sums (the model is untouched)
@@ -169,8 +173,10 @@ def run(rng):
     norms = np.linalg.norm(W, axis=1)
     print(f"  updates on Class 1 samples (false negatives): {int(np.sum(err > 0))}, "
           f"on Class 0 samples (false positives): {int(np.sum(err < 0))}")
-    print(f"  after each update: ||w|| mean {norms.mean():.3f} (5-95%: {np.percentile(norms, 5):.3f}-{np.percentile(norms, 95):.3f}), "
-          f"i.e. about {norms.mean() / (ETA * mean_norm):.1f} single updates; b 5-95%: {np.percentile(B, 5):.3f} to {np.percentile(B, 95):.3f}")
+    print(f"  after each update: ||w|| mean {norms.mean():.3f} "
+          f"(5-95%: {np.percentile(norms, 5):.3f}-{np.percentile(norms, 95):.3f}), "
+          f"i.e. about {norms.mean() / (ETA * mean_norm):.1f} single updates; "
+          f"b 5-95%: {np.percentile(B, 5):.3f} to {np.percentile(B, 95):.3f}")
     nonzero_b = B[:-1] != 0  # b is exactly 0 whenever the two kinds of mistakes are tied: no relative change there
     print(f"  relative change per mistake (median): ||w|| {np.median(np.abs(np.diff(norms)) / norms[:-1]):.1%}, "
           f"|b| {np.median(np.abs(np.diff(B))[nonzero_b] / np.abs(B[:-1][nonzero_b])):.1%}")
@@ -188,7 +194,8 @@ def run(rng):
     norm_ep = np.array([np.linalg.norm(w) for w, _ in hist["weights"][1:]])
     print(f"  updates per epoch: min {upd.min()}, mean {upd.mean():.0f}, max {upd.max()}; "
           f"epochs without any update: {int(np.sum(upd == 0))}")
-    print(f"  end-of-epoch accuracy over epochs 1-{len(acc_ep)}: min {acc_ep.min():.2%}, mean {acc_ep.mean():.2%}, max {acc_ep.max():.2%}")
+    print(f"  end-of-epoch accuracy over epochs 1-{len(acc_ep)}: min {acc_ep.min():.2%}, "
+          f"mean {acc_ep.mean():.2%}, max {acc_ep.max():.2%}")
     print(f"  end-of-epoch ||w||: first 10 epochs mean {norm_ep[:10].mean():.3f}, last 10 epochs mean "
           f"{norm_ep[-10:].mean():.3f}, max {norm_ep.max():.3f}")
 
