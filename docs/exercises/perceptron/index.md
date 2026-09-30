@@ -19,7 +19,7 @@ The generator is consumed in a fixed order: the Exercise 1 data (Class 0, Class 
 
 - *Matching the update rule to the labels.* With labels in {0, 1} the rule must be driven by the error y − ŷ; the textbook form w ← w + η y x belongs to labels in {−1, +1} and would never correct a false positive.
 - *Changing "nothing else" when comparing learning rates.* The η = 1.0 run of Exercise 1 must start from the same weights, and see the samples in the same order, as the η = 0.01 run. The initial weights are therefore drawn once and passed to both runs, and the presentation order is fixed.
-- *The statement does not fix the presentation order*, and on non-separable data the final weights depend on it. We shuffle once after generation, so the classes are interleaved and every run sees the same sequence, and report the class-sorted order as a side check in Exercise 2, item D.
+- *The statement does not fix the presentation order*, and on non-separable data the final weights depend on it. Each dataset is shuffled once after generation, so the classes are interleaved and every run sees the same sequence; the class-sorted order is reported as a side check in Exercise 2, item D.
 - *Knowing how good the pocket is.* The statement quotes the accuracy of the best line for its own data; for ours, the exact value is computed in item D, so the pocket can be compared against the true optimum.
 - *Explaining a moving target.* On overlapping data the weights change 766 times per epoch on average. To analyze where the boundary goes, the weights after every single update are rebuilt from the training log (they are cumulative sums of η e x), without adding anything to the model.
 
@@ -173,7 +173,7 @@ The Exercise 1 implementation is reused unchanged — the same `train` function,
 | **Final** (after epoch 100) | [0.068178, 0.096455] | −0.4600 | **64.85%** |
 | **Pocket** (best so far, found in epoch 40) | [0.070947, 0.065048] | −0.4800 | **70.70%** |
 
-The pocket weights are 5.85 points better than the final weights. The statement expects the final weights to land near 50%; with our presentation order they land at 64.85%. That value depends on the order in which the samples are presented: item D explains why, and shows that the same code, with the same points presented class by class, ends at 50.05%.
+The pocket weights are 5.85 points better than the final weights. The statement expects the final weights to land near 50%; with the fixed shuffled order used here they land at 64.85%. That value depends on the order in which the samples are presented: item D explains why, and shows that the same code, with the same points presented class by class, ends at 50.05%.
 
 ### C — Figures
 
@@ -208,7 +208,7 @@ The pocket is immune to this, because it keeps the rare moments when the line ha
 
 **Do more epochs fix it? Does a smaller η?** Neither does, and the update rule shows why without running either experiment:
 
-- **More epochs.** An update happens on every mistake and never shrinks: it is always η x. A pass without mistakes would mean that one fixed line classifies all 2000 points correctly, which is impossible when the best line misclassifies 29.20% of them; so the stopping condition can never be met. And since the mistakes of the two classes cancel (point 2 above), extra epochs neither make w larger nor the line steadier: they only prolong the same cycling (in each of the 100 epochs we ran, the last correction was even made on the same sample). More epochs can only give the pocket more chances; the final weights remain a snapshot.
+- **More epochs.** An update happens on every mistake and never shrinks: it is always η x. A pass without mistakes would mean that one fixed line classifies all 2000 points correctly, which is impossible when the best line misclassifies 29.20% of them; so the stopping condition can never be met. And since the mistakes of the two classes cancel (point 2 above), extra epochs neither make w larger nor the line steadier: they only prolong the same cycling (in each of the 100 epochs run here, the last correction was even made on the same sample). More epochs can only give the pocket more chances; the final weights remain a snapshot.
 - **A smaller η.** The rescaling of Exercise 1 applies unchanged: (w/η, b/η) follows w/η ← w/η + e x, b/η ← b/η + e, a rule without η, and makes the same predictions as (w, b). Changing η therefore does not change the rule the boundary follows at all: the only thing it changes is the starting point of that rule, w₀/η. In particular, the ratio of the bias step to the weight step per mistake, η / (η‖x‖) = 1/‖x‖ ≈ 0.2, is the same for every η, and so is the size of a step relative to the rescaled weights, ‖x‖ / ‖w/η‖. Since the rule is the one that never stops on this data, a smaller η cannot make it converge: it only starts the same endless cycling from a different point. "Smaller steps" is an illusion when only the direction of (w, b) matters.
 
 What does help is what the pocket does: keep the best weights instead of the last ones.
