@@ -182,7 +182,7 @@ def run(rng):
           f"{np.percentile(acc_upd, 95):.2%}, updates leaving it at 70% or more: {np.mean(acc_upd >= 0.70):.2%}, "
           f"highest {acc_upd.max():.2%}")
 
-    # The loop never settles: updates, accuracy and weight size at the end of every epoch
+    # Does the loop settle? Updates, accuracy and weight size at the end of every epoch
     upd = np.array(hist["updates"][1:])
     acc_ep = np.array(hist["accuracy"][1:])
     norm_ep = np.array([np.linalg.norm(w) for w, _ in hist["weights"][1:]])
@@ -192,7 +192,7 @@ def run(rng):
     print(f"  end-of-epoch ||w||: first 10 epochs mean {norm_ep[:10].mean():.3f}, last 10 epochs mean "
           f"{norm_ep[-10:].mean():.3f}, max {norm_ep.max():.3f}")
 
-    # What ends each epoch: with a fixed order, every epoch finishes with the same samples
+    # What ends each epoch: the sample behind the last update of every epoch
     last_update = {}
     for epoch, i in hist["update_positions"]:
         last_update[epoch] = i  # overwritten until it holds the last update of each epoch

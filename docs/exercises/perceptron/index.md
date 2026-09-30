@@ -19,9 +19,9 @@ The generator is consumed in a fixed order: the Exercise 1 data (Class 0, Class 
 
 - *Matching the update rule to the labels.* With labels in {0, 1} the rule must be driven by the error y − ŷ; the textbook form w ← w + η y x belongs to labels in {−1, +1} and would never correct a false positive.
 - *Changing "nothing else" when comparing learning rates.* The η = 1.0 run of Exercise 1 must start from the same weights, and see the samples in the same order, as the η = 0.01 run. The initial weights are therefore drawn once and passed to both runs, and the presentation order is fixed.
-- *The statement does not fix the presentation order*, and on non-separable data the final weights depend on it. We use the standard choice, shuffling once, and report the class-sorted order as a side check in Exercise 2, item D.
+- *The statement does not fix the presentation order*, and on non-separable data the final weights depend on it. We shuffle once after generation, so the classes are interleaved and every run sees the same sequence, and report the class-sorted order as a side check in Exercise 2, item D.
 - *Knowing how good the pocket is.* The statement quotes the accuracy of the best line for its own data; for ours, the exact value is computed in item D, so the pocket can be compared against the true optimum.
-- *Explaining a moving target.* On overlapping data the weights change 766 times per epoch on average. To analyse where the boundary goes, the weights after every single update are rebuilt from the training log (they are cumulative sums of η e x), without adding anything to the model.
+- *Explaining a moving target.* On overlapping data the weights change 766 times per epoch on average. To analyze where the boundary goes, the weights after every single update are rebuilt from the training log (they are cumulative sums of η e x), without adding anything to the model.
 
 ``` python title="code/main.py"
 --8<-- "docs/exercises/perceptron/code/main.py"
@@ -52,15 +52,20 @@ Figure 1 — The 2000 points of Exercise 1, one color per class.
 The perceptron is written once, in `code/perceptron.py`, as a small set of functions reused unchanged in Exercise 2:
 
 - **Prediction:** ŷ = step(w · x + b), where step(z) = 1 if z ≥ 0 and 0 otherwise (`step`, `predict`).
+
 - **Update rule** for labels in {0, 1}: for each sample, in the fixed order, the error e = y − ŷ is 0 on a correct prediction and ±1 on a mistake, and
 
     $$ \mathbf{w} \leftarrow \mathbf{w} + \eta\, e\, \mathbf{x}, \qquad b \leftarrow b + \eta\, e. $$
 
     A correctly classified sample changes nothing. A false negative (y = 1, ŷ = 0, e = +1) raises the sample's score w · x + b by η(‖x‖² + 1), toward the Class 1 side; a false positive (e = −1) lowers it by the same amount.
+
 - **Initialization:** w drawn from `rng.normal(0, 0.01, size=2)` with the shared generator, and b = 0 (`init_weights`). Here w₀ = [0.009914, −0.008270], with ‖w₀‖ = 0.0129.
+
 - **Learning rate:** η = 0.01.
+
 - **Stopping:** training ends after the first full pass over the dataset with no update, or after 100 epochs, whichever comes first. The accuracy on the full dataset is recorded after every epoch (and before training, as epoch 0).
-- **Pocket** (used in Exercise 2 only): with `pocket=True`, after every update the accuracy on the full dataset is recomputed, and (w, b) is copied into the pocket whenever it beats the best accuracy seen so far. That copy is all the option adds: the prediction, the update and the stopping rule are the same lines of code.
+
+- **Pocket** (used in Exercise 2 only): with `pocket=True`, after every update the accuracy on the full dataset is recomputed, and (w, b) is copied into the pocket whenever it beats the best accuracy seen so far. That is all the option adds (the accuracy check after each update, the copy, and a record of the best-so-far accuracy per epoch for Figure 6): the prediction, the update and the stopping rule are the same lines of code.
 
 ``` python title="code/perceptron.py"
 --8<-- "docs/exercises/perceptron/code/perceptron.py"
@@ -74,11 +79,10 @@ Training with η = 0.01 from w₀:
 |---|---|
 | Final w | [0.031891, 0.028736] |
 | Final b | −0.2000 |
-| Epochs | **2**: 48 updates in epoch 1, none in epoch 2 (the pass that confirms convergence) |
+| Epochs | **2**, counting the final pass that confirms convergence: all 48 updates happened in epoch 1, and epoch 2 was the first pass without a single mistake |
 | Accuracy per epoch | 61.50% before training, 100.00% after epoch 1, 100.00% after epoch 2 |
 | Final accuracy | **100.00%** (0 misclassified points) |
 
-The epoch count includes the final pass that verifies convergence: all 48 updates happened during epoch 1, and epoch 2 was the first pass without a single mistake.
 
 ![Figure 2](figures/fig2.png)
 /// caption
@@ -92,7 +96,7 @@ Figure 3 — Accuracy on the full dataset after each epoch (epoch 0 = initial we
 
 ### D — Analysis
 
-**Why does separable data converge quickly?** The update rule only acts on mistakes: when ŷ = y the error is 0 and nothing changes, and every mistake moves the boundary toward classifying that sample correctly. On separable data, once the boundary lies anywhere inside the empty gap between the two clouds, no sample is misclassified, so no update ever happens again and the loop stops. The number of updates per epoch therefore drops to zero and stays there: 48 updates in epoch 1, 0 in epoch 2. The mistakes thin out even within epoch 1: 23 of the 48 happened within the first 100 samples and the other 25 in a few short bursts, the last one at the 1457th sample of 2000. None of the remaining 543 samples of epoch 1, nor any of the 2000 samples of epoch 2, was misclassified. This is what the perceptron convergence theorem guarantees for separable data: a finite number of mistakes (at most (R/γ)² when training starts from w = 0, and still finite from any other start), a number that is small when the margin γ between the classes is wide relative to the size R of the data. Here the means are seven class standard deviations apart.
+**Why does separable data converge quickly?** The update rule only acts on mistakes: when ŷ = y the error is 0 and nothing changes, and every mistake moves the boundary toward classifying that sample correctly. On separable data, once the boundary lies anywhere inside the empty gap between the two clouds, no sample is misclassified, so no update ever happens again and the loop stops. The number of updates per epoch therefore drops to zero, and the loop stops: 48 updates in epoch 1, 0 in epoch 2. The mistakes thin out even within epoch 1: 23 of the 48 happened within the first 100 samples and the other 25 in a few short bursts, the last one at the 1457th sample of 2000. None of the remaining 543 samples of epoch 1, nor any of the 2000 samples of epoch 2, was misclassified. This is what the perceptron convergence theorem guarantees for separable data: a finite number of mistakes (at most (R/γ)² when training starts from w = 0, and still finite from any other start), a number that is small when the margin γ between the classes is wide relative to the size R of the data. Here the means are seven class standard deviations apart.
 
 **Re-run with η = 1.0, changing nothing else** (same data, same order, same w₀, b₀ = 0):
 
@@ -128,7 +132,7 @@ $$ \mathbf{w}^{(2)}_t = c\,\mathbf{w}^{(1)}_t, \qquad b^{(2)}_t = c\,b^{(1)}_t \
 
     and in the same way b⁽²⁾ₜ₊₁ = c b⁽¹⁾ₜ₊₁.
 
-Consequently the two runs make the same mistakes on the same samples, hence the same number of updates in every epoch and the same stopping epoch, and their final parameters differ only by the factor η₂/η₁. Scaling (w, b) by c > 0 does not change the set of points where w · x + b = 0, so the decision boundary is identical: η changes nothing but the length of w. The argument breaks as soon as w₀ ≠ 0, because the base case fails (w₀ ≠ c w₀ unless c = 1). That is why item B forbids the zero start. Numerically, from the zero start both η = 0.01 and η = 1.0 make the same 25 updates at the same positions and stop after 2 epochs, with w = [0.017074, 0.016729], b = −0.11 for η = 0.01 and w = [1.707430, 1.672855], b = −11.00 for η = 1.0: exactly 100 times larger, as the proof predicts.
+Consequently the two runs make the same mistakes on the same samples, hence the same number of updates in every epoch and the same stopping epoch, and their final parameters differ only by the factor η₂/η₁. Scaling (w, b) by c > 0 does not change the set of points where w · x + b = 0, so the decision boundary is identical: η changes nothing but the length of w. The argument breaks as soon as w₀ ≠ 0, because the base case fails (w₀ ≠ c w₀ unless c = 1). That is why item B forbids the zero start. Numerically, from the zero start both η = 0.01 and η = 1.0 make the same 25 updates at the same positions and stop after 2 epochs, with w = [0.017074, 0.016729], b = −0.1100 for η = 0.01 and w = [1.707430, 1.672855], b = −11.0000 for η = 1.0: exactly 100 times larger, as the proof predicts.
 
 ### Code
 
@@ -185,7 +189,7 @@ Figure 6 — Accuracy of the current weights at the end of each epoch, and best-
 
 ### D — Analysis
 
-**The gap between the final and the pocket weights.** For this sample, the best straight line scores exactly 70.80% (1416 of 2000 points). It is computed exactly: every line thresholds a projection of the points on some direction, and rotating that direction through all the angles where two points swap order visits every possible line. The optimal classifier for these two distributions, the perpendicular bisector of the means (itself a straight line), scores 71.81% in expectation; the statement quotes about 73%, and these values vary from sample to sample. The pocket weights land 0.10 points below the best line: 70.70%, with a line passing 0.04 units from the middle of the cloud, (3.5, 3.5), and 72.90% / 68.50% of Class 0 / Class 1 correct. The final weights do not: 64.85%.
+**The gap between the final and the pocket weights.** For this sample, the best straight line scores exactly 70.80% (1416 of 2000 points). It is computed exactly: every line thresholds a projection of the points on some direction, and rotating that direction through all the angles where two points swap order visits every way a straight line can split the points. The optimal classifier for these two distributions, the perpendicular bisector of the means (itself a straight line), scores 71.81% in expectation; the statement quotes about 73%, and these values vary from sample to sample. The pocket weights land 0.10 points below the best line: 70.70%, with a line passing 0.04 units from the middle of the cloud, (3.5, 3.5), and 72.90% / 68.50% of Class 0 / Class 1 correct. The final weights do not: 64.85%.
 
 **Where the final boundary sits.** About one unit off the middle of the cloud, on the Class 0 side. The middle, (3.5, 3.5), is 0.98 units from the final line and falls on its Class 1 side, and the line classifies 75.75% of all points as Class 1: it gets 90.60% of Class 1 right but only 39.10% of Class 0 (Figure 5, left).
 
@@ -193,7 +197,7 @@ Figure 6 — Accuracy of the current weights at the end of each epoch, and best-
 
 1. **Per mistake, b moves by η = 0.01 while w moves by η‖x‖**, 0.0511 on average (the mean ‖x‖ is 5.11): five times more.
 2. **The mistakes of the two kinds almost exactly cancel.** There were 38 287 false negatives (adding η x) and 38 333 false positives (subtracting η x), so the weights never accumulate. After an update, ‖w‖ is 0.095 on average, about the size of 1.9 single updates, and it does not grow with training (0.116 at the end of the first ten epochs, 0.117 at the end of the last ten). The bias, which only records the imbalance between the two kinds (46 more false positives over the whole run, b = −46 η), is stuck as well: it stays between −0.48 and −0.40 during 90% of the updates.
-3. **So one mistake shifts the line by a large amount.** Measured along w, the line lies at distance −b/‖w‖ from the origin, and to cut this cloud in the middle it has to lie about 5 units from the origin. A single mistake changes ‖w‖ by 48% (median) but b by only 2.3%, so it changes that distance by roughly half: at the middle of the cloud the line moves by 2.79 units per mistake (median), more than twice the standard deviation of a class. The bias is far too slow to hold the line in place.
+3. **So one mistake shifts the line by a large amount.** Measured along w, the line lies at distance −b/‖w‖ from the origin, and to cut this cloud in the middle it has to lie about 5 units from the origin. A single mistake changes ‖w‖ by 48.1% (median) but b by only 2.3%, so it changes that distance by roughly half: at the middle of the cloud the line moves by 2.79 units per mistake (median), more than twice the standard deviation of a class. The bias is far too slow to hold the line in place.
 4. **The final weights are wherever the last mistake of epoch 100 left the line.** With a fixed presentation order, every epoch ends the same way: in all 100 epochs, the last update was triggered by the very last sample of the order, a Class 1 point at (1.93, 3.79) that lies well inside the Class 0 region, one unit beyond the pocket line (which misclassifies it too). Its correction pulls the line toward the origin. In epoch 100 it moved the line from 1.23 units on the Class 1 side of the middle (61.75% accuracy) to 0.98 units on the Class 0 side (64.85%). That is why the line ends every epoch on the Class 0 side, between 0.69 and 1.41 units off the middle in all 100 epochs, classifying between 68.60% and 84.50% of the points as Class 1.
 
 The pocket is immune to this, because it keeps the rare moments when the line happened to cut the cloud near its middle. The accuracy right after an update averages 60.45%; only 2.34% of the updates left it at 70% or more, and the best of them, 70.70%, is the pocket.

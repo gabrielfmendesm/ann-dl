@@ -45,7 +45,8 @@ def train(X, y, w0, b0, eta, max_epochs=100, pocket=False):
 
     pocket=True adds the pocket algorithm: after every update the accuracy on
     the full dataset is recomputed and, if it beats the best value seen so far,
-    (w, b) is copied into the pocket. The copy is the only thing it adds.
+    (w, b) is copied into the pocket. The prediction, the update and the
+    stopping rule are unchanged.
     """
     w = np.array(w0, dtype=float)  # work on a copy: the caller's w0 is reused by other runs
     b = float(b0)
