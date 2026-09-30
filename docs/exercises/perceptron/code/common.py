@@ -50,9 +50,9 @@ def draw_boundary(ax, w, b, xlim, **style):
 def mark_misclassified(ax, X, y, w, b, size=22):
     """Overlay a black 'x' on every point that (w, b) misclassifies; returns their count."""
     wrong = predict(X, w, b) != y
-    ax.scatter(*X[wrong].T, s=size, marker="x", color="black", linewidths=0.8,
-               label=f"misclassified ({int(wrong.sum())})")
-    return int(wrong.sum())
+    n_wrong = int(wrong.sum())
+    ax.scatter(*X[wrong].T, s=size, marker="x", color="black", linewidths=0.8, label=f"misclassified ({n_wrong})")
+    return n_wrong
 
 
 def data_limits(X, pad=0.8):

@@ -14,15 +14,16 @@ import numpy as np
 import exercise1
 import exercise2
 
+
+def fmt(w, b):
+    """Weights and bias formatted as in the Results summary table."""
+    return f"w = [{w[0]:.4f}, {w[1]:.4f}], b = {b:.4f}"
+
+
 rng = np.random.default_rng(42)
 
 ex1 = exercise1.run(rng)
 ex2 = exercise2.run(rng)
-
-
-def fmt(w, b):
-    return f"w = [{w[0]:.4f}, {w[1]:.4f}], b = {b:.4f}"
-
 
 print("\n" + "=" * 72 + "\nRESULTS SUMMARY\n" + "=" * 72)
 rows = [

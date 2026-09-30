@@ -58,7 +58,7 @@ def run(rng):
     ax.legend(loc="upper left")
     save(fig, "fig1.png")
 
-    # --- B: initial weights, drawn once and shared by every run of this exercise --------------
+    # --- B: initial weights, drawn once and shared by the eta = 0.01 and eta = 1.0 runs ---------
     w0, b0 = pc.init_weights(rng)
     print(f"\nInitial weights: w0 = {np.round(w0, 6).tolist()}, ||w0|| = {np.linalg.norm(w0):.4f}, b0 = {b0}")
 
@@ -107,8 +107,7 @@ def run(rng):
 
     # Re-run with eta = 1.0 and nothing else changed: same data, same order, same w0 and b0
     res_large = pc.train(X, y, w0, b0, eta=ETA_LARGE)
-    print(f"\n  Re-run with eta = {ETA_LARGE} (same data, order, w0 and b0):")
-    summary(f"eta = {ETA}", X, y, res)
+    print(f"\n  Re-run with eta = {ETA_LARGE} (same data, order, w0 and b0; the eta = {ETA} run is printed above):")
     summary(f"eta = {ETA_LARGE}", X, y, res_large)
     angle = np.degrees(np.arccos(np.clip(unit(res["w"]) @ unit(res_large["w"]), -1.0, 1.0)))
     print(f"  angle between the two boundary directions = {angle:.2f} degrees")

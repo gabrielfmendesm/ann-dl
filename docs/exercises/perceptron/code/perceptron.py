@@ -24,13 +24,13 @@ def accuracy(X, y, w, b):
     return float(np.mean(predict(X, w, b) == y))
 
 
-def init_weights(rng, n_features=2):
-    """Initial parameters: w drawn from N(0, 0.01) with the shared generator, and b = 0.
+def init_weights(rng):
+    """Initial parameters: w = rng.normal(0, 0.01, size=2) (mean 0, standard deviation 0.01), b = 0.
 
     The start must not be w = 0: from an all-zero start the learning rate would
     only rescale the weights (Exercise 1, item D).
     """
-    return rng.normal(0.0, 0.01, size=n_features), 0.0
+    return rng.normal(0.0, 0.01, size=2), 0.0
 
 
 def train(X, y, w0, b0, eta, max_epochs=100, pocket=False):
@@ -57,8 +57,8 @@ def train(X, y, w0, b0, eta, max_epochs=100, pocket=False):
         "weights": [(w.copy(), b)],  # (w, b) at the end of each epoch
         "update_positions": [],      # (epoch, sample index) of every update
     }
-    best = {"w": w.copy(), "b": b, "accuracy": acc0, "epoch": 0}
     if pocket:
+        best = {"w": w.copy(), "b": b, "accuracy": acc0, "epoch": 0}  # the pocket starts with the initial weights
         history["pocket_accuracy"] = [acc0]  # best-so-far accuracy at the end of each epoch
 
     for epoch in range(1, max_epochs + 1):

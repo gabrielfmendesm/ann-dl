@@ -119,7 +119,7 @@ def run(rng):
     # --- C: figures ----------------------------------------------------------------------------
     # Figure 5: both boundaries over the data; each panel marks the points its own weights get wrong
     fig, axes = plt.subplots(1, 2, figsize=(14, 6.2), sharex=True, sharey=True)
-    panels = [("Final weights (end of epoch 100)", final_w, final_b, "tab:red", pocket["w"], pocket["b"], "tab:green", "pocket"),
+    panels = [(f"Final weights (end of epoch {res['epochs']})", final_w, final_b, "tab:red", pocket["w"], pocket["b"], "tab:green", "pocket"),
               (f"Pocket weights (best, found in epoch {pocket['epoch']})", pocket["w"], pocket["b"], "tab:green",
                final_w, final_b, "tab:red", "final")]
     for ax, (title, w, b, color, w_other, b_other, color_other, other) in zip(axes, panels):
@@ -171,7 +171,7 @@ def run(rng):
           f"on Class 0 samples (false positives): {int(np.sum(err < 0))}")
     print(f"  after each update: ||w|| mean {norms.mean():.3f} (5-95%: {np.percentile(norms, 5):.3f}-{np.percentile(norms, 95):.3f}), "
           f"i.e. about {norms.mean() / (ETA * mean_norm):.1f} single updates; b 5-95%: {np.percentile(B, 5):.3f} to {np.percentile(B, 95):.3f}")
-    nonzero_b = B[:-1] != 0  # b is exactly 0 at a few early updates; a relative change is undefined there
+    nonzero_b = B[:-1] != 0  # b is exactly 0 whenever the two kinds of mistakes are tied: no relative change there
     print(f"  relative change per mistake (median): ||w|| {np.median(np.abs(np.diff(norms)) / norms[:-1]):.1%}, "
           f"|b| {np.median(np.abs(np.diff(B))[nonzero_b] / np.abs(B[:-1][nonzero_b])):.1%}")
     offsets = (W @ CENTER + B) / norms
@@ -186,27 +186,30 @@ def run(rng):
     upd = np.array(hist["updates"][1:])
     acc_ep = np.array(hist["accuracy"][1:])
     norm_ep = np.array([np.linalg.norm(w) for w, _ in hist["weights"][1:]])
-    print(f"  updates per epoch: min {upd.min()}, mean {upd.mean():.0f}, max {upd.max()} (never zero)")
-    print(f"  end-of-epoch accuracy over epochs 1-100: min {acc_ep.min():.2%}, mean {acc_ep.mean():.2%}, max {acc_ep.max():.2%}")
-    print(f"  end-of-epoch ||w||: epochs 1-10 mean {norm_ep[:10].mean():.3f}, epochs 91-100 mean {norm_ep[-10:].mean():.3f}, "
-          f"max {norm_ep.max():.3f} (no growth)")
+    print(f"  updates per epoch: min {upd.min()}, mean {upd.mean():.0f}, max {upd.max()}; "
+          f"epochs without any update: {int(np.sum(upd == 0))}")
+    print(f"  end-of-epoch accuracy over epochs 1-{len(acc_ep)}: min {acc_ep.min():.2%}, mean {acc_ep.mean():.2%}, max {acc_ep.max():.2%}")
+    print(f"  end-of-epoch ||w||: first 10 epochs mean {norm_ep[:10].mean():.3f}, last 10 epochs mean "
+          f"{norm_ep[-10:].mean():.3f}, max {norm_ep.max():.3f}")
 
     # What ends each epoch: with a fixed order, every epoch finishes with the same samples
     last_update = {}
     for epoch, i in hist["update_positions"]:
-        last_update[epoch] = i
-    last_positions = sorted(set(last_update.values()))
-    x_last = X[last_positions[0]]
-    print(f"  sample position of the last update of each epoch: {last_positions} "
-          f"(Class {y[last_positions[0]]}, x = {x_last.round(3).tolist()}, x1 + x2 = {x_last.sum():.3f}; "
-          f"the pocket line predicts Class {pc.predict(x_last[None], pocket['w'], pocket['b'])[0]} for it)")
-    print(f"  epoch 100, just before its last update: accuracy {pc.accuracy(X, y, W[-2], B[-2]):.2%}, "
+        last_update[epoch] = i  # overwritten until it holds the last update of each epoch
+    positions, counts = np.unique(list(last_update.values()), return_counts=True)
+    top = int(positions[np.argmax(counts)])
+    x_last = X[top]
+    print(f"  sample position of the last update of each epoch (position: epochs): "
+          f"{dict(zip(positions.tolist(), counts.tolist()))}")
+    print(f"      position {top}: Class {y[top]}, x = {x_last.round(3).tolist()}, x1 + x2 = {x_last.sum():.3f}; "
+          f"the pocket line predicts Class {pc.predict(x_last[None], pocket['w'], pocket['b'])[0]} for it")
+    print(f"  epoch {res['epochs']}, just before its last update: accuracy {pc.accuracy(X, y, W[-2], B[-2]):.2%}, "
           f"offset of the cloud middle {center_offset(W[-2], B[-2]):+.3f}; right after it (final weights): "
           f"accuracy {pc.accuracy(X, y, final_w, final_b):.2%}, offset {center_offset(final_w, final_b):+.3f}")
     pred1 = np.array([pc.predict(X, w, b).mean() for w, b in hist["weights"][1:]])
     offset_ep = np.array([center_offset(w, b) for w, b in hist["weights"][1:]])
     print(f"  end-of-epoch offset of the cloud middle: min {offset_ep.min():+.3f}, max {offset_ep.max():+.3f} "
-          f"(positive in {int(np.sum(offset_ep > 0))} of 100 epochs); share predicted as Class 1: "
+          f"(positive in {int(np.sum(offset_ep > 0))} of {len(offset_ep)} epochs); share predicted as Class 1: "
           f"{pred1.min():.2%}-{pred1.max():.2%}")
 
     # Side check: the same points, the same w0 and the same code, presented class by class
