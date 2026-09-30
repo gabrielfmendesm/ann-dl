@@ -1,6 +1,6 @@
 # ANN & Deep Learning — Deliverables
 
-Individual deliverables for the *Artificial Neural Networks and Deep Learning* course (Insper, 2026.2).
+Deliverables for the *Artificial Neural Networks and Deep Learning* course (Insper, 2026.2): the individual exercises and the team projects.
 
 **Published site:** https://gabrielfmendesm.github.io/ann-dl
 
@@ -24,6 +24,15 @@ mkdocs serve -o
 
 Every push to `main` publishes the site automatically via GitHub Actions (`mkdocs gh-deploy`).
 
+## Reproducing the results
+
+Each report's code lives in `docs/exercises/<exercise>/code/` and rewrites the figures in `docs/exercises/<exercise>/figures/`. From the repository root:
+
+``` shell
+python docs/exercises/data/code/exercise1.py        # also exercise2.py and exercise3.py
+python docs/exercises/perceptron/code/main.py
+```
+
 ## Layout
 
 ```
@@ -41,9 +50,9 @@ docs/
 mkdocs.yml
 requirements.txt
 data/
-  spaceship-titanic/train.csv   # Kaggle Spaceship Titanic training file (Exercise 3)
+  spaceship-titanic/train.csv   # Kaggle Spaceship Titanic training file (Data, Exercise 3)
 ```
 
 ## Data
 
-`data/spaceship-titanic/train.csv` is the training file of the [Spaceship Titanic](https://www.kaggle.com/competitions/spaceship-titanic) Kaggle competition, committed so the Exercise 3 script runs from a clean checkout.
+`data/spaceship-titanic/train.csv` is the training file of the [Spaceship Titanic](https://www.kaggle.com/competitions/spaceship-titanic) Kaggle competition, committed so the script of the Data activity's Exercise 3 runs from a clean checkout.
