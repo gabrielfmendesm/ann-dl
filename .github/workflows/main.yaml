@@ -2,7 +2,7 @@ name: ci
 on:
   - push
   - pull_request
-  
+
 # Environment
 env:
   CI: true
@@ -10,25 +10,27 @@ env:
 
 # Jobs to run
 jobs:
-     
+
   # Build and deploy documentation site
   deploy:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
 
-      # Checkout source form GitHub
-      - uses: actions/checkout@v4
+      # Checkout the source from GitHub, with the full history: the git date and author plugins need it
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       # Install Python runtime and dependencies
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       # pip
       - run: |
           pip install -r requirements.txt
-          
+
       # deploy
       - run: |
           git config user.name "github-actions[bot]"
