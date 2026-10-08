@@ -31,6 +31,7 @@ Each report's code lives in `docs/exercises/<exercise>/code/` and rewrites the f
 ``` shell
 python docs/exercises/data/code/exercise1.py        # also exercise2.py and exercise3.py
 python docs/exercises/perceptron/code/main.py
+python docs/projects/eda/code/main.py               # EDA project: Figures 1-13 and results/
 ```
 
 ## Layout
@@ -47,12 +48,16 @@ docs/
     mlp/
     vae/
   projects/
+    eda/                  # same layout: index.md, code/, figures/, plus results/
 mkdocs.yml
 requirements.txt
 data/
   spaceship-titanic/train.csv   # Kaggle Spaceship Titanic training file (Data, Exercise 3)
+  stroke-prediction/healthcare-dataset-stroke-data.csv   # Kaggle Stroke Prediction Dataset (EDA project)
 ```
 
 ## Data
 
 `data/spaceship-titanic/train.csv` is the training file of the [Spaceship Titanic](https://www.kaggle.com/competitions/spaceship-titanic) Kaggle competition, committed so the script of the Data activity's Exercise 3 runs from a clean checkout.
+
+`data/stroke-prediction/healthcare-dataset-stroke-data.csv` is the [Stroke Prediction Dataset](https://www.kaggle.com/datasets/fedesoriano/stroke-prediction-dataset) (fedesoriano, Kaggle), committed so the EDA project runs from a clean checkout. SHA-256: `644d473b05d2797006bd94865e4f8bb057f0c721617911613c82c8fcfc707420`.
