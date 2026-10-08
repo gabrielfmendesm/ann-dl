@@ -1,0 +1,4 @@
+feature,lower fence,upper fence,flagged (1.5×IQR),flagged (%),stroke rate among flagged (%),flagged (modified z > 3.5)
+age,-26.5,113.5,0,0.0,0.0,0
+avg_glucose_level,21.984999999999992,169.525,503,12.304305283757339,13.12127236580517,458
+bmi,9.350000000000001,47.35,90,2.2015655577299413,3.3333333333333335,47

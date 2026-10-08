@@ -1,0 +1,332 @@
+{
+  "outlier_rows": 569,
+  "outlier_rows_pct": 13.918786692759296,
+  "outlier_rows_positives": 66,
+  "outlier_rows_positives_share_of_all_pos": 33.165829145728644,
+  "outlier_rows_stroke_rate": 11.599297012302284,
+  "skew_after_log": {
+    "avg_glucose_level": 0.8786860950027386,
+    "bmi": 0.04463933053015012
+  },
+  "raw_max_z": {
+    "avg_glucose_level": 3.6554206707642667,
+    "bmi": 8.66338470426562
+  },
+  "bmi_minmax_q1_median_q3": [
+    0.15234822451317298,
+    0.2027491408934708,
+    0.2611683848797251
+  ],
+  "bmi_below_12": [
+    [
+      40.0,
+      11.5
+    ],
+    [
+      79.0,
+      11.3
+    ],
+    [
+      1.24,
+      10.3
+    ]
+  ],
+  "train_shape": [
+    4088,
+    24
+  ],
+  "test_shape": [
+    1022,
+    24
+  ],
+  "nan_train": 0,
+  "nan_test": 0,
+  "inf_train": 0,
+  "inf_test": 0,
+  "feature_names": [
+    "num__age",
+    "log__avg_glucose_level",
+    "log__bmi",
+    "missing__missingindicator_bmi",
+    "cat__gender_Female",
+    "cat__gender_Male",
+    "cat__gender_Other",
+    "cat__hypertension_0",
+    "cat__hypertension_1",
+    "cat__heart_disease_0",
+    "cat__heart_disease_1",
+    "cat__ever_married_No",
+    "cat__ever_married_Yes",
+    "cat__work_type_Govt_job",
+    "cat__work_type_Never_worked",
+    "cat__work_type_Private",
+    "cat__work_type_Self-employed",
+    "cat__work_type_children",
+    "cat__Residence_type_Rural",
+    "cat__Residence_type_Urban",
+    "cat__smoking_status_Unknown",
+    "cat__smoking_status_formerly smoked",
+    "cat__smoking_status_never smoked",
+    "cat__smoking_status_smokes"
+  ],
+  "bmi_median_train": 28.0,
+  "bmi_median_full": 28.1,
+  "glucose_median_train": 91.945,
+  "glucose_median_full": 91.88499999999999,
+  "num_means_train": [
+    -0.0,
+    -0.0,
+    -0.0
+  ],
+  "num_stds_train": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "num_means_test": [
+    -0.028,
+    -0.0232,
+    -0.011
+  ],
+  "num_stds_test": [
+    1.0033,
+    0.9991,
+    0.9793
+  ],
+  "max_abs_z_train": [
+    1.92,
+    2.8,
+    4.87
+  ],
+  "max_abs_z_test": [
+    1.92,
+    2.76,
+    3.09
+  ],
+  "unseen_category_probe": {
+    "gender_block": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "work_type_block": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "all_missing_row_finite": true,
+    "all_missing_row_bmi_indicator": 1.0
+  },
+  "train_stroke_rate_bmi_missing": 21.764705882352942,
+  "train_stroke_rate_bmi_observed": 4.134762633996937,
+  "train_bmi_missing_rate_pos": 18.592964824120603,
+  "train_bmi_missing_rate_neg": 3.419902288506043,
+  "pca_evr": [
+    0.308025,
+    0.152021,
+    0.109104,
+    0.082114,
+    0.080259,
+    0.05353,
+    0.047368,
+    0.032637,
+    0.030782,
+    0.026746,
+    0.024716,
+    0.022357,
+    0.014757,
+    0.0086,
+    0.006283,
+    0.000642,
+    6e-05,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "pca_pc1": 30.802524244316352,
+  "pca_pc2": 15.202089290077826,
+  "pca_pc12": 46.00461353439418,
+  "pca_k_80": 7,
+  "pca_k_90": 10,
+  "pca_k_95": 12,
+  "pca_zero_components": 7,
+  "total_variance": 6.0843340322544375,
+  "loadings": {
+    "num__age": {
+      "PC1": 0.6264851287323953,
+      "PC2": -0.13885767156377174
+    },
+    "log__avg_glucose_level": {
+      "PC1": 0.30319161690949464,
+      "PC2": 0.9395859761979417
+    },
+    "log__bmi": {
+      "PC1": 0.540832299054343,
+      "PC2": -0.21527885696956367
+    },
+    "missing__missingindicator_bmi": {
+      "PC1": 0.010819760703593499,
+      "PC2": 0.014877445998490012
+    },
+    "cat__gender_Female": {
+      "PC1": 0.013528529297583872,
+      "PC2": -0.08361842220488828
+    },
+    "cat__gender_Male": {
+      "PC1": -0.013413839312866315,
+      "PC2": 0.08326262399436797
+    },
+    "cat__gender_Other": {
+      "PC1": -0.00011468998471758029,
+      "PC2": 0.0003557982105204448
+    },
+    "cat__hypertension_0": {
+      "PC1": -0.0639914854284247,
+      "PC2": -0.019257717031736614
+    },
+    "cat__hypertension_1": {
+      "PC1": 0.06399148542842469,
+      "PC2": 0.01925771703173648
+    },
+    "cat__heart_disease_0": {
+      "PC1": -0.03647445198645882,
+      "PC2": -0.023709632680829613
+    },
+    "cat__heart_disease_1": {
+      "PC1": 0.036474451986458815,
+      "PC2": 0.02370963268082954
+    },
+    "cat__ever_married_No": {
+      "PC1": -0.2557120193273619,
+      "PC2": 0.08751773255685882
+    },
+    "cat__ever_married_Yes": {
+      "PC1": 0.25571201932736143,
+      "PC2": -0.08751773255685881
+    },
+    "cat__work_type_Govt_job": {
+      "PC1": 0.03091755063953439,
+      "PC2": -0.012458566677721442
+    },
+    "cat__work_type_Never_worked": {
+      "PC1": -0.0025824145360832684,
+      "PC2": 0.0008860872231476033
+    },
+    "cat__work_type_Private": {
+      "PC1": 0.08438716249717329,
+      "PC2": -0.06187485572710716
+    },
+    "cat__work_type_Self-employed": {
+      "PC1": 0.06865877447209968,
+      "PC2": -0.016203071522340746
+    },
+    "cat__work_type_children": {
+      "PC1": -0.18138107307272405,
+      "PC2": 0.08965040670402158
+    },
+    "cat__Residence_type_Rural": {
+      "PC1": -0.010015882416036268,
+      "PC2": 0.015199582191110967
+    },
+    "cat__Residence_type_Urban": {
+      "PC1": 0.010015882416036261,
+      "PC2": -0.015199582191110998
+    },
+    "cat__smoking_status_Unknown": {
+      "PC1": -0.16087013168711073,
+      "PC2": 0.07104623069219014
+    },
+    "cat__smoking_status_formerly smoked": {
+      "PC1": 0.06205326855990127,
+      "PC2": -0.009397326092430328
+    },
+    "cat__smoking_status_never smoked": {
+      "PC1": 0.06480398082202495,
+      "PC2": -0.04562995163576151
+    },
+    "cat__smoking_status_smokes": {
+      "PC1": 0.034012882305184546,
+      "PC2": -0.01601895296399845
+    }
+  },
+  "pc1_corr": {
+    "num__age": 0.8575457919340987,
+    "log__avg_glucose_level": 0.4150149513628639,
+    "log__bmi": 0.7403024284622791,
+    "missing__missingindicator_bmi": 0.07418539615265261
+  },
+  "pc2_corr": {
+    "num__age": -0.1335287913051612,
+    "log__avg_glucose_level": 0.9035278952619649,
+    "log__bmi": -0.20701719423187112,
+    "missing__missingindicator_bmi": 0.07166178678234494
+  },
+  "tsne_kl_5": 0.9714363813400269,
+  "tsne_kl_30": 1.0168931484222412,
+  "tsne_kl_50": 1.0585031509399414,
+  "n_profiles": 364,
+  "projection_diagnostics": [
+    {
+      "space": "Original 24 dimensions",
+      "trustworthiness k=5": "\u2014",
+      "trustworthiness k=30": "\u2014",
+      "positives among 10-NN of positives (%)": 8.894472361809045,
+      "same categorical profile among 10-NN (%)": 75.51859099804305
+    },
+    {
+      "space": "PCA (2 components)",
+      "trustworthiness k=5": 0.8173848255055447,
+      "trustworthiness k=30": 0.8198488378331823,
+      "positives among 10-NN of positives (%)": 8.84422110552764,
+      "same categorical profile among 10-NN (%)": 4.49853228962818
+    },
+    {
+      "space": "t-SNE perplexity 5",
+      "trustworthiness k=5": 0.9963651385211619,
+      "trustworthiness k=30": 0.9538411714089656,
+      "positives among 10-NN of positives (%)": 10.201005025125628,
+      "same categorical profile among 10-NN (%)": 78.19716242661448
+    },
+    {
+      "space": "t-SNE perplexity 30",
+      "trustworthiness k=5": 0.9966799048386478,
+      "trustworthiness k=30": 0.9770874869546942,
+      "positives among 10-NN of positives (%)": 9.698492462311558,
+      "same categorical profile among 10-NN (%)": 77.73238747553816
+    },
+    {
+      "space": "t-SNE perplexity 50",
+      "trustworthiness k=5": 0.9962339798933272,
+      "trustworthiness k=30": 0.9776452753905926,
+      "positives among 10-NN of positives (%)": 10.201005025125628,
+      "same categorical profile among 10-NN (%)": 76.72455968688845
+    },
+    {
+      "space": "UMAP n_neighbors 5",
+      "trustworthiness k=5": 0.9937887192548253,
+      "trustworthiness k=30": 0.9560979215857606,
+      "positives among 10-NN of positives (%)": 10.65326633165829,
+      "same categorical profile among 10-NN (%)": 76.85665362035226
+    },
+    {
+      "space": "UMAP n_neighbors 15",
+      "trustworthiness k=5": 0.9871875359732935,
+      "trustworthiness k=30": 0.9693857259442946,
+      "positives among 10-NN of positives (%)": 9.045226130653267,
+      "same categorical profile among 10-NN (%)": 74.19031311154599
+    },
+    {
+      "space": "UMAP n_neighbors 50",
+      "trustworthiness k=5": 0.9805365176892675,
+      "trustworthiness k=30": 0.9708660671171154,
+      "positives among 10-NN of positives (%)": 10.50251256281407,
+      "same categorical profile among 10-NN (%)": 68.21673189823875
+    }
+  ]
+}
