@@ -19,7 +19,7 @@ This report explores the dataset that the classification project will use until 
 python docs/projects/eda/code/main.py
 ```
 
-The run takes about a minute and a half. It writes Figures 1–13 to `figures/` and the tables (Markdown and CSV) and numbers (JSON) to `results/`. The CSV is committed at `data/stroke-prediction/`, so the script runs from a clean clone.
+The run takes about 80 seconds on a laptop. It writes Figures 1–13 to `figures/` and the tables (Markdown and CSV) and numbers (JSON) to `results/`. The CSV is committed at `data/stroke-prediction/` (SHA-256 `644d473b05d2797006bd94865e4f8bb057f0c721617911613c82c8fcfc707420`), so the script runs from a clean clone.
 
 **Rule followed throughout.** The full file is used only for the stage-1 inventory: missing values, duplicates, consistency checks and the target distribution. The split happens right after it (1D). From then on, every statistic, figure and fitted parameter comes from the 4,088 training rows. The 1,022 test rows are only transformed by the finished pipeline, to report their shape and to prove that nothing was learned from them.
 
@@ -82,10 +82,7 @@ The run takes about a minute and a half. It writes Figures 1–13 to `figures/` 
 | smoking_status | 0 | 0.00 |
 | stroke | 0 | 0.00 |
 
-Two kinds of missing information do not show up in Table 2:
-
-- **`smoking_status = Unknown`** is a disguised missing value: 1,544 rows (30.22% of the file) carry it, and the publisher defines it as "information unavailable". It is not random: 682 of these rows are patients under 18, and in training 498 of the 554 `children` rows are `Unknown`. Children were simply not asked, which makes the category informative rather than noise (section 4A keeps it as its own category).
-- **Top-coded age?** No age exceeds 82, and 56 rows sit exactly at 82, against 60 at 81 and 70 at 80. This is consistent with ages above 82 having been recorded as 82; it cannot be confirmed from the file, and it does not change any decision here.
+**Disguised missing values.** Table 2 misses one: **`smoking_status = Unknown`**, carried by 1,544 rows (30.22% of the file) and defined by the publisher as "information unavailable". It is not random: 682 of these rows are patients under 18, and in training 498 of the 554 `children` rows are `Unknown`. Children were simply not asked, which makes the category informative rather than noise (section 4A keeps it as its own category).
 
 **Duplicates, impossible and inconsistent values.** Every check is quantified in Table 3.
 
@@ -148,7 +145,7 @@ The split is made **before any preprocessing decision**, with `train_test_split(
 - **Train: 4,088 rows** (3,889 negatives, 199 positives — 4.87%).
 - **Test: 1,022 rows** (972 negatives, 50 positives — 4.89%).
 - The two sets are disjoint and together cover all 5,110 rows. No row was removed before the split: the file has no duplicates to remove.
-- **Stratified**, because a random 20% of a 4.87% class could easily hold 40 or 60 positives instead of 50; stratification fixes the rate in both parts (Table 4).
+- **Stratified**, because with only 249 positives an unstratified random split would let the test rate drift by chance. Stratification fixes it at 4.87% in train and 4.89% in test (Table 4).
 - **Not temporal**, because the file has no date. **Not grouped**, because each `id` is unique and there is no other patient key.
 - With fewer than 10,000 rows, the course recommends cross-validation plus a held-out test set. The modeling deliverable will therefore select models with stratified, shuffled 5-fold cross-validation **inside these 4,088 training rows**, refitting the whole pipeline in every fold, and will look at the 1,022 test rows once, at the end.
 
@@ -170,7 +167,7 @@ The split is made **before any preprocessing decision**, with `train_test_split(
 
 The figure shows histograms, to read the shape and the modes, with boxplots below, to count the points beyond 1.5×IQR. The mean is drawn next to the median because their gap is the cheapest skewness diagnostic.
 
-- **`age`** — roughly uniform between 0 and 82 years, with a slight left skew (−0.16; mean 43.35 < median 45.00) and a flat shape (excess kurtosis −0.98). There are two spikes: infants (ages below 2) and the 78–82 band, where the possible top-coding at 82 sits. No point lies beyond the IQR fences.
+- **`age`** — roughly uniform between 0 and 82 years, with a slight left skew (−0.16; mean 43.35 < median 45.00) and a flat shape (excess kurtosis −0.98). There are two concentrations at the ends: infants (ages below 2) and patients aged 78–82, the maximum. No point lies beyond the IQR fences.
 - **`avg_glucose_level`** — strongly right-skewed (1.56; mean 106.32 > median 91.94) and, above all, **bimodal**. The main mode is near 85 mg/dL and a second mode near 205 mg/dL, separated by a valley near 175 mg/dL. 589 training rows (14.41%) lie above 150 mg/dL. The boxplot flags 503 points as "outliers", but they are not isolated errors: they are the second mode — a subpopulation, most likely diabetic patients, whose diagnosis is not a column of the file.
 - **`bmi`** — right-skewed (1.12; mean 28.92 > median 28.00) with a heavy right tail (excess kurtosis 3.84). 90 points lie beyond the upper fence of 47.35, and the maximum is 97.6.
 
@@ -358,8 +355,8 @@ The figure shows histograms, to read the shape and the modes, with boxplots belo
 The age bands separate the real signals from the age proxies:
 
 - **The clinical flags survive the control.** Among patients aged 60 or more, hypertension still raises the stroke rate from 11.62% to 17.87%, and heart disease from 11.94% to 18.39%. Both gaps are real but much smaller than the unadjusted 3.5–3.9×.
-- **The work and smoking effects disappear.** At 60+, Self-employed (12.40%) is no longer above Private (13.53%). Formerly smoked (14.47%) is only slightly above never smoked (12.86%).
-- **Marriage reverses.** At 60+, the never-married have the higher rate: 20.48% (n = 83) against 12.34% for the married. This is a Simpson's paradox: the median age is 54 for the married and 18 for the never-married, and that age gap alone produced the unadjusted 3.9×.
+- **The work and smoking effects almost disappear.** At 60+, Self-employed (12.40%) is no longer above Private (13.53%). Formerly smoked (14.47%) is only slightly above never smoked (12.86%).
+- **Marriage reverses.** At 60+, the never-married have the higher rate: 20.48% (n = 83) against 12.34% for the married. This is a Simpson's paradox: the median age is 54 for the married and 18 for the never-married, so the unadjusted 3.9× reflects the age gap, not marriage.
 
 *This implies that* the network must see age together with the categorical features. It also implies that none of the social categories can be presented as a risk factor.
 
@@ -502,7 +499,7 @@ The three projections all use the same matrix: the 4,088 training rows transform
 | UMAP n_neighbors 15 | 0.987 | 0.969 | 9.05 | 74.2 |
 | UMAP n_neighbors 50 | 0.981 | 0.971 | 10.50 | 68.2 |
 
-- **The islands are categorical profiles.** The training set holds 364 distinct combinations of the seven categorical features plus the BMI indicator. In the original 24-dimensional space, 75.5% of each point's 10 nearest neighbors share its exact profile. t-SNE keeps 76.7–78.2% and UMAP 68.2–76.9%, but PCA keeps only **4.5%**: it superimposes the profiles, because its two components are spent on the three continuous features. In Figure 13 (top), the `children` profiles form islands of their own in t-SNE and UMAP, while PCA only shades them along PC1.
+- **The islands are categorical profiles.** The training set holds 364 distinct combinations of the seven categorical features plus the BMI indicator. In the original 24-dimensional space, 75.5% of each point's 10 nearest neighbors share its exact profile. t-SNE (76.7–78.2%) and UMAP (68.2–76.9%) keep that level, but PCA keeps only **4.5%**: it superimposes the profiles, because its two components are spent on the three continuous features. In Figure 13 (top), the `children` profiles form islands of their own in t-SNE and UMAP, while PCA only shades them along PC1.
 - **The local structure is far better preserved.** At k = 5, trustworthiness is 0.996–0.997 for t-SNE and 0.981–0.994 for UMAP, against 0.817 for PCA. Comparing the two neighborhood sizes ("read the columns, not the rows"): t-SNE with perplexity 5 drops from 0.996 at k = 5 to 0.954 at k = 30, because it keeps only the closest neighbors, while perplexity 50 holds 0.978.
 - **The positives are not a cluster in any space.** Around each positive, 8.89% of its 10 nearest neighbors are positive in the original space: 1.8 times the base rate, but far from a pure group. The 2D maps stay in the same range (8.84–10.65%), and none forms a positive cluster. Figure 13 (bottom) shows why the enrichment exists at all: inside every island, the positives sit at the old-age end.
 

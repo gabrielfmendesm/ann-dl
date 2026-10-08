@@ -352,8 +352,8 @@ def stage3(train, res):
         iqr = [d.quantile(.75) - d.quantile(.25) for d in data]
         ax.set(title=f"{f}: median {data[0].median():.1f} → {data[1].median():.1f}, IQR {iqr[0]:.1f} → {iqr[1]:.1f}",
                xlabel="Target class", ylabel=UNITS[f])
-        ax.legend(handles=[Patch(color=CLASS_COLORS[k], alpha=0.75, label=CLASS_LABELS[k]) for k in (0, 1)],
-                  loc="upper left")
+    fig.legend(handles=[Patch(color=CLASS_COLORS[k], alpha=0.75, label=CLASS_LABELS[k]) for k in (0, 1)],
+               loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.06), fontsize=10)
     save_figure(fig, 7, "box_target", "Numerical features by class (train): positives are older, with higher glucose")
 
     # Figure 8 — confounding structure: age by work type and by smoking status, glucose by hypertension
