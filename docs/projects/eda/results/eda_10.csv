@@ -1,0 +1,12 @@
+feature,group,n,median,Q1,Q3,IQR
+age,work_type = Govt_job,522,51.0,41.0,62.0,21.0
+age,work_type = Never_worked,13,17.0,16.0,18.0,2.0
+age,work_type = Private,2332,45.0,30.0,59.0,29.0
+age,work_type = Self-employed,667,63.0,50.0,75.0,25.0
+age,work_type = children,554,6.0,2.0,11.0,9.0
+age,smoking_status = Unknown,1247,24.0,8.0,52.0,44.0
+age,smoking_status = formerly smoked,714,57.0,42.0,69.0,27.0
+age,smoking_status = never smoked,1501,47.0,31.0,62.0,31.0
+age,smoking_status = smokes,626,48.0,34.0,59.0,25.0
+avg_glucose_level,hypertension = 0,3691,91.09,77.035,112.07499999999999,35.03999999999999
+avg_glucose_level,hypertension = 1,397,103.89,79.79,196.01,116.21999999999998

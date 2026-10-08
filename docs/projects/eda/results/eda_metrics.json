@@ -1,0 +1,626 @@
+{
+  "seed": 42,
+  "features": [
+    "age",
+    "avg_glucose_level",
+    "bmi",
+    "gender",
+    "hypertension",
+    "heart_disease",
+    "ever_married",
+    "work_type",
+    "Residence_type",
+    "smoking_status"
+  ],
+  "raw_shape": [
+    5110,
+    12
+  ],
+  "bmi_missing": 201,
+  "bmi_missing_pct": 3.9334637964774952,
+  "checks": {
+    "Fully duplicated rows": 0,
+    "Duplicated rows ignoring id": 0,
+    "Repeated id": 0,
+    "Constant columns": 0,
+    "Values outside the documented vocabulary": 0,
+    "age <= 0 or age > 120": 0,
+    "Fractional age (all below 2 years)": 115,
+    "avg_glucose_level <= 0": 0,
+    "bmi < 12 (observed)": 3,
+    "bmi > 60 (observed)": 13,
+    "work_type = children with age >= 18": 0,
+    "ever_married = Yes with age < 18": 0,
+    "smoking_status = smokes with age < 12": 1,
+    "smoking_status = Unknown": 1544,
+    "smoking_status = Unknown with age < 18": 682
+  },
+  "bmi_extremes": [
+    97.6,
+    92.0,
+    78.0,
+    71.9
+  ],
+  "age_min": 0.08,
+  "age_max": 82.0,
+  "age_at_82": 56,
+  "gender_other_rows": 1,
+  "id_target_spearman": 0.006499153301245574,
+  "id_target_p": 0.6423050057065125,
+  "positives_first_row": 0,
+  "positives_last_row": 248,
+  "last20_positives": 0,
+  "stroke_rate_bmi_missing_full": 19.900497512437813,
+  "stroke_rate_bmi_observed_full": 4.257486249745366,
+  "strokes_bmi_missing_full": 40,
+  "n_pos": 249,
+  "n_neg": 4861,
+  "pos_pct": 4.87279843444227,
+  "imbalance_ratio": 19.522088353413654,
+  "train_rows": 4088,
+  "test_rows": 1022,
+  "train_pos": 199,
+  "test_pos": 50,
+  "train_pos_pct": 4.867906066536203,
+  "test_pos_pct": 4.892367906066536,
+  "train_bmi_missing": 170,
+  "train_bmi_missing_pct": 4.158512720156556,
+  "numerical_stats": {
+    "age": {
+      "count": 4088,
+      "missing": 0,
+      "mean": 43.35328767123288,
+      "median": 45.0,
+      "std": 22.596815562234276,
+      "min": 0.08,
+      "Q1": 26.0,
+      "Q3": 61.0,
+      "max": 82.0,
+      "skewness": -0.15539456287186007,
+      "excess kurtosis": -0.9820137185006561
+    },
+    "avg_glucose_level": {
+      "count": 4088,
+      "missing": 0,
+      "mean": 106.31716731898237,
+      "median": 91.945,
+      "std": 45.25965245283156,
+      "min": 55.12,
+      "Q1": 77.3125,
+      "Q3": 114.1975,
+      "max": 271.74,
+      "skewness": 1.5567790018540584,
+      "excess kurtosis": 1.621576868811292
+    },
+    "bmi": {
+      "count": 3918,
+      "missing": 170,
+      "mean": 28.922179683512,
+      "median": 28.0,
+      "std": 7.928377734216916,
+      "min": 10.3,
+      "Q1": 23.6,
+      "Q3": 33.1,
+      "max": 97.6,
+      "skewness": 1.116184374289241,
+      "excess kurtosis": 3.8415906425358792
+    }
+  },
+  "glucose_mode_low": 85.0,
+  "glucose_mode_high": 205.0,
+  "glucose_valley": 175.0,
+  "glucose_above_150": 589,
+  "glucose_above_150_pct": 14.40802348336595,
+  "rare_categories": [
+    {
+      "feature": "gender",
+      "category": "Other",
+      "count": 1,
+      "share (%)": 0.02446183953033268
+    },
+    {
+      "feature": "work_type",
+      "category": "Never_worked",
+      "count": 13,
+      "share (%)": 0.3180039138943248
+    }
+  ],
+  "smoking_unknown_train": 1247,
+  "smoking_unknown_train_pct": 30.503913894324853,
+  "smoking_unknown_under18_train": 547,
+  "children_rows_train": 554,
+  "children_unknown_smoking_train": 498,
+  "top_pair": "age \u00d7 bmi",
+  "top_pair_rho": 0.3809168219983647,
+  "top_pair_r": 0.33578453625573335,
+  "top_pair_n": 3918,
+  "redundant_pairs": 0,
+  "age_bmi_rho_adults": 0.08281589869240778,
+  "age_bmi_n_adults": 3259,
+  "train_base_rate": 4.867906066536203,
+  "category_rates": [
+    {
+      "feature": "gender",
+      "category": "Female",
+      "n": 2395,
+      "strokes": 112,
+      "stroke rate (%)": 4.676409185803758,
+      "95% CI (%)": "3.9\u20135.6"
+    },
+    {
+      "feature": "gender",
+      "category": "Male",
+      "n": 1692,
+      "strokes": 87,
+      "stroke rate (%)": 5.141843971631205,
+      "95% CI (%)": "4.2\u20136.3"
+    },
+    {
+      "feature": "gender",
+      "category": "Other",
+      "n": 1,
+      "strokes": 0,
+      "stroke rate (%)": 0.0,
+      "95% CI (%)": "0.0\u201379.3"
+    },
+    {
+      "feature": "hypertension",
+      "category": "0",
+      "n": 3691,
+      "strokes": 145,
+      "stroke rate (%)": 3.928474668111623,
+      "95% CI (%)": "3.3\u20134.6"
+    },
+    {
+      "feature": "hypertension",
+      "category": "1",
+      "n": 397,
+      "strokes": 54,
+      "stroke rate (%)": 13.602015113350127,
+      "95% CI (%)": "10.6\u201317.3"
+    },
+    {
+      "feature": "heart_disease",
+      "category": "0",
+      "n": 3867,
+      "strokes": 163,
+      "stroke rate (%)": 4.21515386604603,
+      "95% CI (%)": "3.6\u20134.9"
+    },
+    {
+      "feature": "heart_disease",
+      "category": "1",
+      "n": 221,
+      "strokes": 36,
+      "stroke rate (%)": 16.289592760180994,
+      "95% CI (%)": "12.0\u201321.7"
+    },
+    {
+      "feature": "ever_married",
+      "category": "No",
+      "n": 1388,
+      "strokes": 23,
+      "stroke rate (%)": 1.6570605187319885,
+      "95% CI (%)": "1.1\u20132.5"
+    },
+    {
+      "feature": "ever_married",
+      "category": "Yes",
+      "n": 2700,
+      "strokes": 176,
+      "stroke rate (%)": 6.518518518518518,
+      "95% CI (%)": "5.6\u20137.5"
+    },
+    {
+      "feature": "work_type",
+      "category": "Govt_job",
+      "n": 522,
+      "strokes": 28,
+      "stroke rate (%)": 5.363984674329502,
+      "95% CI (%)": "3.7\u20137.6"
+    },
+    {
+      "feature": "work_type",
+      "category": "Never_worked",
+      "n": 13,
+      "strokes": 0,
+      "stroke rate (%)": 0.0,
+      "95% CI (%)": "0.0\u201322.8"
+    },
+    {
+      "feature": "work_type",
+      "category": "Private",
+      "n": 2332,
+      "strokes": 115,
+      "stroke rate (%)": 4.931389365351629,
+      "95% CI (%)": "4.1\u20135.9"
+    },
+    {
+      "feature": "work_type",
+      "category": "Self-employed",
+      "n": 667,
+      "strokes": 55,
+      "stroke rate (%)": 8.245877061469265,
+      "95% CI (%)": "6.4\u201310.6"
+    },
+    {
+      "feature": "work_type",
+      "category": "children",
+      "n": 554,
+      "strokes": 1,
+      "stroke rate (%)": 0.18050541516245489,
+      "95% CI (%)": "0.0\u20131.0"
+    },
+    {
+      "feature": "Residence_type",
+      "category": "Rural",
+      "n": 2019,
+      "strokes": 91,
+      "stroke rate (%)": 4.507181773155027,
+      "95% CI (%)": "3.7\u20135.5"
+    },
+    {
+      "feature": "Residence_type",
+      "category": "Urban",
+      "n": 2069,
+      "strokes": 108,
+      "stroke rate (%)": 5.219913001449976,
+      "95% CI (%)": "4.3\u20136.3"
+    },
+    {
+      "feature": "smoking_status",
+      "category": "Unknown",
+      "n": 1247,
+      "strokes": 38,
+      "stroke rate (%)": 3.0473135525260626,
+      "95% CI (%)": "2.2\u20134.2"
+    },
+    {
+      "feature": "smoking_status",
+      "category": "formerly smoked",
+      "n": 714,
+      "strokes": 56,
+      "stroke rate (%)": 7.8431372549019605,
+      "95% CI (%)": "6.1\u201310.0"
+    },
+    {
+      "feature": "smoking_status",
+      "category": "never smoked",
+      "n": 1501,
+      "strokes": 71,
+      "stroke rate (%)": 4.730179880079946,
+      "95% CI (%)": "3.8\u20135.9"
+    },
+    {
+      "feature": "smoking_status",
+      "category": "smokes",
+      "n": 626,
+      "strokes": 34,
+      "stroke rate (%)": 5.431309904153355,
+      "95% CI (%)": "3.9\u20137.5"
+    }
+  ],
+  "cramers_v": {
+    "hypertension": 0.1331089378551075,
+    "heart_disease": 0.12688336011798482,
+    "ever_married": 0.10697878063370704,
+    "work_type": 0.10337108065892112,
+    "smoking_status": 0.07511229238298472,
+    "Residence_type": 0.016558793218707756,
+    "gender": 0.011224042672024459
+  },
+  "chi2_p": {
+    "hypertension": 1.7296300971246615e-17,
+    "heart_disease": 4.954757360339134e-16,
+    "ever_married": 7.921943284327444e-12,
+    "work_type": 7.467132945424606e-09,
+    "smoking_status": 3.916310130540898e-05,
+    "Residence_type": 0.2897239748893603,
+    "gender": 0.7729805830219665
+  },
+  "by_target": [
+    {
+      "feature": "age",
+      "group": "stroke = 0",
+      "n": 3889,
+      "median": 44.0,
+      "Q1": 24.0,
+      "Q3": 59.0,
+      "IQR": 35.0,
+      "Mann\u2013Whitney p": 3.4178155081293595e-57,
+      "AUC (feature alone)": 0.8344157144684595
+    },
+    {
+      "feature": "age",
+      "group": "stroke = 1",
+      "n": 199,
+      "median": 70.0,
+      "Q1": 58.5,
+      "Q3": 78.0,
+      "IQR": 19.5,
+      "Mann\u2013Whitney p": 3.4178155081293595e-57,
+      "AUC (feature alone)": 0.8344157144684595
+    },
+    {
+      "feature": "avg_glucose_level",
+      "group": "stroke = 0",
+      "n": 3889,
+      "median": 91.65,
+      "Q1": 77.28,
+      "Q3": 112.98,
+      "IQR": 35.7,
+      "Mann\u2013Whitney p": 3.4087608745979706e-06,
+      "AUC (feature alone)": 0.5974575887925098
+    },
+    {
+      "feature": "avg_glucose_level",
+      "group": "stroke = 1",
+      "n": 199,
+      "median": 104.86,
+      "Q1": 78.44,
+      "Q3": 195.47,
+      "IQR": 117.03,
+      "Mann\u2013Whitney p": 3.4087608745979706e-06,
+      "AUC (feature alone)": 0.5974575887925098
+    },
+    {
+      "feature": "bmi",
+      "group": "stroke = 0",
+      "n": 3756,
+      "median": 27.95,
+      "Q1": 23.5,
+      "Q3": 33.1,
+      "IQR": 9.600000000000001,
+      "Mann\u2013Whitney p": 0.00026742220539902446,
+      "AUC (feature alone)": 0.5844443129675646
+    },
+    {
+      "feature": "bmi",
+      "group": "stroke = 1",
+      "n": 162,
+      "median": 29.9,
+      "Q1": 26.525,
+      "Q3": 33.7,
+      "IQR": 7.175000000000004,
+      "Mann\u2013Whitney p": 0.00026742220539902446,
+      "AUC (feature alone)": 0.5844443129675646
+    }
+  ],
+  "positives_age_ge_60_pct": 71.85929648241206,
+  "positives_age_lt_30": 1,
+  "glucose_above_150_stroke_rate": 12.224108658743633,
+  "glucose_below_150_stroke_rate": 3.6296084595598743,
+  "grouped_other": [
+    {
+      "feature": "age",
+      "group": "work_type = Govt_job",
+      "n": 522,
+      "median": 51.0,
+      "Q1": 41.0,
+      "Q3": 62.0,
+      "IQR": 21.0
+    },
+    {
+      "feature": "age",
+      "group": "work_type = Never_worked",
+      "n": 13,
+      "median": 17.0,
+      "Q1": 16.0,
+      "Q3": 18.0,
+      "IQR": 2.0
+    },
+    {
+      "feature": "age",
+      "group": "work_type = Private",
+      "n": 2332,
+      "median": 45.0,
+      "Q1": 30.0,
+      "Q3": 59.0,
+      "IQR": 29.0
+    },
+    {
+      "feature": "age",
+      "group": "work_type = Self-employed",
+      "n": 667,
+      "median": 63.0,
+      "Q1": 50.0,
+      "Q3": 75.0,
+      "IQR": 25.0
+    },
+    {
+      "feature": "age",
+      "group": "work_type = children",
+      "n": 554,
+      "median": 6.0,
+      "Q1": 2.0,
+      "Q3": 11.0,
+      "IQR": 9.0
+    },
+    {
+      "feature": "age",
+      "group": "smoking_status = Unknown",
+      "n": 1247,
+      "median": 24.0,
+      "Q1": 8.0,
+      "Q3": 52.0,
+      "IQR": 44.0
+    },
+    {
+      "feature": "age",
+      "group": "smoking_status = formerly smoked",
+      "n": 714,
+      "median": 57.0,
+      "Q1": 42.0,
+      "Q3": 69.0,
+      "IQR": 27.0
+    },
+    {
+      "feature": "age",
+      "group": "smoking_status = never smoked",
+      "n": 1501,
+      "median": 47.0,
+      "Q1": 31.0,
+      "Q3": 62.0,
+      "IQR": 31.0
+    },
+    {
+      "feature": "age",
+      "group": "smoking_status = smokes",
+      "n": 626,
+      "median": 48.0,
+      "Q1": 34.0,
+      "Q3": 59.0,
+      "IQR": 25.0
+    },
+    {
+      "feature": "avg_glucose_level",
+      "group": "hypertension = 0",
+      "n": 3691,
+      "median": 91.09,
+      "Q1": 77.035,
+      "Q3": 112.07499999999999,
+      "IQR": 35.03999999999999
+    },
+    {
+      "feature": "avg_glucose_level",
+      "group": "hypertension = 1",
+      "n": 397,
+      "median": 103.89,
+      "Q1": 79.79,
+      "Q3": 196.01,
+      "IQR": 116.21999999999998
+    }
+  ],
+  "age_stratified": [
+    {
+      "feature": "hypertension",
+      "category": "0",
+      "rate, all ages (%)": 3.928474668111623,
+      "n, age \u2265 18": 3018,
+      "rate, age \u2265 18 (%)": 4.7713717693836974,
+      "n, age \u2265 60": 869,
+      "rate, age \u2265 60 (%)": 11.622554660529344
+    },
+    {
+      "feature": "hypertension",
+      "category": "1",
+      "rate, all ages (%)": 13.602015113350127,
+      "n, age \u2265 18": 396,
+      "rate, age \u2265 18 (%)": 13.636363636363635,
+      "n, age \u2265 60": 235,
+      "rate, age \u2265 60 (%)": 17.872340425531917
+    },
+    {
+      "feature": "heart_disease",
+      "category": "0",
+      "rate, all ages (%)": 4.21515386604603,
+      "n, age \u2265 18": 3193,
+      "rate, age \u2265 18 (%)": 5.073598496711557,
+      "n, age \u2265 60": 930,
+      "rate, age \u2265 60 (%)": 11.935483870967742
+    },
+    {
+      "feature": "heart_disease",
+      "category": "1",
+      "rate, all ages (%)": 16.289592760180994,
+      "n, age \u2265 18": 221,
+      "rate, age \u2265 18 (%)": 16.289592760180994,
+      "n, age \u2265 60": 174,
+      "rate, age \u2265 60 (%)": 18.39080459770115
+    },
+    {
+      "feature": "ever_married",
+      "category": "No",
+      "rate, all ages (%)": 1.6570605187319885,
+      "n, age \u2265 18": 714,
+      "rate, age \u2265 18 (%)": 3.081232492997199,
+      "n, age \u2265 60": 83,
+      "rate, age \u2265 60 (%)": 20.481927710843372
+    },
+    {
+      "feature": "ever_married",
+      "category": "Yes",
+      "rate, all ages (%)": 6.518518518518518,
+      "n, age \u2265 18": 2700,
+      "rate, age \u2265 18 (%)": 6.518518518518518,
+      "n, age \u2265 60": 1021,
+      "rate, age \u2265 60 (%)": 12.340842311459353
+    },
+    {
+      "feature": "work_type",
+      "category": "Govt_job",
+      "rate, all ages (%)": 5.363984674329502,
+      "n, age \u2265 18": 518,
+      "rate, age \u2265 18 (%)": 5.405405405405405,
+      "n, age \u2265 60": 156,
+      "rate, age \u2265 60 (%)": 12.179487179487179
+    },
+    {
+      "feature": "work_type",
+      "category": "Private",
+      "rate, all ages (%)": 4.931389365351629,
+      "n, age \u2265 18": 2232,
+      "rate, age \u2265 18 (%)": 5.152329749103942,
+      "n, age \u2265 60": 569,
+      "rate, age \u2265 60 (%)": 13.53251318101933
+    },
+    {
+      "feature": "work_type",
+      "category": "Self-employed",
+      "rate, all ages (%)": 8.245877061469265,
+      "n, age \u2265 18": 660,
+      "rate, age \u2265 18 (%)": 8.333333333333332,
+      "n, age \u2265 60": 379,
+      "rate, age \u2265 60 (%)": 12.401055408970976
+    },
+    {
+      "feature": "smoking_status",
+      "category": "Unknown",
+      "rate, all ages (%)": 3.0473135525260626,
+      "n, age \u2265 18": 700,
+      "rate, age \u2265 18 (%)": 5.285714285714286,
+      "n, age \u2265 60": 229,
+      "rate, age \u2265 60 (%)": 11.353711790393014
+    },
+    {
+      "feature": "smoking_status",
+      "category": "formerly smoked",
+      "rate, all ages (%)": 7.8431372549019605,
+      "n, age \u2265 18": 691,
+      "rate, age \u2265 18 (%)": 8.104196816208393,
+      "n, age \u2265 60": 304,
+      "rate, age \u2265 60 (%)": 14.473684210526317
+    },
+    {
+      "feature": "smoking_status",
+      "category": "never smoked",
+      "rate, all ages (%)": 4.730179880079946,
+      "n, age \u2265 18": 1401,
+      "rate, age \u2265 18 (%)": 5.067808708065667,
+      "n, age \u2265 60": 420,
+      "rate, age \u2265 60 (%)": 12.857142857142856
+    },
+    {
+      "feature": "smoking_status",
+      "category": "smokes",
+      "rate, all ages (%)": 5.431309904153355,
+      "n, age \u2265 18": 622,
+      "rate, age \u2265 18 (%)": 5.466237942122187,
+      "n, age \u2265 60": 151,
+      "rate, age \u2265 60 (%)": 12.582781456953644
+    }
+  ],
+  "rate_age_ge_60": 12.952898550724637,
+  "rate_age_lt_60": 1.876675603217158,
+  "positives_age_ge_60": 143,
+  "age_median_by_married": {
+    "No": 18.0,
+    "Yes": 54.0
+  },
+  "glucose_above_150_by_hypertension": {
+    "0": 12.137632078027636,
+    "1": 35.51637279596977
+  },
+  "glucose_above_150_age_median": 60.0,
+  "glucose_below_150_age_median": 42.0
+}

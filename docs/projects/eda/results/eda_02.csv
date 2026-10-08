@@ -1,0 +1,16 @@
+check,rows
+Fully duplicated rows,0
+Duplicated rows ignoring id,0
+Repeated id,0
+Constant columns,0
+Values outside the documented vocabulary,0
+age <= 0 or age > 120,0
+Fractional age (all below 2 years),115
+avg_glucose_level <= 0,0
+bmi < 12 (observed),3
+bmi > 60 (observed),13
+work_type = children with age >= 18,0
+ever_married = Yes with age < 18,0
+smoking_status = smokes with age < 12,1
+smoking_status = Unknown,1544
+smoking_status = Unknown with age < 18,682
