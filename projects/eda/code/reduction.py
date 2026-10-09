@@ -291,12 +291,12 @@ def main():
         save_figure(fig, number, f"{method} of the scaled training features: three {key} values, colored by the target")
 
     # Figure 13 — what the nonlinear maps group by: color by a categorical feature and by age
-    fig, axes = plt.subplots(2, 3, figsize=(18, 10.5))
+    fig, axes = plt.subplots(3, 2, figsize=(12, 16))   # one row per method: work_type on the left, age on the right
     shown = ["PCA (2 components)", "t-SNE perplexity 30", "UMAP n_neighbors 15"]
     work = X_train.work_type.to_numpy()
     order = ["Private", "Self-employed", "Govt_job", "children", "Never_worked"]
     axis_names = {"PCA (2 components)": ("PC1 score", "PC2 score")}
-    for ax, name in zip(axes[0], shown):
+    for ax, name in zip(axes[:, 0], shown):
         Z = embeddings[name]
         for k, color in zip(order, GROUP_COLORS):
             sel = work == k
@@ -305,7 +305,7 @@ def main():
         xl, yl = axis_names.get(name, ("Dimension 1 (no units)", "Dimension 2 (no units)"))
         ax.set(title=f"{name} — colored by work_type", xlabel=xl, ylabel=yl)
         ax.legend(loc="best", markerscale=3, fontsize=7)
-    for ax, name in zip(axes[1], shown):
+    for ax, name in zip(axes[:, 1], shown):
         Z = embeddings[name]
         sc = ax.scatter(Z[:, 0], Z[:, 1], c=X_train.age, cmap="Blues", s=4, edgecolors="none", rasterized=True)
         pos = y == 1

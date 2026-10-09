@@ -1,0 +1,15 @@
+/* A wider content column, so wide tables and multi-panel figures stay readable without scrolling. */
+.md-grid {
+  max-width: 90rem;
+}
+
+/* A code identifier inside a table cell is never broken across lines. */
+.md-typeset table:not([class]) code {
+  white-space: nowrap;
+}
+
+/* Tighter cells, so a 12-column table fits the content column. */
+.md-typeset table:not([class]) th,
+.md-typeset table:not([class]) td {
+  padding: 0.6em 0.8em;
+}
