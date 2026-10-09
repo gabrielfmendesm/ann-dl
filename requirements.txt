@@ -11,9 +11,9 @@ mkdocs-git-revision-date-localized-plugin
 mkdocs-render-swagger-plugin
 mkdocs-jupyter
 termynal
-matplotlib
-numpy
-pandas
-scikit-learn
-scipy
-umap-learn
+matplotlib>=3.10
+numpy>=2
+pandas>=2.2
+scikit-learn>=1.5
+scipy>=1.14
+umap-learn>=0.5.7
