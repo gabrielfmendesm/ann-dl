@@ -12,15 +12,13 @@ import warnings
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib.patches import Patch
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE, trustworthiness
 from sklearn.neighbors import NearestNeighbors
 from umap import UMAP
 
 from common import CLASS_COLORS, CLASS_LABELS, GROUP_COLORS, NEUTRAL, UNITS, Results, save_figure, wilson_interval
-from preprocessing import (CATEGORICAL_FEATURES, NUMERICAL_FEATURES, SEED, SKEWED_FEATURES, TARGET,
-                           build_preprocessor, load_raw, split)
+from preprocessing import NUMERICAL_FEATURES, SEED, SKEWED_FEATURES, build_preprocessor, load_raw, split
 
 PERPLEXITIES = [5, 30, 50]
 N_NEIGHBORS = [5, 15, 50]
@@ -45,7 +43,7 @@ def outliers(X_train, y_train, res):
                      y_train[iqr_flag].mean() * 100 if iqr_flag.any() else 0.0,
                      "flagged (modified z > 3.5)": int(mz_flag.sum())})
     table = pd.DataFrame(rows)
-    res.table("Outliers in the training set (fences fitted on train; no row removed)", table,
+    res.table(13, "Outliers in the training set (fences fitted on train; no row removed)", table,
               {"lower fence": ".2f", "upper fence": ".2f", "flagged (%)": ".2f",
                "stroke rate among flagged (%)": ".2f"})
     any_flag = pd.concat(flags, axis=1).any(axis=1)
@@ -53,7 +51,6 @@ def outliers(X_train, y_train, res):
     m["outlier_rows_pct"] = float(any_flag.mean() * 100)
     m["outlier_rows_positives"] = int(y_train[any_flag].sum())
     m["outlier_rows_positives_share_of_all_pos"] = float(y_train[any_flag].sum() / y_train.sum() * 100)
-    m["outlier_rows_stroke_rate"] = float(y_train[any_flag].mean() * 100)
 
     # Skewness before and after log1p: the transform is a hypothesis, so it is re-measured
     rows = []
@@ -62,18 +59,18 @@ def outliers(X_train, y_train, res):
         rows.append({"feature": c, "skewness (raw)": x.skew(), "skewness (log1p)": np.log1p(x).skew(),
                      "max/median (raw)": x.max() / x.median(),
                      "max/median (log1p)": np.log1p(x.max()) / np.log1p(x.median())})
-    res.table("Skewness of the right-skewed features before and after log1p (train, observed values)",
+    res.table(14, "Skewness of the right-skewed features before and after log1p (train, observed values)",
               pd.DataFrame(rows), {k: ".2f" for k in ["skewness (raw)", "skewness (log1p)",
                                                         "max/median (raw)", "max/median (log1p)"]})
-    m["skew_after_log"] = {r["feature"]: float(r["skewness (log1p)"]) for r in rows}
-    # What plain standardization or min-max scaling would do with the raw tails (scaling choice, 4A)
-    # same base as the pipeline (median-imputed), so the comparison with max_abs_z_train is like for like
+
+    # What plain standardization or min-max scaling would do with the raw tails (scaling choice, 4A). The
+    # z-scores use the same median-imputed base as the pipeline, so they compare with max_abs_z_train
     imputed = X_train[SKEWED_FEATURES].fillna(X_train[SKEWED_FEATURES].median())
-    m["raw_max_z"] = {c: float((imputed[c].max() - imputed[c].mean()) / imputed[c].std(ddof=0)) for c in SKEWED_FEATURES}
+    m["raw_max_z"] = {c: float((imputed[c].max() - imputed[c].mean()) / imputed[c].std(ddof=0))
+                      for c in SKEWED_FEATURES}
     b = X_train.bmi.dropna()
     span = b.max() - b.min()
     m["bmi_minmax_q1_median_q3"] = [float((b.quantile(q) - b.min()) / span) for q in (.25, .5, .75)]
-    m["bmi_below_12"] = X_train.loc[X_train.bmi < 12, ["age", "bmi"]].values.tolist()
 
 
 def pipeline_checks(pre, X_train, X_test, Xt, Xv, names, res):
@@ -92,7 +89,7 @@ def pipeline_checks(pre, X_train, X_test, Xt, Xv, names, res):
     for i, c in enumerate(SKEWED_FEATURES):
         rows.append({"feature": f"log1p({c})", "imputation median": log["impute"].statistics_[i],
                      "scaler mean": log["scale"].mean_[i], "scaler std": log["scale"].scale_[i]})
-    res.table("Parameters fitted by the pipeline (training rows only)", pd.DataFrame(rows),
+    res.table(15, "Parameters fitted by the pipeline (training rows only)", pd.DataFrame(rows),
               {"imputation median": ".3f", "scaler mean": ".4f", "scaler std": ".4f"})
     assert np.isclose(log["impute"].statistics_[1], X_train.bmi.median())
     full = pd.concat([X_train, X_test])
@@ -104,7 +101,6 @@ def pipeline_checks(pre, X_train, X_test, Xt, Xv, names, res):
     m["num_means_test"] = Xv[:, :3].mean(axis=0).round(4).tolist()
     m["num_stds_test"] = Xv[:, :3].std(axis=0).round(4).tolist()
     m["max_abs_z_train"] = np.abs(Xt[:, :3]).max(axis=0).round(2).tolist()
-    m["max_abs_z_test"] = np.abs(Xv[:, :3]).max(axis=0).round(2).tolist()
 
     # A category never seen in training, and missing values everywhere, still give a finite row of the same width
     probe = X_test.iloc[:2].copy()
@@ -118,10 +114,11 @@ def pipeline_checks(pre, X_train, X_test, Xt, Xv, names, res):
     work_cols = [i for i, n in enumerate(names) if n.startswith("cat__work_type_")]
     assert out.shape == (2, len(names)) and np.isfinite(out).all()
     assert out[0, gender_cols].sum() == 0 and out[0, work_cols].sum() == 0
+    indicator = list(names).index("missing__missingindicator_bmi")
     m["unseen_category_probe"] = {"gender_block": out[0, gender_cols].tolist(),
                                   "work_type_block": out[0, work_cols].tolist(),
                                   "all_missing_row_finite": bool(np.isfinite(out[1]).all()),
-                                  "all_missing_row_bmi_indicator": float(out[1, list(names).index("missing__missingindicator_bmi")])}
+                                  "all_missing_row_bmi_indicator": float(out[1, indicator])}
 
 
 def neighborhood_stats(Z, y, profile):
@@ -135,6 +132,7 @@ def neighborhood_stats(Z, y, profile):
 
 
 def scatter_by_class(ax, Z, y, title, xlabel="Dimension 1 (no units)", ylabel="Dimension 2 (no units)"):
+    """2D projection colored by the target, with the positives drawn larger and on top."""
     for k in (0, 1):
         sel = y == k
         ax.scatter(Z[sel, 0], Z[sel, 1], s=4 if k == 0 else 12, alpha=0.35 if k == 0 else 0.9,
@@ -145,6 +143,7 @@ def scatter_by_class(ax, Z, y, title, xlabel="Dimension 1 (no units)", ylabel="D
 
 
 def main():
+    """Run stage 4 and write Tables 13-18, Figures 9-13 and results/reduction_metrics.json."""
     res = Results("reduction")
     m = res.metrics
     X_train, X_test, y_train, y_test = split(load_raw())
@@ -179,8 +178,9 @@ def main():
     ax.set_xticks([0, 1], ["bmi observed", "bmi missing"])
     ax.set(title="Stroke rate by bmi missingness (95% Wilson)", xlabel="bmi status", ylabel="Stroke rate (%)")
     ax.legend(loc="upper left")
-    for ax, c, j in zip(axes[1:], SKEWED_FEATURES, [1, 2]):
+    for ax, c in zip(axes[1:], SKEWED_FEATURES):
         raw = X_train[c].dropna()
+        j = list(names).index(f"log__{c}")
         z = Xt[~miss, j] if c == "bmi" else Xt[:, j]
         ax.hist(z, bins=40, color=CLASS_COLORS[0], alpha=0.85, edgecolor="white", linewidth=0.4,
                 label=f"log1p + standardized (n = {len(z):,})")
@@ -188,7 +188,7 @@ def main():
                xlabel=f"Standardized log1p({c}) (train z-score)", ylabel="Training rows")
         ax.axvline(0, color="#0b0b0b", lw=1, label="Train mean = 0")
         ax.legend(loc="upper right")
-    save_figure(fig, 9, "preprocessing", "What the pipeline answers: informative missingness and right skew")
+    save_figure(fig, 9, "What the pipeline answers: informative missingness and right skew")
 
     # PCA on the full transformed training matrix
     pca = PCA(random_state=SEED).fit(Xt)
@@ -203,11 +203,11 @@ def main():
     m["total_variance"] = float(pca.explained_variance_.sum())
     var_table = pd.DataFrame({"component": [f"PC{i + 1}" for i in range(8)], "explained (%)": evr[:8] * 100,
                               "cumulative (%)": cum[:8] * 100})
-    res.table("PCA explained variance (first 8 of 24 components)", var_table,
+    res.table(16, "PCA explained variance (first 8 of 24 components)", var_table,
               {"explained (%)": ".2f", "cumulative (%)": ".2f"})
     load = pd.DataFrame({"feature": names, "PC1": pca.components_[0], "PC2": pca.components_[1]})
     top = load.reindex(load[["PC1", "PC2"]].abs().max(axis=1).sort_values(ascending=False).index).head(10)
-    res.table("Largest PCA loadings (eigenvector coefficients) of PC1 and PC2", top,
+    res.table(17, "Largest PCA loadings (eigenvector coefficients) of PC1 and PC2", top,
               {"PC1": "+.3f", "PC2": "+.3f"})
     m["loadings"] = load.set_index("feature").to_dict(orient="index")
     # correlation of the PC scores with the raw numerical features (helps naming the components)
@@ -233,7 +233,7 @@ def main():
     ax.set_yticks(pos, show.feature, fontsize=8)
     ax.set(title="10 largest loadings", xlabel="Loading (eigenvector coefficient)", ylabel="Feature (pipeline output)")
     ax.legend(loc="lower right")
-    save_figure(fig, 10, "pca", "PCA of the scaled training features: two components keep under half the variance")
+    save_figure(fig, 10, "PCA of the scaled training features: two components keep under half the variance")
 
     # t-SNE and UMAP, three parameter values each, on the same training matrix
     embeddings = {"PCA (2 components)": P[:, :2]}
@@ -261,21 +261,21 @@ def main():
     rows = []
     enr, agr = neighborhood_stats(Xt, y, profile)
     rows.append({"space": "Original 24 dimensions", "trustworthiness k=5": "—", "trustworthiness k=30": "—",
-                 f"positives among 10-NN of positives (%)": enr, "same categorical profile among 10-NN (%)": agr})
+                 "positives among 10-NN of positives (%)": enr, "same categorical profile among 10-NN (%)": agr})
     for name, Z in embeddings.items():
         enr, agr = neighborhood_stats(Z, y, profile)
         rows.append({"space": name, "trustworthiness k=5": trustworthiness(Xt, Z, n_neighbors=5),
                      "trustworthiness k=30": trustworthiness(Xt, Z, n_neighbors=30),
-                     f"positives among 10-NN of positives (%)": enr, "same categorical profile among 10-NN (%)": agr})
+                     "positives among 10-NN of positives (%)": enr, "same categorical profile among 10-NN (%)": agr})
     cat_s = np.array(["".join(str(int(v)) for v in row) for row in Xs[:, cat_cols]])
     enr, agr = neighborhood_stats(Zs, ys, cat_s)
     rows.append({"space": "Control: t-SNE perplexity 30 on independently shuffled columns",
                  "trustworthiness k=5": trustworthiness(Xs, Zs, n_neighbors=5),
                  "trustworthiness k=30": trustworthiness(Xs, Zs, n_neighbors=30),
-                 f"positives among 10-NN of positives (%)": enr, "same categorical profile among 10-NN (%)": agr})
+                 "positives among 10-NN of positives (%)": enr, "same categorical profile among 10-NN (%)": agr})
     m["n_profiles_shuffled"] = int(len(set(cat_s)))
     diag = pd.DataFrame(rows)
-    res.table("Projection diagnostics (train, 4,088 rows; base rate 4.87%)", diag,
+    res.table(18, "Projection diagnostics (train, 4,088 rows; base rate 4.87%)", diag,
               {"trustworthiness k=5": ".3f", "trustworthiness k=30": ".3f",
                "positives among 10-NN of positives (%)": ".2f", "same categorical profile among 10-NN (%)": ".1f"})
     m["projection_diagnostics"] = diag.to_dict(orient="records")
@@ -285,8 +285,7 @@ def main():
         fig, axes = plt.subplots(1, 3, figsize=(18, 5.4))
         for ax, p in zip(axes, params):
             scatter_by_class(ax, embeddings[f"{method} {key} {p}"], y, f"{key} = {p}")
-        save_figure(fig, number, method.lower().replace("-", ""),
-                    f"{method} of the scaled training features: three {key} values, colored by the target")
+        save_figure(fig, number, f"{method} of the scaled training features: three {key} values, colored by the target")
 
     # Figure 13 — what the nonlinear maps group by: color by a categorical feature and by age
     fig, axes = plt.subplots(2, 3, figsize=(18, 10.5))
@@ -313,8 +312,7 @@ def main():
         xl, yl = axis_names.get(name, ("Dimension 1 (no units)", "Dimension 2 (no units)"))
         ax.set(title=f"{name} — colored by age", xlabel=xl, ylabel=yl)
         ax.legend(loc="best", fontsize=7)
-    save_figure(fig, 13, "projection_drivers",
-                "What the maps group by: categorical profiles make the islands, age orders the positives")
+    save_figure(fig, 13, "What the maps group by: categorical profiles make the islands, age orders the positives")
 
     m["versions"] = {p: importlib.metadata.version(p) for p in
                      ["numpy", "pandas", "scipy", "scikit-learn", "umap-learn", "matplotlib"]}
