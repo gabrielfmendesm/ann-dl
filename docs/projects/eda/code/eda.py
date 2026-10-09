@@ -208,7 +208,7 @@ def stage2(train, res):
                                                & (train.smoking_status == "Unknown")).sum())
 
     # Figure 3 — one bar panel per categorical feature + cardinality panel
-    fig, axes = plt.subplots(2, 4, figsize=(17, 8))
+    fig, axes = plt.subplots(4, 2, figsize=(12, 15))
     for ax, c in zip(axes.flat, CAT):
         vc = train[c].value_counts().sort_values()
         shares = vc / len(train) * 100
@@ -227,7 +227,7 @@ def stage2(train, res):
     ax.legend(loc="lower right")
     fig.legend(handles=[Patch(color=CLASS_COLORS[0], label="Category with ≥ 1% of the training rows"),
                         Patch(color=CLASS_COLORS[1], label="Rare category: < 1% of the training rows")],
-               loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.03), fontsize=10)
+               loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.015), fontsize=10)
     save_figure(fig, 3, f"Categorical features (train): low cardinality, {len(m['rare_categories'])} rare categories")
 
 
@@ -313,7 +313,7 @@ def stage3(train, res):
             p_kept = "—"
         assoc.append({"feature": c, "χ²": chi2, "dof": dof, "p-value": p,
                       "Cramér's V": np.sqrt(chi2 / (table.values.sum() * (min(table.shape) - 1))),
-                      "min expected count": expected.min(), "p-value, categories with expected < 5 removed": p_kept})
+                      "min expected count": expected.min(), "p-value without the sparse categories": p_kept})
     rates = pd.DataFrame(rows)
     rates_table = rates.assign(**{"95% CI (%)": [f"{lo:.1f}–{hi:.1f}" for lo, hi in zip(rates.ci_lo, rates.ci_hi)]}) \
         .drop(columns=["ci_lo", "ci_hi"])
@@ -326,7 +326,7 @@ def stage3(train, res):
     m["chi2_p"] = assoc.set_index("feature")["p-value"].to_dict()
 
     # Figure 6 — category stroke rates with intervals, plus the Cramér's V ranking
-    fig, axes = plt.subplots(2, 4, figsize=(18, 8.5))
+    fig, axes = plt.subplots(4, 2, figsize=(12, 16))
     for ax, c in zip(axes.flat, CAT):
         sub = rates[rates.feature == c].reset_index(drop=True)
         rate, lo, hi = (sub[k].to_numpy() for k in ("stroke rate (%)", "ci_lo", "ci_hi"))

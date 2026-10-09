@@ -292,7 +292,7 @@ Figure 5 — Scatter plots of the three numerical pairs, training rows, with the
 
 **Table 9 — Association of each categorical feature with the target (train).** Each row is Pearson's χ² test of independence, without Yates' continuity correction, with Cramér's V as the effect size, since with n = 4,088 a p-value alone says little.
 
-| feature | χ² | dof | p-value | Cramér's V | min expected count | p-value, categories with expected < 5 removed |
+| feature | χ² | dof | p-value | Cramér's V | min expected count | p-value without the sparse categories |
 |---|---|---|---|---|---|---|
 | hypertension | 72.4 | 1 | 1.7e-17 | 0.133 | 19.33 | — |
 | heart_disease | 65.8 | 1 | 5e-16 | 0.127 | 10.76 | — |
@@ -546,10 +546,10 @@ Figure 12 — UMAP of the transformed training matrix at n_neighbors 5, 15 and 5
 
 ![Figure 13 — What the projections group by](figures/fig13.png)
 /// caption
-Figure 13 — PCA, t-SNE and UMAP colored by work type (top) and by age, with the stroke cases circled (bottom).
+Figure 13 — PCA, t-SNE and UMAP (one per row) colored by work type (left) and by age, with the stroke cases circled (right).
 ///
 
-**Conclusion — Figure 13.** Colored by `work_type` (top), the t-SNE and UMAP islands are homogeneous blocks of categories — children form islands of their own — while PCA mixes every category in one cloud. Colored by age (bottom), every map shows the positives on the oldest points, whatever the island. *This implies that* the nonlinear maps are organized by the categorical profiles while the risk follows age across them, so the islands are not stroke subtypes.
+**Conclusion — Figure 13.** Colored by `work_type` (left column), the t-SNE and UMAP islands are homogeneous blocks of categories — children form islands of their own — while PCA mixes every category in one cloud. Colored by age (right column), every map shows the positives on the oldest points, whatever the island. *This implies that* the nonlinear maps are organized by the categorical profiles while the risk follows age across them, so the islands are not stroke subtypes.
 
 **Table 18 — Projection diagnostics (train, 4,088 rows; base rate 4.87%).** Trustworthiness measures how well each map keeps the original neighbors (k = 5 and k = 30). The last two columns count, among each point's 10 nearest neighbors in the map, the share that are positive (computed around the positives only) and the share with exactly the same categorical profile — the 7 categorical features plus the BMI indicator.
 
@@ -565,10 +565,10 @@ Figure 13 — PCA, t-SNE and UMAP colored by work type (top) and by age, with th
 | UMAP n_neighbors 50 | 0.981 | 0.971 | 10.50 | 68.2 |
 | Control: t-SNE perplexity 30 on independently shuffled columns | 0.992 | 0.944 | 3.97 | 59.7 |
 
-- **The islands are categorical profiles.** The training set holds 364 distinct combinations of the seven categorical features plus the BMI indicator. In the original 24-dimensional space, 75.5% of each point's 10 nearest neighbors share its exact profile. t-SNE (76.7–78.2%) and UMAP (68.2–76.9%) keep that level, but PCA keeps only **4.5%**: it superimposes the profiles, because its two components are spent on the three continuous features. In Figure 13 (top), the `children` profiles form islands of their own in t-SNE and UMAP, while PCA only shades them along PC1.
+- **The islands are categorical profiles.** The training set holds 364 distinct combinations of the seven categorical features plus the BMI indicator. In the original 24-dimensional space, 75.5% of each point's 10 nearest neighbors share its exact profile. t-SNE (76.7–78.2%) and UMAP (68.2–76.9%) keep that level, but PCA keeps only **4.5%**: it superimposes the profiles, because its two components are spent on the three continuous features. In Figure 13 (left column), the `children` profiles form islands of their own in t-SNE and UMAP, while PCA only shades them along PC1.
 - **Part of the island structure is encoding geometry — the null control shows how much.** The course's reduction handout recommends rerunning the method on independently shuffled columns. With every raw column permuted separately (no association left between features or with the target), t-SNE at perplexity 30 still keeps 59.7% profile agreement over 440 profiles (Table 18, last row). Full one-hot vectors of different profiles always sit √2 apart per differing feature, so islands form even in pure noise. The real data reach 77.7% with 364 profiles: the excess comes from real associations between the categorical features, such as children with unknown smoking status and no marriage.
 - **The local structure is far better preserved.** At k = 5, trustworthiness is 0.996–0.997 for t-SNE and 0.981–0.994 for UMAP, against 0.817 for PCA. Comparing the two neighborhood sizes ("read the columns, not the rows"): t-SNE with perplexity 5 drops from 0.996 at k = 5 to 0.954 at k = 30, because it keeps only the closest neighbors, while perplexity 50 drops less, to 0.978.
-- **The positives are not a cluster in any space.** Around each positive, 8.89% of its 10 nearest neighbors are positive in the original space: 1.8 times the base rate, but far from a pure group. The 2D maps stay in the same range (8.84–10.65%), and none forms a positive cluster. In the shuffled control the share falls to 3.97%, below the 4.87% base rate, so the enrichment in the real maps is signal (age), not an artifact of the method. Figure 13 (bottom) shows why the enrichment exists at all: in the islands that contain positives, they sit at the old-age end.
+- **The positives are not a cluster in any space.** Around each positive, 8.89% of its 10 nearest neighbors are positive in the original space: 1.8 times the base rate, but far from a pure group. The 2D maps stay in the same range (8.84–10.65%), and none forms a positive cluster. In the shuffled control the share falls to 3.97%, below the 4.87% base rate, so the enrichment in the real maps is signal (age), not an artifact of the method. Figure 13 (right column) shows why the enrichment exists at all: in the islands that contain positives, they sit at the old-age end.
 
 **Comparison.** PCA gives a global, linear and interpretable view: two axes (life stage, glucose), measurable variance, and loadings that can be read. t-SNE and UMAP reveal what PCA flattens: the data are a mosaic of categorical profiles, and age orders the risk inside each one. Within the course's rules — no reading of island sizes or of distances between islands, and conclusions only from patterns stable across all three parameter values — the three methods agree: **no 2D view separates the classes**. *This implies that* the classifier must use the full 24-column matrix and combine age with the clinical flags and glucose. t-SNE coordinates cannot be features in any case: t-SNE cannot transform new rows, so it cannot be refitted inside cross-validation.
 

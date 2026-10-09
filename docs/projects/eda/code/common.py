@@ -31,7 +31,7 @@ def save_figure(fig, number, title):
     """Give the figure its numbered title and write it to figures/fig{number}.png."""
     FIGURES_DIR.mkdir(exist_ok=True)
     fig.suptitle(f"Figure {number} — {title}", fontsize=13, fontweight="bold")
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0, 1, 1 - 0.45 / fig.get_figheight()))   # keep the panels clear of the title
     fig.savefig(FIGURES_DIR / f"fig{number}.png", bbox_inches="tight")
     plt.close(fig)
 

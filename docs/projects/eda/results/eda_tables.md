@@ -111,7 +111,7 @@
 
 ### Table 9 — Association of each categorical feature with the target (train, χ² test of independence)
 
-| feature | χ² | dof | p-value | Cramér's V | min expected count | p-value, categories with expected < 5 removed |
+| feature | χ² | dof | p-value | Cramér's V | min expected count | p-value without the sparse categories |
 |---|---|---|---|---|---|---|
 | hypertension | 72.4 | 1 | 1.7e-17 | 0.133 | 19.33 | — |
 | heart_disease | 65.8 | 1 | 5e-16 | 0.127 | 10.76 | — |
