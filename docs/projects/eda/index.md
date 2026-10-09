@@ -11,6 +11,8 @@ ai_use: "Claude assisted with the code implementation and the drafting of this r
 
 # EDA — Stroke Prediction
 
+**Gabriel Fernando Missaka Mendes · Eduardo Takei Yaginuma · Luca Santana Feltrin** — Insper, Artificial Neural Networks and Deep Learning, 2026.2
+
 This report explores the dataset that the classification project will use until the end of the semester: which recorded demographic and health features are associated with a stroke, what makes the data hard, and how to turn it into an input matrix for a neural network. No model is trained here.
 
 **Approach.** The code is split into five files under `code/`: `preprocessing.py` (the data loading, the split and the importable pipeline — nothing is fitted at import), `eda.py` (stages 1–3: inspection, univariate and bivariate analysis, Figures 1–8), `reduction.py` (stage 4: outliers, pipeline checks, PCA, t-SNE and UMAP, Figures 9–13), `common.py` (paths, colors and table helpers) and `main.py`, which runs the two stages in sequence. Every table, number and figure in this report is reproduced, with the fixed seed `random_state=42`, by installing `requirements.txt` and running, from the repository root:
