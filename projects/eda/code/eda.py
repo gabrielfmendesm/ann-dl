@@ -8,7 +8,8 @@ and every later statistic and figure uses the training rows only.
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib.patches import Patch
+from matplotlib.lines import Line2D
+from matplotlib.patches import Patch, Rectangle
 from scipy.stats import chi2_contingency, fisher_exact, mannwhitneyu, spearmanr
 
 from common import (CLASS_COLORS, CLASS_LABELS, GROUP_COLORS, NEUTRAL, RESULTS_DIR, UNITS, Results,
@@ -65,6 +66,7 @@ def stage1(raw, res):
     m["bmi_extremes"] = sorted(raw.bmi.dropna().nlargest(4).tolist(), reverse=True)
     m["age_min"], m["age_max"] = float(raw.age.min()), float(raw.age.max())
     m["gender_other_rows"] = int((raw.gender == "Other").sum())
+    m["id_distinct"] = int(raw[ID_COLUMN].nunique())
     m["fractional_age_max"] = float(raw.age[raw.age % 1 != 0].max())
     m["children_age_max"] = float(raw.age[raw.work_type == "children"].max())
     m["never_worked_age_range"] = [float(raw.age[raw.work_type == "Never_worked"].min()),
@@ -115,7 +117,8 @@ def stage1(raw, res):
                   width=0.6)
     for bar, n in zip(bars, counts.values):
         ax.text(bar.get_x() + bar.get_width() / 2, n + 60, f"{n:,} ({n / len(raw):.2%})", ha="center")
-    ax.set(title="Class frequencies (full file, 5,110 rows)", xlabel="Target class", ylabel="Rows", ylim=(0, 5600))
+    ax.set(title=f"Class frequencies (full file, {len(raw):,} rows)", xlabel="Target class", ylabel="Rows",
+           ylim=(0, counts.max() * 1.15))
     ax.legend(handles=[Patch(color=CLASS_COLORS[k], label=CLASS_LABELS[k]) for k in (0, 1)], loc="upper right")
     ax = axes[1]
     row = np.arange(len(raw))
@@ -124,7 +127,7 @@ def stage1(raw, res):
     ax.set(title="Positives by position in the CSV: the file is sorted by target",
            xlabel="Row position in the CSV", ylabel="Cumulative stroke = 1 rows")
     ax.legend(loc="lower right")
-    save_figure(fig, 1, "Target: 4.87% positives, all stored at the top of the file")
+    save_figure(fig, 1, f"Target: {m['pos_pct']:.2f}% positives, all stored at the top of the file")
 
     train = X_train.assign(**{TARGET: y_train})
     return train
@@ -158,7 +161,7 @@ def stage2(train, res):
     m["glucose_above_150_pct"] = float((glucose > 150).mean() * 100)
 
     # Figure 2 — histograms with mean/median and boxplots (shape, modes, outliers)
-    fig, axes = plt.subplots(2, 3, figsize=(15, 7.5), gridspec_kw={"height_ratios": [3, 1.2]})
+    fig, axes = plt.subplots(2, 3, figsize=(15, 8), gridspec_kw={"height_ratios": [3, 1.5]})
     for j, c in enumerate(NUM):
         x = train[c].dropna()
         ax = axes[0, j]
@@ -170,15 +173,21 @@ def stage2(train, res):
         ax.set(title=f"{c} — skewness {x.skew():.2f}", xlabel=UNITS[c], ylabel="Rows")
         ax.legend(loc="upper left" if c == "age" else "upper right")
         ax = axes[1, j]
-        ax.boxplot(x, orientation="horizontal", widths=0.6, patch_artist=True,
+        ax.boxplot(x, orientation="horizontal", widths=0.45, patch_artist=True,
                    boxprops={"facecolor": "#b7d3f6"}, medianprops={"color": CLASS_COLORS[1]},
                    flierprops={"marker": "o", "markersize": 2.5, "alpha": 0.4})
         q1, q3 = x.quantile(.25), x.quantile(.75)
         n_out = int(((x < q1 - 1.5 * (q3 - q1)) | (x > q3 + 1.5 * (q3 - q1))).sum())
-        ax.set(xlabel=UNITS[c], yticks=[], ylabel="Train", title=f"Boxplot: {n_out} points beyond 1.5×IQR")
+        ax.set(xlabel=UNITS[c], yticks=[], ylabel="Train", ylim=(0.5, 1.7),
+               title=f"Boxplot: {n_out} points beyond 1.5×IQR")
+        ax.legend(handles=[Patch(facecolor="#b7d3f6", edgecolor="#0b0b0b",
+                                 label="Box: Q1–Q3 · orange line: median · whiskers: 1.5×IQR"),
+                           Line2D([], [], marker="o", color="#0b0b0b", ls="none", ms=3, alpha=0.4,
+                                  label=f"{n_out} points beyond the fences")],
+                  loc="upper right", fontsize=7)
     axes[0, 1].annotate("second mode", xy=(m["glucose_mode_high"], 40), xytext=(225, 160),
                         arrowprops={"arrowstyle": "->"}, ha="center")
-    save_figure(fig, 2, "Numerical features (train): symmetric age, bimodal glucose, right-skewed BMI")
+    save_figure(fig, 2, "Numerical features (train): near-symmetric age, bimodal glucose, right-skewed BMI")
 
     # 2B — frequencies, cardinality and rare categories
     rows = []
@@ -213,13 +222,13 @@ def stage2(train, res):
     ax = axes.flat[-1]
     card = pd.Series({c: train[c].nunique() for c in CAT}).sort_values()
     ax.barh(card.index, card.values, color=NEUTRAL, height=0.6, label="Distinct categories")
-    ax.set(title="Cardinality (id: 5,110 distinct, dropped)", xlabel="Distinct categories in train", ylabel="Feature",
-           xticks=range(0, 7))
+    ax.set(title=f"Cardinality (id: {m['id_distinct']:,} distinct, dropped)", xlabel="Distinct categories in train",
+           ylabel="Feature", xticks=range(0, 7))
     ax.legend(loc="lower right")
     fig.legend(handles=[Patch(color=CLASS_COLORS[0], label="Category with ≥ 1% of the training rows"),
                         Patch(color=CLASS_COLORS[1], label="Rare category: < 1% of the training rows")],
                loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.03), fontsize=10)
-    save_figure(fig, 3, "Categorical features (train): low cardinality, two rare categories")
+    save_figure(fig, 3, f"Categorical features (train): low cardinality, {len(m['rare_categories'])} rare categories")
 
 
 def stage3(train, res):
@@ -259,9 +268,13 @@ def stage3(train, res):
                         color="white" if abs(mat.iloc[r, c]) > 0.6 else "#0b0b0b")
         ax.set(title=f"{method.capitalize()} (pairwise-complete)", xlabel="Feature", ylabel="Feature")
         fig.colorbar(im, ax=ax, fraction=0.046, label=f"{method.capitalize()} coefficient")
-    fig.legend(handles=[Patch(color="#b7d3f6", label="Pearson r: linear association, pulled by extreme values"),
-                        Patch(color="#f4c4b0", label="Spearman ρ: monotonic association on ranks")],
-               loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.04), fontsize=9)
+        i, j = (NUM.index(f) for f in top["pair"].split(" × "))
+        for r, c in ((i, j), (j, i)):
+            ax.add_patch(Rectangle((c - 0.5, r - 0.5), 1, 1, fill=False, edgecolor="#0b0b0b", lw=2))
+    fig.legend(handles=[Patch(facecolor="none", edgecolor="#0b0b0b", lw=2,
+                              label=f"Strongest pair: {top['pair']} — no pair reaches the redundancy flag "
+                                    f"|ρ| ≥ {REDUNDANT_RHO:.2f}")],
+               loc="lower center", bbox_to_anchor=(0.5, -0.04), fontsize=9)
     save_figure(fig, 4, "Numerical correlations (train): no redundant pair, strongest is age × BMI")
 
     # Figure 5 — scatter plots of the three pairs, positives drawn on top
@@ -288,6 +301,7 @@ def stage3(train, res):
             rows.append({"feature": c, "category": str(k), "n": int(r["count"]), "strokes": int(r["sum"]),
                          "stroke rate (%)": r["sum"] / r["count"] * 100, "ci_lo": lo * 100, "ci_hi": hi * 100})
         table = pd.crosstab(train[c], y)
+        # Pearson's chi-square without Yates' continuity correction (the correction only applies to 2x2 tables)
         chi2, p, dof, expected = chi2_contingency(table, correction=False)
         # expected counts below 5 invalidate the approximation: drop those categories and re-test
         small = table.index[(expected < 5).any(axis=1)]
@@ -331,8 +345,12 @@ def stage3(train, res):
     ax.barh(assoc.feature[::-1], assoc["Cramér's V"][::-1], color=NEUTRAL, height=0.55, label="Cramér's V")
     ax.set(title="Strength of association with stroke", xlabel="Cramér's V (0 = none)", ylabel="Feature")
     ax.legend(loc="lower right")
-    save_figure(fig, 6, "Stroke rate by category (train): "
-                        "hypertension, heart disease and marriage multiply it by 3.5–3.9")
+    binary = ["hypertension", "heart_disease", "ever_married"]
+    ratios = {c: float(rates.loc[rates.feature == c, "stroke rate (%)"].max()
+                       / rates.loc[rates.feature == c, "stroke rate (%)"].min()) for c in binary}
+    m["binary_rate_ratios"] = ratios
+    save_figure(fig, 6, "Stroke rate by category (train): hypertension, heart disease and marriage multiply it by "
+                        f"{min(ratios.values()):.1f}–{max(ratios.values()):.1f}")
 
     # 3C — grouped location (median) and spread (IQR) summaries
     def grouped(by, features):
