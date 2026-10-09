@@ -31,7 +31,8 @@ Each report's code lives in `docs/exercises/<exercise>/code/` and rewrites the f
 ``` shell
 python docs/exercises/data/code/exercise1.py        # also exercise2.py and exercise3.py
 python docs/exercises/perceptron/code/main.py
-python docs/projects/eda/code/main.py               # EDA project: Figures 1-13 and results/
+python docs/projects/eda/code/main.py               # EDA project: Figures 1-13, results/tableNN.csv and metrics
+python docs/projects/eda/code/check_report.py       # then: the report's tables and summary match results/
 ```
 
 ## Layout
