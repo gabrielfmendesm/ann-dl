@@ -1,4 +1,4 @@
-### Outliers in the training set (fences fitted on train; no row removed)
+### Table 13 — Outliers in the training set (fences fitted on train; no row removed)
 
 | feature | lower fence | upper fence | flagged (1.5×IQR) | flagged (%) | stroke rate among flagged (%) | flagged (modified z > 3.5) |
 |---|---|---|---|---|---|---|
@@ -6,14 +6,14 @@
 | avg_glucose_level | 21.98 | 169.53 | 503 | 12.30 | 13.12 | 458 |
 | bmi | 9.35 | 47.35 | 90 | 2.20 | 3.33 | 47 |
 
-### Skewness of the right-skewed features before and after log1p (train, observed values)
+### Table 14 — Skewness of the right-skewed features before and after log1p (train, observed values)
 
 | feature | skewness (raw) | skewness (log1p) | max/median (raw) | max/median (log1p) |
 |---|---|---|---|---|
 | avg_glucose_level | 1.56 | 0.88 | 2.96 | 1.24 |
 | bmi | 1.12 | 0.04 | 3.49 | 1.36 |
 
-### Parameters fitted by the pipeline (training rows only)
+### Table 15 — Parameters fitted by the pipeline (training rows only)
 
 | feature | imputation median | scaler mean | scaler std |
 |---|---|---|---|
@@ -21,7 +21,7 @@
 | log1p(avg_glucose_level) | 91.945 | 4.6048 | 0.3587 |
 | log1p(bmi) | 28.000 | 3.3655 | 0.2515 |
 
-### PCA explained variance (first 8 of 24 components)
+### Table 16 — PCA explained variance (first 8 of 24 components)
 
 | component | explained (%) | cumulative (%) |
 |---|---|---|
@@ -34,7 +34,7 @@
 | PC7 | 4.74 | 83.24 |
 | PC8 | 3.26 | 86.51 |
 
-### Largest PCA loadings (eigenvector coefficients) of PC1 and PC2
+### Table 17 — Largest PCA loadings (eigenvector coefficients) of PC1 and PC2
 
 | feature | PC1 | PC2 |
 |---|---|---|
@@ -49,7 +49,7 @@
 | cat__gender_Female | +0.014 | -0.084 |
 | cat__gender_Male | -0.013 | +0.083 |
 
-### Projection diagnostics (train, 4,088 rows; base rate 4.87%)
+### Table 18 — Projection diagnostics (train, 4,088 rows; base rate 4.87%)
 
 | space | trustworthiness k=5 | trustworthiness k=30 | positives among 10-NN of positives (%) | same categorical profile among 10-NN (%) |
 |---|---|---|---|---|

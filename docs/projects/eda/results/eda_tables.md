@@ -1,4 +1,4 @@
-### Missing values per column (full file)
+### Table 2 — Missing values per column (full file)
 
 | column | missing (count) | missing (%) |
 |---|---|---|
@@ -15,7 +15,7 @@
 | smoking_status | 0 | 0.00 |
 | stroke | 0 | 0.00 |
 
-### Duplicates, impossible and inconsistent values (full file)
+### Table 3 — Duplicates, impossible and inconsistent values (full file)
 
 | check | rows |
 |---|---|
@@ -35,7 +35,7 @@
 | smoking_status = Unknown | 1544 |
 | smoking_status = Unknown with age < 18 | 682 |
 
-### Target distribution in the full file and after the stratified split
+### Table 4 — Target distribution in the full file and after the stratified split
 
 | partition | rows | stroke = 0 | stroke = 1 | stroke = 1 (%) |
 |---|---|---|---|---|
@@ -43,7 +43,7 @@
 | Train | 4088 | 3889 | 199 | 4.87 |
 | Test | 1022 | 972 | 50 | 4.89 |
 
-### Descriptive statistics of the numerical features (train, observed values)
+### Table 5 — Descriptive statistics of the numerical features (train, observed values)
 
 | feature | count | missing | mean | median | std | min | Q1 | Q3 | max | skewness | excess kurtosis |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -51,7 +51,7 @@
 | avg_glucose_level | 4088 | 0 | 106.32 | 91.94 | 45.26 | 55.12 | 77.31 | 114.20 | 271.74 | 1.56 | 1.62 |
 | bmi | 3918 | 170 | 28.92 | 28.00 | 7.93 | 10.30 | 23.60 | 33.10 | 97.60 | 1.12 | 3.84 |
 
-### Frequencies and cardinality of the categorical features (train)
+### Table 6 — Frequencies and cardinality of the categorical features (train)
 
 | feature | category | count | share (%) | cardinality | rare (< 1%) |
 |---|---|---|---|---|---|
@@ -76,7 +76,7 @@
 | smoking_status | formerly smoked | 714 | 17.47 | 4 |  |
 | smoking_status | smokes | 626 | 15.31 | 4 |  |
 
-### Pairwise correlations of the numerical features (train, observed values)
+### Table 7 — Pairwise correlations of the numerical features (train, observed values)
 
 | pair | n | Pearson r | Spearman ρ |
 |---|---|---|---|
@@ -84,7 +84,7 @@
 | age × bmi | 3918 | 0.336 | 0.381 |
 | avg_glucose_level × bmi | 3918 | 0.172 | 0.113 |
 
-### Stroke rate per category (train) with 95% Wilson intervals
+### Table 8 — Stroke rate per category (train) with 95% Wilson intervals
 
 | feature | category | n | strokes | stroke rate (%) | 95% CI (%) |
 |---|---|---|---|---|---|
@@ -109,7 +109,7 @@
 | smoking_status | never smoked | 1501 | 71 | 4.73 | 3.8–5.9 |
 | smoking_status | smokes | 626 | 34 | 5.43 | 3.9–7.5 |
 
-### Association of each categorical feature with the target (train, χ² test of independence)
+### Table 9 — Association of each categorical feature with the target (train, χ² test of independence)
 
 | feature | χ² | dof | p-value | Cramér's V | min expected count | p-value, categories with expected < 5 removed |
 |---|---|---|---|---|---|---|
@@ -121,7 +121,7 @@
 | Residence_type | 1.1 | 1 | 0.29 | 0.017 | 98.28 | — |
 | gender | 0.5 | 2 | 0.77 | 0.011 | 0.05 | 0.5 (without Other) |
 
-### Numerical features by target class (train): location and spread
+### Table 10 — Numerical features by target class (train): location and spread
 
 | feature | group | n | median | Q1 | Q3 | IQR | Mann–Whitney p | AUC (feature alone) |
 |---|---|---|---|---|---|---|---|---|
@@ -132,7 +132,7 @@
 | bmi | stroke = 0 | 3756 | 27.95 | 23.50 | 33.10 | 9.60 | 0.00027 | 0.584 |
 | bmi | stroke = 1 | 162 | 29.90 | 26.52 | 33.70 | 7.18 | 0.00027 | 0.584 |
 
-### Numerical features grouped by categorical features (train): location and spread
+### Table 11 — Numerical features grouped by categorical features (train): location and spread
 
 | feature | group | n | median | Q1 | Q3 | IQR |
 |---|---|---|---|---|---|---|
@@ -148,7 +148,7 @@
 | avg_glucose_level | hypertension = 0 | 3691 | 91.09 | 77.03 | 112.07 | 35.04 |
 | avg_glucose_level | hypertension = 1 | 397 | 103.89 | 79.79 | 196.01 | 116.22 |
 
-### Stroke rate per category within age bands (train): what remains after holding age roughly fixed
+### Table 12 — Stroke rate per category within age bands (train): what remains after holding age roughly fixed
 
 | feature | category | rate, all ages (%) | n, age ≥ 18 | rate, age ≥ 18 (%) | n, age ≥ 60 | rate, age ≥ 60 (%) | Fisher p, age ≥ 60 |
 |---|---|---|---|---|---|---|---|

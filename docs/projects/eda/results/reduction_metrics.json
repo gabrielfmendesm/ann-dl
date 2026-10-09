@@ -3,11 +3,6 @@
   "outlier_rows_pct": 13.918786692759296,
   "outlier_rows_positives": 66,
   "outlier_rows_positives_share_of_all_pos": 33.165829145728644,
-  "outlier_rows_stroke_rate": 11.599297012302284,
-  "skew_after_log": {
-    "avg_glucose_level": 0.8786860950027386,
-    "bmi": 0.04463933053015012
-  },
   "raw_max_z": {
     "avg_glucose_level": 3.6554206707642667,
     "bmi": 8.85178998401772
@@ -16,20 +11,6 @@
     0.15234822451317298,
     0.2027491408934708,
     0.2611683848797251
-  ],
-  "bmi_below_12": [
-    [
-      40.0,
-      11.5
-    ],
-    [
-      79.0,
-      11.3
-    ],
-    [
-      1.24,
-      10.3
-    ]
   ],
   "train_shape": [
     4088,
@@ -97,11 +78,6 @@
     1.92,
     2.8,
     4.87
-  ],
-  "max_abs_z_test": [
-    1.92,
-    2.76,
-    3.09
   ],
   "unseen_category_probe": {
     "gender_block": [

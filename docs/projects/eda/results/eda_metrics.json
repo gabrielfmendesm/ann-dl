@@ -43,7 +43,6 @@
   ],
   "age_min": 0.08,
   "age_max": 82.0,
-  "age_at_82": 56,
   "gender_other_rows": 1,
   "fractional_age_max": 1.88,
   "children_age_max": 16.0,
@@ -410,7 +409,6 @@
     }
   ],
   "positives_age_ge_60_pct": 71.85929648241206,
-  "positives_age_lt_30": 1,
   "glucose_above_150_stroke_rate": 12.224108658743633,
   "glucose_below_150_stroke_rate": 3.6296084595598743,
   "grouped_other": [

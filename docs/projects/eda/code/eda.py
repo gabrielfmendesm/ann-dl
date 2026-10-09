@@ -36,7 +36,7 @@ def stage1(raw, res):
     # 1B — missing values per column, full file (the inventory precedes the split)
     missing = pd.DataFrame({"column": raw.columns, "missing (count)": raw.isna().sum().values,
                             "missing (%)": raw.isna().mean().values * 100})
-    res.table("Missing values per column (full file)", missing, {"missing (%)": ".2f"})
+    res.table(2, "Missing values per column (full file)", missing, {"missing (%)": ".2f"})
     m["bmi_missing"] = int(raw["bmi"].isna().sum())
     m["bmi_missing_pct"] = float(raw["bmi"].isna().mean() * 100)
 
@@ -60,10 +60,10 @@ def stage1(raw, res):
     }
     checks = {k: int(v) for k, v in checks.items()}
     m["checks"] = checks
-    res.table("Duplicates, impossible and inconsistent values (full file)",
+    res.table(3, "Duplicates, impossible and inconsistent values (full file)",
               pd.DataFrame({"check": list(checks), "rows": list(checks.values())}))
     m["bmi_extremes"] = sorted(raw.bmi.dropna().nlargest(4).tolist(), reverse=True)
-    m["age_min"], m["age_max"], m["age_at_82"] = float(raw.age.min()), float(raw.age.max()), int((raw.age == 82).sum())
+    m["age_min"], m["age_max"] = float(raw.age.min()), float(raw.age.max())
     m["gender_other_rows"] = int((raw.gender == "Other").sum())
     m["fractional_age_max"] = float(raw.age[raw.age % 1 != 0].max())
     m["children_age_max"] = float(raw.age[raw.work_type == "children"].max())
@@ -101,7 +101,7 @@ def stage1(raw, res):
         target_rows.append({"partition": part, "rows": len(y), "stroke = 0": int((y == 0).sum()),
                             "stroke = 1": int((y == 1).sum()), "stroke = 1 (%)": float(y.mean() * 100)})
     target_table = pd.DataFrame(target_rows)
-    res.table("Target distribution in the full file and after the stratified split", target_table,
+    res.table(4, "Target distribution in the full file and after the stratified split", target_table,
               {"stroke = 1 (%)": ".2f"})
     m["train_pos"], m["test_pos"] = int(y_train.sum()), int(y_test.sum())
     m["train_pos_pct"], m["test_pos_pct"] = float(y_train.mean() * 100), float(y_test.mean() * 100)
@@ -124,7 +124,7 @@ def stage1(raw, res):
     ax.set(title="Positives by position in the CSV: the file is sorted by target",
            xlabel="Row position in the CSV", ylabel="Cumulative stroke = 1 rows")
     ax.legend(loc="lower right")
-    save_figure(fig, 1, "target", "Target: 4.87% positives, all stored at the top of the file")
+    save_figure(fig, 1, "Target: 4.87% positives, all stored at the top of the file")
 
     train = X_train.assign(**{TARGET: y_train})
     return train
@@ -141,7 +141,7 @@ def stage2(train, res):
                      "Q1": x.quantile(.25), "Q3": x.quantile(.75), "max": x.max(),
                      "skewness": x.skew(), "excess kurtosis": x.kurt()})
     stats = pd.DataFrame(rows)
-    res.table("Descriptive statistics of the numerical features (train, observed values)", stats,
+    res.table(5, "Descriptive statistics of the numerical features (train, observed values)", stats,
               {k: ".2f" for k in ["mean", "median", "std", "min", "Q1", "Q3", "max", "skewness", "excess kurtosis"]})
     m["numerical_stats"] = stats.set_index("feature").to_dict(orient="index")
 
@@ -178,7 +178,7 @@ def stage2(train, res):
         ax.set(xlabel=UNITS[c], yticks=[], ylabel="Train", title=f"Boxplot: {n_out} points beyond 1.5×IQR")
     axes[0, 1].annotate("second mode", xy=(m["glucose_mode_high"], 40), xytext=(225, 160),
                         arrowprops={"arrowstyle": "->"}, ha="center")
-    save_figure(fig, 2, "numerical", "Numerical features (train): symmetric age, bimodal glucose, right-skewed BMI")
+    save_figure(fig, 2, "Numerical features (train): symmetric age, bimodal glucose, right-skewed BMI")
 
     # 2B — frequencies, cardinality and rare categories
     rows = []
@@ -188,7 +188,7 @@ def stage2(train, res):
             rows.append({"feature": c, "category": str(k), "count": int(n), "share (%)": n / len(train) * 100,
                          "cardinality": len(vc), "rare (< 1%)": "yes" if n / len(train) < RARE_SHARE else ""})
     freq = pd.DataFrame(rows)
-    res.table("Frequencies and cardinality of the categorical features (train)", freq, {"share (%)": ".2f"})
+    res.table(6, "Frequencies and cardinality of the categorical features (train)", freq, {"share (%)": ".2f"})
     m["rare_categories"] = freq.loc[freq["rare (< 1%)"] == "yes", ["feature", "category", "count", "share (%)"]] \
         .to_dict(orient="records")
     m["smoking_unknown_train"] = int((train.smoking_status == "Unknown").sum())
@@ -219,7 +219,7 @@ def stage2(train, res):
     fig.legend(handles=[Patch(color=CLASS_COLORS[0], label="Category with ≥ 1% of the training rows"),
                         Patch(color=CLASS_COLORS[1], label="Rare category: < 1% of the training rows")],
                loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.03), fontsize=10)
-    save_figure(fig, 3, "categorical", "Categorical features (train): low cardinality, two rare categories")
+    save_figure(fig, 3, "Categorical features (train): low cardinality, two rare categories")
 
 
 def stage3(train, res):
@@ -235,7 +235,7 @@ def stage3(train, res):
             rows.append({"pair": f"{a} × {b}", "n": len(pair), "Pearson r": pair[a].corr(pair[b]),
                          "Spearman ρ": spearmanr(pair[a], pair[b]).statistic})
     corr = pd.DataFrame(rows)
-    res.table("Pairwise correlations of the numerical features (train, observed values)", corr,
+    res.table(7, "Pairwise correlations of the numerical features (train, observed values)", corr,
               {"Pearson r": ".3f", "Spearman ρ": ".3f"})
     top = corr.loc[corr["Spearman ρ"].abs().idxmax()]
     m["top_pair"], m["top_pair_rho"], m["top_pair_r"], m["top_pair_n"] = (
@@ -262,7 +262,7 @@ def stage3(train, res):
     fig.legend(handles=[Patch(color="#b7d3f6", label="Pearson r: linear association, pulled by extreme values"),
                         Patch(color="#f4c4b0", label="Spearman ρ: monotonic association on ranks")],
                loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.04), fontsize=9)
-    save_figure(fig, 4, "correlation", "Numerical correlations (train): no redundant pair, strongest is age × BMI")
+    save_figure(fig, 4, "Numerical correlations (train): no redundant pair, strongest is age × BMI")
 
     # Figure 5 — scatter plots of the three pairs, positives drawn on top
     fig, axes = plt.subplots(1, 3, figsize=(16, 4.8))
@@ -275,7 +275,7 @@ def stage3(train, res):
         ax.set(title=f"ρ = {r['Spearman ρ']:.3f} · r = {r['Pearson r']:.3f} · n = {r['n']:,}",
                xlabel=UNITS[a], ylabel=UNITS[b])
         ax.legend(loc="upper left", markerscale=1.5)
-    save_figure(fig, 5, "scatter", "Numerical pairs (train): broad clouds, stroke cases concentrated at older ages")
+    save_figure(fig, 5, "Numerical pairs (train): broad clouds, stroke cases concentrated at older ages")
 
     # 3B — stroke rate per category with 95% Wilson intervals; chi-square and Cramér's V per feature
     base = y.mean() * 100
@@ -286,8 +286,7 @@ def stage3(train, res):
         for k, r in g.iterrows():
             lo, hi = wilson_interval(r["sum"], r["count"])
             rows.append({"feature": c, "category": str(k), "n": int(r["count"]), "strokes": int(r["sum"]),
-                         "stroke rate (%)": r["sum"] / r["count"] * 100,
-                         "95% CI (%)": f"{lo * 100:.1f}–{hi * 100:.1f}"})
+                         "stroke rate (%)": r["sum"] / r["count"] * 100, "ci_lo": lo * 100, "ci_hi": hi * 100})
         table = pd.crosstab(train[c], y)
         chi2, p, dof, expected = chi2_contingency(table, correction=False)
         # expected counts below 5 invalidate the approximation: drop those categories and re-test
@@ -302,11 +301,13 @@ def stage3(train, res):
                       "Cramér's V": np.sqrt(chi2 / (table.values.sum() * (min(table.shape) - 1))),
                       "min expected count": expected.min(), "p-value, categories with expected < 5 removed": p_kept})
     rates = pd.DataFrame(rows)
-    res.table("Stroke rate per category (train) with 95% Wilson intervals", rates, {"stroke rate (%)": ".2f"})
+    rates_table = rates.assign(**{"95% CI (%)": [f"{lo:.1f}–{hi:.1f}" for lo, hi in zip(rates.ci_lo, rates.ci_hi)]}) \
+        .drop(columns=["ci_lo", "ci_hi"])
+    res.table(8, "Stroke rate per category (train) with 95% Wilson intervals", rates_table, {"stroke rate (%)": ".2f"})
     assoc = pd.DataFrame(assoc).sort_values("Cramér's V", ascending=False)
-    res.table("Association of each categorical feature with the target (train, χ² test of independence)", assoc,
+    res.table(9, "Association of each categorical feature with the target (train, χ² test of independence)", assoc,
               {"χ²": ".1f", "p-value": ".2g", "Cramér's V": ".3f", "min expected count": ".2f"})
-    m["category_rates"] = rates.to_dict(orient="records")
+    m["category_rates"] = rates_table.to_dict(orient="records")
     m["cramers_v"] = assoc.set_index("feature")["Cramér's V"].to_dict()
     m["chi2_p"] = assoc.set_index("feature")["p-value"].to_dict()
 
@@ -314,28 +315,28 @@ def stage3(train, res):
     fig, axes = plt.subplots(2, 4, figsize=(18, 8.5))
     for ax, c in zip(axes.flat, CAT):
         sub = rates[rates.feature == c].reset_index(drop=True)
-        lo_hi = np.array([[float(v) for v in s.split("–")] for s in sub["95% CI (%)"]])
-        rate = sub["stroke rate (%)"].to_numpy()
+        rate, lo, hi = (sub[k].to_numpy() for k in ("stroke rate (%)", "ci_lo", "ci_hi"))
         ypos = np.arange(len(sub))
         ax.barh(ypos, rate, color=CLASS_COLORS[1], height=0.55, label="Stroke rate in category")
-        ax.errorbar(rate, ypos, xerr=[rate - lo_hi[:, 0], lo_hi[:, 1] - rate], fmt="none", ecolor="#0b0b0b",
+        ax.errorbar(rate, ypos, xerr=[rate - lo, hi - rate], fmt="none", ecolor="#0b0b0b",
                     capsize=3, lw=1, label="95% Wilson interval")
         ax.axvline(base, color=CLASS_COLORS[0], ls="--", lw=1.3, label=f"Train base rate {base:.2f}%")
         ax.set_yticks(ypos, [f"{k} (n={n:,})" for k, n in zip(sub.category, sub.n)])
         ax.set(title=c, xlabel="Stroke rate (%)", ylabel="Category (rows)", xlim=(0, 25))
-        for i, hi in enumerate(lo_hi[:, 1]):
-            if hi > 25:  # tiny groups: the interval runs off the shared axis, so state its upper end
-                ax.text(24.5, i + 0.3, f"interval to {hi:.0f}%", ha="right", fontsize=7)
+        for i, upper in enumerate(hi):
+            if upper > 25:  # tiny groups: the interval runs off the shared axis, so state its upper end
+                ax.text(24.5, i + 0.3, f"interval to {upper:.0f}%", ha="right", fontsize=7)
         ax.legend(loc="lower right", fontsize=7)
     ax = axes.flat[-1]
     ax.barh(assoc.feature[::-1], assoc["Cramér's V"][::-1], color=NEUTRAL, height=0.55, label="Cramér's V")
     ax.set(title="Strength of association with stroke", xlabel="Cramér's V (0 = none)", ylabel="Feature")
     ax.legend(loc="lower right")
-    save_figure(fig, 6, "category_target",
-                "Stroke rate by category (train): hypertension, heart disease and marriage multiply it by 3.5–3.9")
+    save_figure(fig, 6, "Stroke rate by category (train): "
+                        "hypertension, heart disease and marriage multiply it by 3.5–3.9")
 
     # 3C — grouped location (median) and spread (IQR) summaries
     def grouped(by, features):
+        """Observed count, median, quartiles and IQR of each feature within each level of `by`."""
         out = []
         for f in features:
             for k, g in train.groupby(by):
@@ -352,12 +353,11 @@ def stage3(train, res):
     by_target["Mann–Whitney p"] = by_target.feature.map({f: t.pvalue for f, t in tests.items()})
     by_target["AUC (feature alone)"] = by_target.feature.map(
         {f: t.statistic / (len(pos[f]) * len(neg[f])) for f, t in tests.items()})
-    res.table("Numerical features by target class (train): location and spread", by_target,
+    res.table(10, "Numerical features by target class (train): location and spread", by_target,
               {"median": ".2f", "Q1": ".2f", "Q3": ".2f", "IQR": ".2f", "Mann–Whitney p": ".2g",
                "AUC (feature alone)": ".3f"})
     m["by_target"] = by_target.to_dict(orient="records")
     m["positives_age_ge_60_pct"] = float((train.loc[y == 1, "age"] >= 60).mean() * 100)
-    m["positives_age_lt_30"] = int((train.loc[y == 1, "age"] < 30).sum())
     m["glucose_above_150_stroke_rate"] = float(train.loc[train.avg_glucose_level > 150, TARGET].mean() * 100)
     m["glucose_below_150_stroke_rate"] = float(train.loc[train.avg_glucose_level <= 150, TARGET].mean() * 100)
 
@@ -372,16 +372,16 @@ def stage3(train, res):
             patch.set_alpha(0.75)
         ax.set_xticks([1, 2], [f"{CLASS_LABELS[k]}\nn = {len(d):,}" for k, d in zip((0, 1), data)])
         iqr = [d.quantile(.75) - d.quantile(.25) for d in data]
-        ax.set(title=f"{f}: median {data[0].median():.1f} → {data[1].median():.1f}, IQR {iqr[0]:.1f} → {iqr[1]:.1f}",
-               xlabel="Target class", ylabel=UNITS[f])
+        ax.set(title=f"{f}: median {data[0].median():.1f} → {data[1].median():.1f}, "
+                     f"IQR {iqr[0]:.1f} → {iqr[1]:.1f}", xlabel="Target class", ylabel=UNITS[f])
     fig.legend(handles=[Patch(color=CLASS_COLORS[k], alpha=0.75, label=CLASS_LABELS[k]) for k in (0, 1)],
                loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.06), fontsize=10)
-    save_figure(fig, 7, "box_target", "Numerical features by class (train): positives are older, with higher glucose")
+    save_figure(fig, 7, "Numerical features by class (train): positives are older, with higher glucose")
 
     # Figure 8 — confounding structure: age by work type and by smoking status, glucose by hypertension
     groups = [("work_type", "age"), ("smoking_status", "age"), ("hypertension", "avg_glucose_level")]
     other = pd.concat([grouped(by, [f]) for by, f in groups], ignore_index=True)
-    res.table("Numerical features grouped by categorical features (train): location and spread", other,
+    res.table(11, "Numerical features grouped by categorical features (train): location and spread", other,
               {"median": ".2f", "Q1": ".2f", "Q3": ".2f", "IQR": ".2f"})
     m["grouped_other"] = other.to_dict(orient="records")
     fig, axes = plt.subplots(1, 3, figsize=(17, 5.2))
@@ -397,7 +397,7 @@ def stage3(train, res):
         ax.set(title=f"{f} by {by}", xlabel=by, ylabel=UNITS[f])
         ax.legend(handles=[Patch(color=c, alpha=0.7, label=f"{by} = {k}") for k, c in zip(order, GROUP_COLORS)],
                   loc="upper left", fontsize=7)
-    save_figure(fig, 8, "box_groups", "Grouped boxplots (train): work type and smoking status are age proxies")
+    save_figure(fig, 8, "Grouped boxplots (train): work type and smoking status are age proxies")
 
     # Age-stratified check of the 3B associations: does the gap survive within an age band?
     old_age = train.age >= 60
@@ -405,13 +405,16 @@ def stage3(train, res):
     rows = []
     for c in ["hypertension", "heart_disease", "ever_married", "work_type", "smoking_status"]:
         for k in sorted(train[c].unique(), key=str):
-            if k in ("children", "Never_worked"):
-                continue  # no member aged 60 or more
             sel = train[c] == k
+            if not (sel & old_age).any():
+                continue  # a category with no member aged 60 or more has no rate in that band
             rows.append({"feature": c, "category": str(k), "rate, all ages (%)": y[sel].mean() * 100,
-                         "n, age ≥ 18": int((sel & adult).sum()), "rate, age ≥ 18 (%)": y[sel & adult].mean() * 100,
-                         "n, age ≥ 60": int((sel & old_age).sum()), "rate, age ≥ 60 (%)": y[sel & old_age].mean() * 100})
+                         "n, age ≥ 18": int((sel & adult).sum()),
+                         "rate, age ≥ 18 (%)": y[sel & adult].mean() * 100,
+                         "n, age ≥ 60": int((sel & old_age).sum()),
+                         "rate, age ≥ 60 (%)": y[sel & old_age].mean() * 100})
     strat = pd.DataFrame(rows)
+    # Fisher's exact test needs a 2x2 table, so only the binary features are tested within the 60+ band
     fisher = {}
     for c in ["hypertension", "heart_disease", "ever_married"]:
         sub = train[old_age]
@@ -423,7 +426,7 @@ def stage3(train, res):
     m["never_married_60_wilson"] = [x * 100 for x in wilson_interval(nm.sum(), len(nm))]
     mm = train[old_age & (train.ever_married == "Yes")][TARGET]
     m["married_60_wilson"] = [x * 100 for x in wilson_interval(mm.sum(), len(mm))]
-    res.table("Stroke rate per category within age bands (train): what remains after holding age roughly fixed",
+    res.table(12, "Stroke rate per category within age bands (train): what remains after holding age roughly fixed",
               strat, {"rate, all ages (%)": ".2f", "rate, age ≥ 18 (%)": ".2f", "rate, age ≥ 60 (%)": ".2f"})
     m["age_stratified"] = strat.to_dict(orient="records")
     m["rate_age_ge_60"], m["rate_age_lt_60"] = float(y[old_age].mean() * 100), float(y[~old_age].mean() * 100)
@@ -437,6 +440,7 @@ def stage3(train, res):
 
 
 def main():
+    """Run stages 1-3 and write Tables 2-12, Figures 1-8 and results/eda_metrics.json."""
     res = Results("eda")
     raw = load_raw()
     assert raw.shape == (5110, 12) and raw[ID_COLUMN].is_unique
