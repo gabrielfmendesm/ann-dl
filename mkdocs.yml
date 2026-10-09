@@ -132,7 +132,7 @@ plugins:
       allow_errors: false
 
 extra_css:
-  - stylesheets/extra.css
+  - stylesheets/tables.css
 
 extra_javascript:
   - https://unpkg.com/mathjax/es5/tex-mml-chtml.js
