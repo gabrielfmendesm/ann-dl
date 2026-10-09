@@ -10,7 +10,7 @@
   },
   "raw_max_z": {
     "avg_glucose_level": 3.6554206707642667,
-    "bmi": 8.66338470426562
+    "bmi": 8.85178998401772
   },
   "bmi_minmax_q1_median_q3": [
     0.15234822451317298,
@@ -271,6 +271,7 @@
   "tsne_kl_30": 1.0168931484222412,
   "tsne_kl_50": 1.0585031509399414,
   "n_profiles": 364,
+  "n_profiles_shuffled": 440,
   "projection_diagnostics": [
     {
       "space": "Original 24 dimensions",
@@ -327,6 +328,22 @@
       "trustworthiness k=30": 0.9708660671171154,
       "positives among 10-NN of positives (%)": 10.50251256281407,
       "same categorical profile among 10-NN (%)": 68.21673189823875
+    },
+    {
+      "space": "Control: t-SNE perplexity 30 on independently shuffled columns",
+      "trustworthiness k=5": 0.9921649327539235,
+      "trustworthiness k=30": 0.9440297136467112,
+      "positives among 10-NN of positives (%)": 3.969849246231156,
+      "same categorical profile among 10-NN (%)": 59.70156555772994
     }
-  ]
+  ],
+  "versions": {
+    "numpy": "2.5.2",
+    "pandas": "3.0.5",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.0",
+    "umap-learn": "0.5.12",
+    "matplotlib": "3.11.1"
+  },
+  "python": "3.14.3"
 }

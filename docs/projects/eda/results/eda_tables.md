@@ -111,15 +111,15 @@
 
 ### Association of each categorical feature with the target (train, χ² test of independence)
 
-| feature | χ² | dof | p-value | Cramér's V | min expected count |
-|---|---|---|---|---|---|
-| hypertension | 72.4 | 1 | 1.7e-17 | 0.133 | 19.33 |
-| heart_disease | 65.8 | 1 | 5e-16 | 0.127 | 10.76 |
-| ever_married | 46.8 | 1 | 7.9e-12 | 0.107 | 67.57 |
-| work_type | 43.7 | 4 | 7.5e-09 | 0.103 | 0.63 |
-| smoking_status | 23.1 | 3 | 3.9e-05 | 0.075 | 30.47 |
-| Residence_type | 1.1 | 1 | 0.29 | 0.017 | 98.28 |
-| gender | 0.5 | 2 | 0.77 | 0.011 | 0.05 |
+| feature | χ² | dof | p-value | Cramér's V | min expected count | p-value, categories with expected < 5 removed |
+|---|---|---|---|---|---|---|
+| hypertension | 72.4 | 1 | 1.7e-17 | 0.133 | 19.33 | — |
+| heart_disease | 65.8 | 1 | 5e-16 | 0.127 | 10.76 | — |
+| ever_married | 46.8 | 1 | 7.9e-12 | 0.107 | 67.57 | — |
+| work_type | 43.7 | 4 | 7.5e-09 | 0.103 | 0.63 | 2.6e-09 (without Never_worked) |
+| smoking_status | 23.1 | 3 | 3.9e-05 | 0.075 | 30.47 | — |
+| Residence_type | 1.1 | 1 | 0.29 | 0.017 | 98.28 | — |
+| gender | 0.5 | 2 | 0.77 | 0.011 | 0.05 | 0.5 (without Other) |
 
 ### Numerical features by target class (train): location and spread
 
@@ -150,18 +150,18 @@
 
 ### Stroke rate per category within age bands (train): what remains after holding age roughly fixed
 
-| feature | category | rate, all ages (%) | n, age ≥ 18 | rate, age ≥ 18 (%) | n, age ≥ 60 | rate, age ≥ 60 (%) |
-|---|---|---|---|---|---|---|
-| hypertension | 0 | 3.93 | 3018 | 4.77 | 869 | 11.62 |
-| hypertension | 1 | 13.60 | 396 | 13.64 | 235 | 17.87 |
-| heart_disease | 0 | 4.22 | 3193 | 5.07 | 930 | 11.94 |
-| heart_disease | 1 | 16.29 | 221 | 16.29 | 174 | 18.39 |
-| ever_married | No | 1.66 | 714 | 3.08 | 83 | 20.48 |
-| ever_married | Yes | 6.52 | 2700 | 6.52 | 1021 | 12.34 |
-| work_type | Govt_job | 5.36 | 518 | 5.41 | 156 | 12.18 |
-| work_type | Private | 4.93 | 2232 | 5.15 | 569 | 13.53 |
-| work_type | Self-employed | 8.25 | 660 | 8.33 | 379 | 12.40 |
-| smoking_status | Unknown | 3.05 | 700 | 5.29 | 229 | 11.35 |
-| smoking_status | formerly smoked | 7.84 | 691 | 8.10 | 304 | 14.47 |
-| smoking_status | never smoked | 4.73 | 1401 | 5.07 | 420 | 12.86 |
-| smoking_status | smokes | 5.43 | 622 | 5.47 | 151 | 12.58 |
+| feature | category | rate, all ages (%) | n, age ≥ 18 | rate, age ≥ 18 (%) | n, age ≥ 60 | rate, age ≥ 60 (%) | Fisher p, age ≥ 60 |
+|---|---|---|---|---|---|---|---|
+| hypertension | 0 | 3.93 | 3018 | 4.77 | 869 | 11.62 | 0.016 |
+| hypertension | 1 | 13.60 | 396 | 13.64 | 235 | 17.87 | 0.016 |
+| heart_disease | 0 | 4.22 | 3193 | 5.07 | 930 | 11.94 | 0.026 |
+| heart_disease | 1 | 16.29 | 221 | 16.29 | 174 | 18.39 | 0.026 |
+| ever_married | No | 1.66 | 714 | 3.08 | 83 | 20.48 | 0.041 |
+| ever_married | Yes | 6.52 | 2700 | 6.52 | 1021 | 12.34 | 0.041 |
+| work_type | Govt_job | 5.36 | 518 | 5.41 | 156 | 12.18 | — |
+| work_type | Private | 4.93 | 2232 | 5.15 | 569 | 13.53 | — |
+| work_type | Self-employed | 8.25 | 660 | 8.33 | 379 | 12.40 | — |
+| smoking_status | Unknown | 3.05 | 700 | 5.29 | 229 | 11.35 | — |
+| smoking_status | formerly smoked | 7.84 | 691 | 8.10 | 304 | 14.47 | — |
+| smoking_status | never smoked | 4.73 | 1401 | 5.07 | 420 | 12.86 | — |
+| smoking_status | smokes | 5.43 | 622 | 5.47 | 151 | 12.58 | — |

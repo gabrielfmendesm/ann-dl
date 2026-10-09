@@ -61,3 +61,4 @@
 | UMAP n_neighbors 5 | 0.994 | 0.956 | 10.65 | 76.9 |
 | UMAP n_neighbors 15 | 0.987 | 0.969 | 9.05 | 74.2 |
 | UMAP n_neighbors 50 | 0.981 | 0.971 | 10.50 | 68.2 |
+| Control: t-SNE perplexity 30 on independently shuffled columns | 0.992 | 0.944 | 3.97 | 59.7 |

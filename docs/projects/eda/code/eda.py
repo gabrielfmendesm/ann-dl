@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.patches import Patch
-from scipy.stats import chi2_contingency, mannwhitneyu, spearmanr
+from scipy.stats import chi2_contingency, fisher_exact, mannwhitneyu, spearmanr
 
-from common import (CLASS_COLORS, CLASS_LABELS, GROUP_COLORS, NEUTRAL, UNITS, Results,
+from common import (CLASS_COLORS, CLASS_LABELS, GROUP_COLORS, NEUTRAL, RESULTS_DIR, UNITS, Results,
                     save_figure, wilson_interval)
 from preprocessing import (CATEGORICAL_FEATURES, FEATURES, ID_COLUMN, NUMERICAL_FEATURES, SEED, TARGET,
                            load_raw, split)
@@ -65,6 +65,12 @@ def stage1(raw, res):
     m["bmi_extremes"] = sorted(raw.bmi.dropna().nlargest(4).tolist(), reverse=True)
     m["age_min"], m["age_max"], m["age_at_82"] = float(raw.age.min()), float(raw.age.max()), int((raw.age == 82).sum())
     m["gender_other_rows"] = int((raw.gender == "Other").sum())
+    m["fractional_age_max"] = float(raw.age[raw.age % 1 != 0].max())
+    m["children_age_max"] = float(raw.age[raw.work_type == "children"].max())
+    m["never_worked_age_range"] = [float(raw.age[raw.work_type == "Never_worked"].min()),
+                                   float(raw.age[raw.work_type == "Never_worked"].max())]
+    m["smokers_under_12_ages"] = raw.age[(raw.smoking_status == "smokes") & (raw.age < 12)].tolist()
+    m["bmi_below_12"] = raw.loc[raw.bmi < 12, ["age", "bmi"]].values.tolist()
 
     # 1B — leakage audit: the identifier, the row order and the bmi missingness pattern
     rho_id, p_id = spearmanr(raw[ID_COLUMN], raw[TARGET])
@@ -87,6 +93,9 @@ def stage1(raw, res):
     X_train, X_test, y_train, y_test = split(raw)
     assert set(X_train.index).isdisjoint(X_test.index) and len(X_train) + len(X_test) == len(raw)
     m["train_rows"], m["test_rows"] = len(X_train), len(X_test)
+    pd.concat([pd.DataFrame({"row": X_train.index, "id": raw.loc[X_train.index, ID_COLUMN], "partition": "train"}),
+               pd.DataFrame({"row": X_test.index, "id": raw.loc[X_test.index, ID_COLUMN], "partition": "test"})]) \
+        .to_csv(RESULTS_DIR / "split.csv", index=False)
     target_rows = []
     for part, y in [("Full file", raw[TARGET]), ("Train", y_train), ("Test", y_test)]:
         target_rows.append({"partition": part, "rows": len(y), "stroke = 0": int((y == 0).sum()),
@@ -153,19 +162,20 @@ def stage2(train, res):
     for j, c in enumerate(NUM):
         x = train[c].dropna()
         ax = axes[0, j]
-        ax.hist(x, bins=40, color=CLASS_COLORS[0], alpha=0.85, edgecolor="white", linewidth=0.4,
+        bins = np.arange(0, 84, 2) if c == "age" else 40   # 2-year bins aligned on integer ages
+        ax.hist(x, bins=bins, color=CLASS_COLORS[0], alpha=0.85, edgecolor="white", linewidth=0.4,
                 label=f"Training rows (n = {len(x):,})")
         ax.axvline(x.mean(), color="#0b0b0b", lw=1.5, label=f"Mean = {x.mean():.1f}")
         ax.axvline(x.median(), color=CLASS_COLORS[1], lw=1.5, ls="--", label=f"Median = {x.median():.1f}")
         ax.set(title=f"{c} — skewness {x.skew():.2f}", xlabel=UNITS[c], ylabel="Rows")
-        ax.legend(loc="upper right")
+        ax.legend(loc="upper left" if c == "age" else "upper right")
         ax = axes[1, j]
         ax.boxplot(x, orientation="horizontal", widths=0.6, patch_artist=True,
                    boxprops={"facecolor": "#b7d3f6"}, medianprops={"color": CLASS_COLORS[1]},
                    flierprops={"marker": "o", "markersize": 2.5, "alpha": 0.4})
         q1, q3 = x.quantile(.25), x.quantile(.75)
         n_out = int(((x < q1 - 1.5 * (q3 - q1)) | (x > q3 + 1.5 * (q3 - q1))).sum())
-        ax.set(xlabel=UNITS[c], yticks=[], title=f"Boxplot: {n_out} points beyond 1.5×IQR")
+        ax.set(xlabel=UNITS[c], yticks=[], ylabel="Train", title=f"Boxplot: {n_out} points beyond 1.5×IQR")
     axes[0, 1].annotate("second mode", xy=(m["glucose_mode_high"], 40), xytext=(225, 160),
                         arrowprops={"arrowstyle": "->"}, ha="center")
     save_figure(fig, 2, "numerical", "Numerical features (train): symmetric age, bimodal glucose, right-skewed BMI")
@@ -198,11 +208,12 @@ def stage2(train, res):
         for i, (n, s) in enumerate(zip(vc.values, shares)):
             ax.text(n + vc.max() * 0.02, i, f"{n:,} ({s:.1f}%)" if s >= 1 else f"{n:,} ({s:.2f}%)", va="center",
                     fontsize=8)
-        ax.set(title=f"{c} — {len(vc)} categories", xlabel="Training rows", xlim=(0, vc.max() * 1.35))
+        ax.set(title=f"{c} — {len(vc)} categories", xlabel="Training rows", ylabel="Category",
+               xlim=(0, vc.max() * 1.35))
     ax = axes.flat[-1]
     card = pd.Series({c: train[c].nunique() for c in CAT}).sort_values()
     ax.barh(card.index, card.values, color=NEUTRAL, height=0.6, label="Distinct categories")
-    ax.set(title="Cardinality (id: 5,110 distinct, dropped)", xlabel="Distinct categories in train",
+    ax.set(title="Cardinality (id: 5,110 distinct, dropped)", xlabel="Distinct categories in train", ylabel="Feature",
            xticks=range(0, 7))
     ax.legend(loc="lower right")
     fig.legend(handles=[Patch(color=CLASS_COLORS[0], label="Category with ≥ 1% of the training rows"),
@@ -248,6 +259,9 @@ def stage3(train, res):
                         color="white" if abs(mat.iloc[r, c]) > 0.6 else "#0b0b0b")
         ax.set(title=f"{method.capitalize()} (pairwise-complete)", xlabel="Feature", ylabel="Feature")
         fig.colorbar(im, ax=ax, fraction=0.046, label=f"{method.capitalize()} coefficient")
+    fig.legend(handles=[Patch(color="#b7d3f6", label="Pearson r: linear association, pulled by extreme values"),
+                        Patch(color="#f4c4b0", label="Spearman ρ: monotonic association on ranks")],
+               loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.04), fontsize=9)
     save_figure(fig, 4, "correlation", "Numerical correlations (train): no redundant pair, strongest is age × BMI")
 
     # Figure 5 — scatter plots of the three pairs, positives drawn on top
@@ -276,9 +290,17 @@ def stage3(train, res):
                          "95% CI (%)": f"{lo * 100:.1f}–{hi * 100:.1f}"})
         table = pd.crosstab(train[c], y)
         chi2, p, dof, expected = chi2_contingency(table, correction=False)
+        # expected counts below 5 invalidate the approximation: drop those categories and re-test
+        small = table.index[(expected < 5).any(axis=1)]
+        if len(small):
+            kept = table.drop(index=small)
+            chi2_k, p_k, _, _ = chi2_contingency(kept, correction=False)
+            p_kept = f"{p_k:.2g} (without {', '.join(map(str, small))})"
+        else:
+            p_kept = "—"
         assoc.append({"feature": c, "χ²": chi2, "dof": dof, "p-value": p,
                       "Cramér's V": np.sqrt(chi2 / (table.values.sum() * (min(table.shape) - 1))),
-                      "min expected count": expected.min()})
+                      "min expected count": expected.min(), "p-value, categories with expected < 5 removed": p_kept})
     rates = pd.DataFrame(rows)
     res.table("Stroke rate per category (train) with 95% Wilson intervals", rates, {"stroke rate (%)": ".2f"})
     assoc = pd.DataFrame(assoc).sort_values("Cramér's V", ascending=False)
@@ -300,14 +322,14 @@ def stage3(train, res):
                     capsize=3, lw=1, label="95% Wilson interval")
         ax.axvline(base, color=CLASS_COLORS[0], ls="--", lw=1.3, label=f"Train base rate {base:.2f}%")
         ax.set_yticks(ypos, [f"{k} (n={n:,})" for k, n in zip(sub.category, sub.n)])
-        ax.set(title=c, xlabel="Stroke rate (%)", xlim=(0, 25))
+        ax.set(title=c, xlabel="Stroke rate (%)", ylabel="Category (rows)", xlim=(0, 25))
         for i, hi in enumerate(lo_hi[:, 1]):
             if hi > 25:  # tiny groups: the interval runs off the shared axis, so state its upper end
                 ax.text(24.5, i + 0.3, f"interval to {hi:.0f}%", ha="right", fontsize=7)
         ax.legend(loc="lower right", fontsize=7)
     ax = axes.flat[-1]
     ax.barh(assoc.feature[::-1], assoc["Cramér's V"][::-1], color=NEUTRAL, height=0.55, label="Cramér's V")
-    ax.set(title="Strength of association with stroke", xlabel="Cramér's V (0 = none)")
+    ax.set(title="Strength of association with stroke", xlabel="Cramér's V (0 = none)", ylabel="Feature")
     ax.legend(loc="lower right")
     save_figure(fig, 6, "category_target",
                 "Stroke rate by category (train): hypertension, heart disease and marriage multiply it by 3.5–3.9")
@@ -390,6 +412,17 @@ def stage3(train, res):
                          "n, age ≥ 18": int((sel & adult).sum()), "rate, age ≥ 18 (%)": y[sel & adult].mean() * 100,
                          "n, age ≥ 60": int((sel & old_age).sum()), "rate, age ≥ 60 (%)": y[sel & old_age].mean() * 100})
     strat = pd.DataFrame(rows)
+    fisher = {}
+    for c in ["hypertension", "heart_disease", "ever_married"]:
+        sub = train[old_age]
+        fisher[c] = float(fisher_exact(pd.crosstab(sub[c], sub[TARGET])).pvalue)
+    strat["Fisher p, age ≥ 60"] = strat.feature.map(lambda f: f"{fisher[f]:.2g}" if f in fisher else "—")
+    m["fisher_60"] = fisher
+    nm = train[old_age & (train.ever_married == "No")][TARGET]
+    m["never_married_60_strokes"], m["never_married_60_n"] = int(nm.sum()), len(nm)
+    m["never_married_60_wilson"] = [x * 100 for x in wilson_interval(nm.sum(), len(nm))]
+    mm = train[old_age & (train.ever_married == "Yes")][TARGET]
+    m["married_60_wilson"] = [x * 100 for x in wilson_interval(mm.sum(), len(mm))]
     res.table("Stroke rate per category within age bands (train): what remains after holding age roughly fixed",
               strat, {"rate, all ages (%)": ".2f", "rate, age ≥ 18 (%)": ".2f", "rate, age ≥ 60 (%)": ".2f"})
     m["age_stratified"] = strat.to_dict(orient="records")
