@@ -6,7 +6,7 @@ team:
   - Gabriel Fernando Missaka Mendes
   - Eduardo Takei Yaginuma
   - Luca Santana Feltrin
-ai_use: "Claude assisted with the code implementation and the drafting of this report; every number, figure and decision was reviewed and validated by the authors."
+ai_use: "Claude assisted with the code implementation and the drafting of this report; all results and analyses were reviewed and validated by the team."
 ---
 
 # EDA — Stroke Prediction
