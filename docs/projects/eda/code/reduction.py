@@ -73,7 +73,7 @@ def outliers(X_train, y_train, res):
     m["bmi_minmax_q1_median_q3"] = [float((b.quantile(q) - b.min()) / span) for q in (.25, .5, .75)]
 
 
-def pipeline_checks(pre, X_train, X_test, Xt, Xv, names, res):
+def pipeline_checks(pre, raw, X_train, X_test, Xt, Xv, names, res):
     """4C contract: no NaN, shapes, names, train-only statistics, unseen categories."""
     m = res.metrics
     m["train_shape"], m["test_shape"] = list(Xt.shape), list(Xv.shape)
@@ -92,15 +92,16 @@ def pipeline_checks(pre, X_train, X_test, Xt, Xv, names, res):
     res.table(15, "Parameters fitted by the pipeline (training rows only)", pd.DataFrame(rows),
               {"imputation median": ".3f", "scaler mean": ".4f", "scaler std": ".4f"})
     assert np.isclose(log["impute"].statistics_[1], X_train.bmi.median())
-    full = pd.concat([X_train, X_test])
-    m["bmi_median_train"], m["bmi_median_full"] = float(X_train.bmi.median()), float(full.bmi.median())
+    # the full-file medians come from the raw file, read once in stage 1, to show what fitting there would give
+    m["bmi_median_train"], m["bmi_median_full"] = float(X_train.bmi.median()), float(raw.bmi.median())
     m["glucose_median_train"], m["glucose_median_full"] = (float(X_train.avg_glucose_level.median()),
-                                                           float(full.avg_glucose_level.median()))
-    m["num_means_train"] = Xt[:, :3].mean(axis=0).round(6).tolist()
-    m["num_stds_train"] = Xt[:, :3].std(axis=0).round(6).tolist()
-    m["num_means_test"] = Xv[:, :3].mean(axis=0).round(4).tolist()
-    m["num_stds_test"] = Xv[:, :3].std(axis=0).round(4).tolist()
-    m["max_abs_z_train"] = np.abs(Xt[:, :3]).max(axis=0).round(2).tolist()
+                                                           float(raw.avg_glucose_level.median()))
+    scaled = [i for i, n in enumerate(names) if n.startswith(("num__", "log__"))]
+    m["num_means_train"] = Xt[:, scaled].mean(axis=0).round(6).tolist()
+    m["num_stds_train"] = Xt[:, scaled].std(axis=0).round(6).tolist()
+    m["num_means_test"] = Xv[:, scaled].mean(axis=0).round(4).tolist()
+    m["num_stds_test"] = Xv[:, scaled].std(axis=0).round(4).tolist()
+    m["max_abs_z_train"] = np.abs(Xt[:, scaled]).max(axis=0).round(2).tolist()
 
     # A category never seen in training, and missing values everywhere, still give a finite row of the same width
     probe = X_test.iloc[:2].copy()
@@ -146,7 +147,8 @@ def main():
     """Run stage 4 and write Tables 13-18, Figures 9-13 and results/reduction_metrics.json."""
     res = Results("reduction")
     m = res.metrics
-    X_train, X_test, y_train, y_test = split(load_raw())
+    raw = load_raw()
+    X_train, X_test, y_train, y_test = split(raw)
     y = y_train.to_numpy()
 
     outliers(X_train, y_train, res)
@@ -155,7 +157,7 @@ def main():
     Xt = pre.fit_transform(X_train)     # fit on train only
     Xv = pre.transform(X_test)          # test is only transformed
     names = pre.get_feature_names_out()
-    pipeline_checks(pre, X_train, X_test, Xt, Xv, names, res)
+    pipeline_checks(pre, raw, X_train, X_test, Xt, Xv, names, res)
 
     # BMI missingness vs target in train (motivates the indicator)
     miss = X_train.bmi.isna().to_numpy()
@@ -210,9 +212,10 @@ def main():
     res.table(17, "Largest PCA loadings (eigenvector coefficients) of PC1 and PC2", top,
               {"PC1": "+.3f", "PC2": "+.3f"})
     m["loadings"] = load.set_index("feature").to_dict(orient="index")
-    # correlation of the PC scores with the raw numerical features (helps naming the components)
+    # correlation of the PC scores with the scaled numerical columns and the indicator (helps naming the components)
     for i in (0, 1):
-        m[f"pc{i + 1}_corr"] = {c: float(np.corrcoef(P[:, i], Xt[:, j])[0, 1]) for j, c in enumerate(names[:4])}
+        m[f"pc{i + 1}_corr"] = {n: float(np.corrcoef(P[:, i], Xt[:, j])[0, 1])
+                                for j, n in enumerate(names) if not n.startswith("cat__")}
 
     # Figure 10 — PCA scatter, cumulative variance, loadings
     fig, axes = plt.subplots(1, 3, figsize=(18, 5.2))
@@ -275,7 +278,7 @@ def main():
                  "positives among 10-NN of positives (%)": enr, "same categorical profile among 10-NN (%)": agr})
     m["n_profiles_shuffled"] = int(len(set(cat_s)))
     diag = pd.DataFrame(rows)
-    res.table(18, "Projection diagnostics (train, 4,088 rows; base rate 4.87%)", diag,
+    res.table(18, f"Projection diagnostics (train, {len(y):,} rows; base rate {y.mean():.2%})", diag,
               {"trustworthiness k=5": ".3f", "trustworthiness k=30": ".3f",
                "positives among 10-NN of positives (%)": ".2f", "same categorical profile among 10-NN (%)": ".1f"})
     m["projection_diagnostics"] = diag.to_dict(orient="records")

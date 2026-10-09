@@ -42,8 +42,8 @@ def load_raw(path=DATA_PATH):
 def split(df, test_size=0.2):
     """Stratified 80/20 split with a fixed seed; returns X_train, X_test, y_train, y_test.
 
-    The file is sorted by the target (the 249 positives are its first rows), so the split
-    must shuffle; stratification keeps the 4.87% minority rate identical in both parts.
+    The file is sorted by the target (every positive comes first), so the split must shuffle;
+    stratification keeps the minority rate the same in both parts.
     """
     X = df[FEATURES]
     y = df[TARGET]

@@ -44,6 +44,7 @@
   "age_min": 0.08,
   "age_max": 82.0,
   "gender_other_rows": 1,
+  "id_distinct": 5110,
   "fractional_age_max": 1.88,
   "children_age_max": 16.0,
   "never_worked_age_range": [
@@ -339,6 +340,11 @@
     "smoking_status": 3.916310130540898e-05,
     "Residence_type": 0.2897239748893603,
     "gender": 0.7729805830219665
+  },
+  "binary_rate_ratios": {
+    "hypertension": 3.4624163988534704,
+    "heart_disease": 3.864530994087111,
+    "ever_married": 3.9337842190016103
   },
   "by_target": [
     {

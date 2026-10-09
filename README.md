@@ -26,7 +26,7 @@ Every push to `main` publishes the site automatically via GitHub Actions (`mkdoc
 
 ## Reproducing the results
 
-Each report's code lives in `docs/exercises/<exercise>/code/` and rewrites the figures in `docs/exercises/<exercise>/figures/`. From the repository root:
+Each report's code lives in its own `code/` folder (`docs/exercises/<slug>/code/` or `docs/projects/<slug>/code/`) and rewrites the figures in the sibling `figures/`. From the repository root:
 
 ``` shell
 python docs/exercises/data/code/exercise1.py        # also exercise2.py and exercise3.py
