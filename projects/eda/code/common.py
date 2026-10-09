@@ -32,7 +32,7 @@ def save_figure(fig, number, slug, title):
     """Number and title the figure, then write figures/figNN_slug.png."""
     fig.suptitle(f"Figure {number} — {title}", fontsize=13, fontweight="bold")
     fig.tight_layout()
-    path = FIGURES_DIR / f"fig{number:02d}_{slug}.png"
+    path = FIGURES_DIR / f"fig{number}.png"
     fig.savefig(path, bbox_inches="tight")
     plt.close(fig)
     return path

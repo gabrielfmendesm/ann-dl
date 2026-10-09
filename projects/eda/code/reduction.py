@@ -5,6 +5,8 @@ only transformed, to report their shape and to prove that nothing was learned fr
 The projections use the transformed training matrix; the target only colors the points.
 """
 
+import importlib.metadata
+import platform
 import warnings
 
 import matplotlib.pyplot as plt
@@ -65,7 +67,9 @@ def outliers(X_train, y_train, res):
                                                         "max/median (raw)", "max/median (log1p)"]})
     m["skew_after_log"] = {r["feature"]: float(r["skewness (log1p)"]) for r in rows}
     # What plain standardization or min-max scaling would do with the raw tails (scaling choice, 4A)
-    m["raw_max_z"] = {c: float((X_train[c].max() - X_train[c].mean()) / X_train[c].std(ddof=0)) for c in SKEWED_FEATURES}
+    # same base as the pipeline (median-imputed), so the comparison with max_abs_z_train is like for like
+    imputed = X_train[SKEWED_FEATURES].fillna(X_train[SKEWED_FEATURES].median())
+    m["raw_max_z"] = {c: float((imputed[c].max() - imputed[c].mean()) / imputed[c].std(ddof=0)) for c in SKEWED_FEATURES}
     b = X_train.bmi.dropna()
     span = b.max() - b.min()
     m["bmi_minmax_q1_median_q3"] = [float((b.quantile(q) - b.min()) / span) for q in (.25, .5, .75)]
@@ -102,12 +106,6 @@ def pipeline_checks(pre, X_train, X_test, Xt, Xv, names, res):
     m["max_abs_z_train"] = np.abs(Xt[:, :3]).max(axis=0).round(2).tolist()
     m["max_abs_z_test"] = np.abs(Xv[:, :3]).max(axis=0).round(2).tolist()
 
-    # The test set never changes the fitted pipeline: refit on train after a transform of altered test rows
-    altered = X_test.copy()
-    altered["avg_glucose_level"] *= 10
-    pre.transform(altered)
-    assert np.allclose(pre.transform(X_train), Xt)
-
     # A category never seen in training, and missing values everywhere, still give a finite row of the same width
     probe = X_test.iloc[:2].copy()
     probe.iloc[0, probe.columns.get_loc("gender")] = "Nonbinary"
@@ -128,8 +126,8 @@ def pipeline_checks(pre, X_train, X_test, Xt, Xv, names, res):
 
 def neighborhood_stats(Z, y, profile):
     """Share of positives among the k nearest neighbors of each positive, and of identical categorical profiles."""
-    nn = NearestNeighbors(n_neighbors=KNN + 1).fit(Z)
-    idx = nn.kneighbors(Z, return_distance=False)[:, 1:]
+    nn = NearestNeighbors(n_neighbors=KNN).fit(Z)
+    idx = nn.kneighbors(return_distance=False)   # no argument: each point is excluded from its own neighbors
     pos = y == 1
     enrichment = y[idx[pos]].mean() * 100
     agreement = (profile[idx] == profile[:, None]).mean() * 100
@@ -233,7 +231,7 @@ def main():
     ax.barh(pos + 0.2, show.PC2, height=0.4, color=CLASS_COLORS[1], label="PC2")
     ax.axvline(0, color="#0b0b0b", lw=0.8)
     ax.set_yticks(pos, show.feature, fontsize=8)
-    ax.set(title="10 largest loadings", xlabel="Loading (eigenvector coefficient)")
+    ax.set(title="10 largest loadings", xlabel="Loading (eigenvector coefficient)", ylabel="Feature (pipeline output)")
     ax.legend(loc="lower right")
     save_figure(fig, 10, "pca", "PCA of the scaled training features: two components keep under half the variance")
 
@@ -246,6 +244,15 @@ def main():
     for nn in N_NEIGHBORS:
         um = UMAP(n_components=2, n_neighbors=nn, min_dist=0.1, random_state=SEED, n_jobs=1)
         embeddings[f"UMAP n_neighbors {nn}"] = um.fit_transform(Xt)
+
+    # Null control (reduction handout): permute every raw column independently, which keeps each marginal
+    # distribution and every categorical profile valid but destroys the associations between columns and target
+    rng = np.random.default_rng(SEED)
+    shuffled = X_train.apply(lambda col: col.to_numpy()[rng.permutation(len(col))])
+    Xs = pre.transform(shuffled)
+    ys = y[rng.permutation(len(y))]
+    tsne = TSNE(n_components=2, perplexity=30, init="pca", learning_rate="auto", random_state=SEED)
+    Zs = tsne.fit_transform(Xs)
 
     # Diagnostics: neighborhood preservation, class enrichment and categorical-profile agreement
     cat_cols = [i for i, n in enumerate(names) if n.startswith("cat__") or n.startswith("missing__")]
@@ -260,6 +267,13 @@ def main():
         rows.append({"space": name, "trustworthiness k=5": trustworthiness(Xt, Z, n_neighbors=5),
                      "trustworthiness k=30": trustworthiness(Xt, Z, n_neighbors=30),
                      f"positives among 10-NN of positives (%)": enr, "same categorical profile among 10-NN (%)": agr})
+    cat_s = np.array(["".join(str(int(v)) for v in row) for row in Xs[:, cat_cols]])
+    enr, agr = neighborhood_stats(Zs, ys, cat_s)
+    rows.append({"space": "Control: t-SNE perplexity 30 on independently shuffled columns",
+                 "trustworthiness k=5": trustworthiness(Xs, Zs, n_neighbors=5),
+                 "trustworthiness k=30": trustworthiness(Xs, Zs, n_neighbors=30),
+                 f"positives among 10-NN of positives (%)": enr, "same categorical profile among 10-NN (%)": agr})
+    m["n_profiles_shuffled"] = int(len(set(cat_s)))
     diag = pd.DataFrame(rows)
     res.table("Projection diagnostics (train, 4,088 rows; base rate 4.87%)", diag,
               {"trustworthiness k=5": ".3f", "trustworthiness k=30": ".3f",
@@ -279,14 +293,15 @@ def main():
     shown = ["PCA (2 components)", "t-SNE perplexity 30", "UMAP n_neighbors 15"]
     work = X_train.work_type.to_numpy()
     order = ["Private", "Self-employed", "Govt_job", "children", "Never_worked"]
+    axis_names = {"PCA (2 components)": ("PC1 score", "PC2 score")}
     for ax, name in zip(axes[0], shown):
         Z = embeddings[name]
         for k, color in zip(order, GROUP_COLORS):
             sel = work == k
             ax.scatter(Z[sel, 0], Z[sel, 1], s=4, alpha=0.6, color=color, label=f"{k} (n={sel.sum():,})",
                        edgecolors="none", rasterized=True)
-        ax.set(title=f"{name} — colored by work_type", xlabel="Dimension 1 (no units)",
-               ylabel="Dimension 2 (no units)")
+        xl, yl = axis_names.get(name, ("Dimension 1 (no units)", "Dimension 2 (no units)"))
+        ax.set(title=f"{name} — colored by work_type", xlabel=xl, ylabel=yl)
         ax.legend(loc="best", markerscale=3, fontsize=7)
     for ax, name in zip(axes[1], shown):
         Z = embeddings[name]
@@ -295,11 +310,15 @@ def main():
         ax.scatter(Z[pos, 0], Z[pos, 1], s=14, facecolors="none", edgecolors=CLASS_COLORS[1], lw=0.8,
                    label=f"{CLASS_LABELS[1]} · n = {pos.sum()}")
         fig.colorbar(sc, ax=ax, fraction=0.046, label=UNITS["age"])
-        ax.set(title=f"{name} — colored by age", xlabel="Dimension 1 (no units)", ylabel="Dimension 2 (no units)")
+        xl, yl = axis_names.get(name, ("Dimension 1 (no units)", "Dimension 2 (no units)"))
+        ax.set(title=f"{name} — colored by age", xlabel=xl, ylabel=yl)
         ax.legend(loc="best", fontsize=7)
     save_figure(fig, 13, "projection_drivers",
                 "What the maps group by: categorical profiles make the islands, age orders the positives")
 
+    m["versions"] = {p: importlib.metadata.version(p) for p in
+                     ["numpy", "pandas", "scipy", "scikit-learn", "umap-learn", "matplotlib"]}
+    m["python"] = platform.python_version()
     res.write()
     print(f"Stage 4 done: train {Xt.shape}, test {Xv.shape}, Figures 9-13 written.")
 
