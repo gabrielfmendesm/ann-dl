@@ -31,25 +31,32 @@ def save_figure(fig, number, title):
     """Give the figure its numbered title and write it to figures/fig{number}.png."""
     FIGURES_DIR.mkdir(exist_ok=True)
     fig.suptitle(f"Figure {number} — {title}", fontsize=13, fontweight="bold")
-    fig.tight_layout(rect=(0, 0, 1, 1 - 0.45 / fig.get_figheight()))   # keep the panels clear of the title
+    fig.tight_layout(rect=(0, 0, 1, 1 - 0.3 / fig.get_figheight()))   # keep the panels clear of the title
     fig.savefig(FIGURES_DIR / f"fig{number}.png", bbox_inches="tight")
     plt.close(fig)
 
 
 def md_table(df, floatfmt=None):
-    """Render a DataFrame as a Markdown table; floatfmt maps a column to its format spec (default .2f)."""
+    """Render a DataFrame as a Markdown table; floatfmt maps a column to its format spec (default .2f).
+
+    Integers get a thousands separator and negative numbers a true minus sign, as in the prose.
+    """
     floatfmt = floatfmt or {}
     header = "| " + " | ".join(str(c) for c in df.columns) + " |"
     rule = "|" + "|".join("---" for _ in df.columns) + "|"
     rows = []
-    for _, row in df.iterrows():
+    for values in df.astype(object).itertuples(index=False):   # object dtype keeps each cell's own type
         cells = []
-        for c in df.columns:
-            v = row[c]
+        for c, v in zip(df.columns, values):
             if isinstance(v, (float, np.floating)):
-                cells.append(format(v, floatfmt.get(c, ".2f")))
+                text = format(v, floatfmt.get(c, ".2f"))
+            elif isinstance(v, (int, np.integer)) and not isinstance(v, (bool, np.bool_)):
+                text = f"{v:,}"
             else:
-                cells.append(str(v))
+                text = str(v)
+            if isinstance(v, (int, float, np.number)) and text.startswith("-"):
+                text = "−" + text[1:]
+            cells.append(text)
         rows.append("| " + " | ".join(cells) + " |")
     return "\n".join([header, rule, *rows])
 
