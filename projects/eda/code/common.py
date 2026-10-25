@@ -61,6 +61,11 @@ def md_table(df, floatfmt=None):
     return "\n".join([header, rule, *rows])
 
 
+def format_p(p):
+    """A p-value with two significant figures: scientific notation below 0.001, trailing zeros kept above."""
+    return f"{p:.1e}" if p < 0.001 else f"{p:#.2g}"
+
+
 def wilson_interval(successes, n, z=1.96):
     """95% Wilson score interval for a proportion (stable for small n and rates near 0)."""
     if n == 0:

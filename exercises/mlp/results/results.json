@@ -198,7 +198,7 @@
     {
       "#": 9,
       "quantity": "Ex. 4 \u2014 accuracy difference against Ex. 3 (mean over seeds)",
-      "value": "-0.70 points (83.93% vs 84.63%, 10 seeds)"
+      "value": "-0.70 points (83.93% vs 84.63%, mean over 10 seeds)"
     }
   ]
 }

@@ -13,7 +13,7 @@ from matplotlib.patches import Patch, Rectangle
 from scipy.stats import chi2_contingency, fisher_exact, mannwhitneyu, pearsonr, spearmanr
 
 from common import (CLASS_COLORS, CLASS_LABELS, GROUP_COLORS, NEUTRAL, RESULTS_DIR, UNITS, Results,
-                    save_figure, wilson_interval)
+                    format_p, save_figure, wilson_interval)
 from preprocessing import (CATEGORICAL_FEATURES, FEATURES, ID_COLUMN, NUMERICAL_FEATURES, SEED, TARGET,
                            load_raw, split)
 
@@ -133,10 +133,10 @@ def stage1(raw, res):
     ax.legend(handles=[Patch(color=CLASS_COLORS[k], label=CLASS_LABELS[k]) for k in (0, 1)], loc="upper right")
     ax = axes[1]
     row = np.arange(len(raw))
-    ax.plot(row, raw[TARGET].cumsum(), color=CLASS_COLORS[1], lw=2, label="Cumulative stroke = 1 rows")
+    ax.plot(row, raw[TARGET].cumsum(), color=CLASS_COLORS[1], lw=2, label="Cumulative positives (stroke = 1)")
     ax.axvline(int(len(raw) * 0.8), color=NEUTRAL, ls="--", lw=1.2, label="Last 20% of the file (unshuffled 'test')")
     ax.set(title="Positives by position in the CSV: the file is sorted by target",
-           xlabel="Row position in the CSV", ylabel="Cumulative stroke = 1 rows")
+           xlabel="Row position in the CSV", ylabel="Cumulative positives (stroke = 1)")
     ax.legend(loc="center right")
     save_figure(fig, 1, f"Target: {m['pos_pct']:.2f}% positives, all stored at the top of the file")
 
@@ -172,15 +172,18 @@ def stage2(train, res):
     m["glucose_valley"] = float(centers[valley])
     high = glucose > m["glucose_valley"]   # the second mode: everything to the right of the valley
     m["glucose_high_rows"], m["glucose_high_pct"] = int(high.sum()), float(high.mean() * 100)
-    age_bins = pd.Series(np.histogram(train.age, bins=np.arange(0, 84, 2))[0], index=np.arange(0, 82, 2))
-    m["age_tallest_bins"] = {f"{a}-{a + 2}": int(n) for a, n in age_bins.nlargest(3).items()}
+    # 2-year age bins [a, a + 2): the edges run one bin past the oldest age, so numpy's closed last bin
+    # never merges three integer ages
+    age_edges = np.arange(0, np.floor(train.age.max()) + 3, 2)
+    age_counts = pd.Series(np.histogram(train.age, bins=age_edges)[0], index=age_edges[:-1].astype(int))
+    m["age_tallest_bins"] = {f"{a}-{a + 2}": int(n) for a, n in age_counts.nlargest(2).items()}
 
     # Figure 2 — histograms with mean/median and boxplots (shape, modes, outliers)
     fig, axes = plt.subplots(2, 3, figsize=(15, 8), gridspec_kw={"height_ratios": [3, 1.5]})
     for j, c in enumerate(NUM):
         x = train[c].dropna()
         ax = axes[0, j]
-        bins = np.arange(0, 84, 2) if c == "age" else 40   # 2-year bins aligned on integer ages
+        bins = {"age": age_edges, "avg_glucose_level": edges}.get(c, 40)   # glucose: the bins that found the modes
         ax.hist(x, bins=bins, color=CLASS_COLORS[0], alpha=0.85, edgecolor="white", linewidth=0.4,
                 label=f"Training rows (n = {len(x):,})")
         ax.axvline(x.mean(), color="#0b0b0b", lw=1.5, label=f"Mean = {x.mean():.1f}")
@@ -278,11 +281,11 @@ def stage3(train, res):
     for ax, method in zip(axes, ["pearson", "spearman"]):
         mat = train[NUM].corr(method=method)
         im = ax.imshow(mat, cmap="RdBu_r", vmin=-1, vmax=1)
-        ax.set_xticks(range(3), NUM, rotation=20)
-        ax.set_yticks(range(3), NUM)
+        ax.set_xticks(range(len(NUM)), NUM, rotation=20)
+        ax.set_yticks(range(len(NUM)), NUM)
         ax.grid(False)
-        for r in range(3):
-            for c in range(3):
+        for r in range(len(NUM)):
+            for c in range(len(NUM)):
                 ax.text(c, r, f"{mat.iloc[r, c]:.3f}", ha="center", va="center",
                         color="white" if abs(mat.iloc[r, c]) > 0.6 else "#0b0b0b")
         ax.set(title=f"{method.capitalize()} (pairwise-complete)", xlabel="Feature", ylabel="Feature")
@@ -306,7 +309,8 @@ def stage3(train, res):
                        color=CLASS_COLORS[k], label=CLASS_LABELS[k], edgecolors="none")
         ax.set(title=f"ρ = {r['Spearman ρ']:.3f} · r = {r['Pearson r']:.3f} · n = {r['n']:,}",
                xlabel=UNITS[a], ylabel=UNITS[b])
-        ax.legend(loc="upper left", markerscale=1.5)
+    fig.legend(*axes[0].get_legend_handles_labels(), loc="lower center", ncol=2, markerscale=2,
+               bbox_to_anchor=(0.5, -0.06), fontsize=10)
     save_figure(fig, 5, "Numerical pairs (train): broad clouds, stroke cases concentrated at older ages")
 
     # 3B — stroke rate per category with 95% Wilson intervals; chi-square and Cramér's V per feature
@@ -326,11 +330,11 @@ def stage3(train, res):
         small = table.index[(expected < 5).any(axis=1)]
         if len(small):
             kept = table.drop(index=small)
-            chi2_k, p_k, _, _ = chi2_contingency(kept, correction=False)
-            p_kept = f"{p_k:.2g} (without {', '.join(map(str, small))})"
+            p_k = chi2_contingency(kept, correction=False)[1]
+            p_kept = f"{format_p(p_k)} (without {', '.join(map(str, small))})"
         else:
             p_kept = "—"
-        assoc.append({"feature": c, "χ²": chi2, "dof": dof, "p-value": p,
+        assoc.append({"feature": c, "χ²": chi2, "dof": dof, "p-value": format_p(p),
                       "Cramér's V": np.sqrt(chi2 / (table.values.sum() * (min(table.shape) - 1))),
                       "min expected count": expected.min(), "p-value without the sparse categories": p_kept})
     rates = pd.DataFrame(rows)
@@ -339,10 +343,9 @@ def stage3(train, res):
     res.table(8, "Stroke rate per category (train) with 95% Wilson intervals", rates_table, {"stroke rate (%)": ".2f"})
     assoc = pd.DataFrame(assoc).sort_values("Cramér's V", ascending=False)
     res.table(9, "Association of each categorical feature with the target (train, χ² test of independence)", assoc,
-              {"χ²": ".1f", "p-value": ".2g", "Cramér's V": ".3f", "min expected count": ".2f"})
+              {"χ²": ".1f", "Cramér's V": ".3f", "min expected count": ".2f"})
     m["category_rates"] = rates_table.to_dict(orient="records")
     m["cramers_v"] = assoc.set_index("feature")["Cramér's V"].to_dict()
-    m["chi2_p"] = assoc.set_index("feature")["p-value"].to_dict()
 
     # Figure 6 — category stroke rates with intervals, plus the Cramér's V ranking
     fig, axes = plt.subplots(4, 2, figsize=(12, 16))
@@ -387,12 +390,11 @@ def stage3(train, res):
     pos = {f: train.loc[y == 1, f].dropna() for f in NUM}
     neg = {f: train.loc[y == 0, f].dropna() for f in NUM}
     tests = {f: mannwhitneyu(pos[f], neg[f]) for f in NUM}
-    by_target["Mann–Whitney p"] = by_target.feature.map({f: t.pvalue for f, t in tests.items()})
+    by_target["Mann–Whitney p"] = by_target.feature.map({f: format_p(t.pvalue) for f, t in tests.items()})
     by_target["AUC (feature alone)"] = by_target.feature.map(
         {f: t.statistic / (len(pos[f]) * len(neg[f])) for f, t in tests.items()})
     res.table(10, "Numerical features by target class (train): location and spread", by_target,
-              {"median": ".2f", "Q1": ".2f", "Q3": ".2f", "IQR": ".2f", "Mann–Whitney p": ".2g",
-               "AUC (feature alone)": ".3f"})
+              {"median": ".2f", "Q1": ".2f", "Q3": ".2f", "IQR": ".2f", "AUC (feature alone)": ".3f"})
     m["by_target"] = by_target.to_dict(orient="records")
     m["positives_age_ge_60_pct"] = float((train.loc[y == 1, "age"] >= 60).mean() * 100)
     valley = m["glucose_valley"]
@@ -419,7 +421,7 @@ def stage3(train, res):
                      f"IQR {iqr[0]:.1f} → {iqr[1]:.1f}", xlabel="Target class", ylabel=UNITS[f])
     fig.legend(handles=[Patch(color=CLASS_COLORS[k], alpha=0.75, label=CLASS_LABELS[k]) for k in (0, 1)],
                loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.06), fontsize=10)
-    save_figure(fig, 7, "Numerical features by class (train): positives are older, with higher glucose")
+    save_figure(fig, 7, "Numerical features by class (train): positives are older and spread over both glucose modes")
 
     # Figure 8 — confounding structure: age by work type and by smoking status, glucose by hypertension
     groups = [("work_type", "age"), ("smoking_status", "age"), ("hypertension", "avg_glucose_level")]
@@ -440,7 +442,8 @@ def stage3(train, res):
         ax.set(title=f"{f} by {by}", xlabel=by, ylabel=UNITS[f], ylim=(None, train[f].max() * 1.3))
         ax.legend(handles=[Patch(color=c, alpha=0.7, label=f"{by} = {k}") for k, c in zip(order, GROUP_COLORS)],
                   loc="upper left", fontsize=7, ncol=2)
-    save_figure(fig, 8, "Grouped boxplots (train): work type and smoking status are age proxies")
+    save_figure(fig, 8, "Grouped boxplots (train): work type and smoking status are age proxies; "
+                        "hypertension widens glucose")
 
     # Age-stratified check of the 3B associations: disjoint adult bands, 18-59 and 60+. gender and
     # Residence_type are left out because they show no association to begin with (Table 9)
@@ -463,7 +466,7 @@ def stage3(train, res):
             for band, mask in bands.items():
                 row[f"n, {band}"] = int((sel & mask).sum())
                 row[f"rate, {band} (%)"] = y[sel & mask].mean() * 100
-            row["test p, ≥ 60"] = f"{band_tests[c][1]:.2g} ({band_tests[c][0]})"
+            row["test p, ≥ 60"] = f"{format_p(band_tests[c][1])} ({band_tests[c][0]})"
             rows.append(row)
     strat = pd.DataFrame(rows)
     res.table(12, "Stroke rate per category within disjoint adult age bands (train)", strat,
@@ -475,8 +478,9 @@ def stage3(train, res):
         m[f"married_{status}_60"] = {"strokes": int(group[TARGET].sum()), "n": len(group),
                                      "wilson": [x * 100 for x in wilson_interval(group[TARGET].sum(), len(group))],
                                      "age_median": float(group.age.median())}
-    m["married_test_18_59"] = float(fisher_exact(pd.crosstab(train.loc[bands["18–59"], "ever_married"],
-                                                             y[bands["18–59"]])).pvalue)
+    young = bands["18–59"]
+    m["band_tests_18_59"] = {c: float(fisher_exact(pd.crosstab(train.loc[young, c], y[young])).pvalue)
+                             for c in ["hypertension", "heart_disease", "ever_married"]}
     m["rate_age_ge_60"], m["rate_age_lt_60"] = float(y[old].mean() * 100), float(y[~old].mean() * 100)
     m["positives_age_ge_60"] = int(y[old].sum())
     m["age_median_by_married"] = train.groupby("ever_married").age.median().to_dict()
