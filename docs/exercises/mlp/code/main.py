@@ -46,7 +46,7 @@ rows = [
     ("Ex. 3 — most-confused class pair", f"Class {i} and Class {j}"),
     ("Ex. 4 — architecture and test accuracy", f"{ex4['deep_layers']}, {pct(ex4['deep_accuracy'])}"),
     ("Ex. 4 — accuracy difference against Ex. 3 (mean over seeds)",
-     f"{100 * ex4['diff_mean']:+.2f} points ({pct(deep['test_mean'])} vs {pct(shallow['test_mean'])}, {len(ex4['seeds'])} seeds)"),
+     f"{100 * ex4['diff_mean']:+.2f} points ({pct(deep['test_mean'])} vs {pct(shallow['test_mean'])}, mean over {len(ex4['seeds'])} seeds)"),
 ]
 print("\n" + "=" * 72 + "\nRESULTS SUMMARY\n" + "=" * 72)
 for n, (quantity, value) in enumerate(rows, start=1):

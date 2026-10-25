@@ -60,8 +60,12 @@ def run():
           f"({int(np.sum(pred != y_te))} of {len(y_te)} test samples wrong)")
 
     baseline = LogisticRegression(max_iter=1000).fit(X_tr, y_tr)
-    base_acc = float(np.mean(baseline.predict(X_te) == y_te))
+    base_pred = baseline.predict(X_te)
+    base_acc = float(np.mean(base_pred == y_te))
     print(f"  logistic-regression baseline (multinomial, one linear score per class): test accuracy {base_acc:.2%}")
+    print(f"    correct test samples per class: {np.diag(confusion_matrix(y_te, base_pred, labels=range(N_CLASSES))).tolist()} of "
+          f"{np.bincount(y_te).tolist()}; accuracy per generating cluster: "
+          + ", ".join(f"cluster {k} {np.mean(base_pred[k_te == k] == y_te[k_te == k]):.2%}" for k in range(N_CLUSTERS)))
 
     # Figure 4: training loss per epoch
     fig, ax = plt.subplots(figsize=(8, 5))
