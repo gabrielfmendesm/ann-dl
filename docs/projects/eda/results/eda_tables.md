@@ -115,12 +115,12 @@
 | feature | χ² | dof | p-value | Cramér's V | min expected count | p-value without the sparse categories |
 |---|---|---|---|---|---|---|
 | hypertension | 72.4 | 1 | 1.7e-17 | 0.133 | 19.33 | — |
-| heart_disease | 65.8 | 1 | 5e-16 | 0.127 | 10.76 | — |
+| heart_disease | 65.8 | 1 | 5.0e-16 | 0.127 | 10.76 | — |
 | ever_married | 46.8 | 1 | 7.9e-12 | 0.107 | 67.57 | — |
 | work_type | 43.7 | 4 | 7.5e-09 | 0.103 | 0.63 | 2.6e-09 (without Never_worked) |
 | smoking_status | 23.1 | 3 | 3.9e-05 | 0.075 | 30.47 | — |
 | Residence_type | 1.1 | 1 | 0.29 | 0.017 | 98.28 | — |
-| gender | 0.5 | 2 | 0.77 | 0.011 | 0.05 | 0.5 (without Other) |
+| gender | 0.5 | 2 | 0.77 | 0.011 | 0.05 | 0.50 (without Other) |
 
 ### Table 10 — Numerical features by target class (train): location and spread
 
@@ -130,8 +130,8 @@
 | age | stroke = 1 | 199 | 70.00 | 58.50 | 78.00 | 19.50 | 3.4e-57 | 0.834 |
 | avg_glucose_level | stroke = 0 | 3,889 | 91.65 | 77.28 | 112.98 | 35.70 | 3.4e-06 | 0.597 |
 | avg_glucose_level | stroke = 1 | 199 | 104.86 | 78.44 | 195.47 | 117.03 | 3.4e-06 | 0.597 |
-| bmi | stroke = 0 | 3,756 | 27.95 | 23.50 | 33.10 | 9.60 | 0.00027 | 0.584 |
-| bmi | stroke = 1 | 162 | 29.90 | 26.52 | 33.70 | 7.18 | 0.00027 | 0.584 |
+| bmi | stroke = 0 | 3,756 | 27.95 | 23.50 | 33.10 | 9.60 | 2.7e-04 | 0.584 |
+| bmi | stroke = 1 | 162 | 29.90 | 26.52 | 33.70 | 7.18 | 2.7e-04 | 0.584 |
 
 ### Table 11 — Numerical features grouped by categorical features (train): location and spread
 

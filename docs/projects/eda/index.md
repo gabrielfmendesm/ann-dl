@@ -15,22 +15,22 @@ ai_use: "Claude assisted with the code implementation and the drafting of this r
 
 This report explores the dataset that the classification project will use until the end of the semester: which recorded demographic and health features are associated with a stroke, what makes the data hard, and how to turn it into an input matrix for a neural network. No model is trained here.
 
-**Approach.** The code is split into six files under `code/`: `preprocessing.py` (the data loading, the split and the importable pipeline — nothing is fitted at import), `eda.py` (stages 1–3: inspection, univariate and bivariate analysis, Tables 2–12, Figures 1–8), `reduction.py` (stage 4: outliers, pipeline checks, PCA, t-SNE and UMAP, Tables 13–18, Figures 9–13), `common.py` (paths, colors, figure saving and result collection), `main.py`, which runs `eda.py` and then `reduction.py`, and `check_report.py`, which verifies after a run that every table in this report is identical to the generated one and that the results summary quotes the stored numbers. Every table, number and figure in this report is reproduced, with the fixed seed `random_state=42`, by installing `requirements.txt` and running, from the repository root:
+**Approach.** The code is split into six files under `code/`: `preprocessing.py` (the data loading, the split and the importable pipeline — nothing is fitted at import), `eda.py` (stages 1–3: inspection, univariate and bivariate analysis, Tables 2–12, Figures 1–8), `reduction.py` (stage 4: outliers, pipeline checks, PCA, t-SNE and UMAP, Tables 13–18, Figures 9–13), `common.py` (paths, colors, figure saving and result collection), `main.py`, which runs `eda.py` and then `reduction.py`, and `check_report.py`, which verifies after a run that every generated table (Tables 2–18) appears in this report exactly as produced and that the results summary quotes the stored numbers. Every table, number and figure in this report is reproduced, with the fixed seed `random_state=42`, by installing `requirements.txt` and running, from the repository root:
 
 ```
 python docs/projects/eda/code/main.py
 ```
 
-The run takes about 90 seconds on a laptop. It writes Figures 1–13 to `figures/` and, under `results/`, every table as `tableNN.csv` (NN is the table's number in this report) and in Markdown, every number quoted as JSON, and the split as `split.csv`. The CSV is committed at `data/stroke-prediction/` (SHA-256 `644d473b05d2797006bd94865e4f8bb057f0c721617911613c82c8fcfc707420`), so the script runs from a clean clone.
+The run takes about 90 seconds on a laptop. It writes Figures 1–13 to `figures/` and, under `results/`, every generated table as `tableNN.csv` (NN is the table's number in this report) and in Markdown, every number quoted as JSON, and the split as `split.csv`. The CSV is committed at `data/stroke-prediction/` (SHA-256 `644d473b05d2797006bd94865e4f8bb057f0c721617911613c82c8fcfc707420`), so the script runs from a clean clone.
 
 **Rule followed throughout.** The full file is used only for the stage-1 inventory: missing values, duplicates, consistency checks, the leakage audit and the target distribution. The split happens right after it (1D). From then on, every statistic, figure and fitted parameter comes from the 4,088 training rows. The 1,022 test rows are only transformed by the finished pipeline, to report their shape and to prove that nothing was learned from them.
 
 **Challenges.**
 
 - *The file is sorted by the target.* The 249 positives are its first 249 rows, so a sequential cut that keeps the last 20% as the test set would hold no positive at all. The split shuffles and stratifies.
-- *Missing values that carry information.* BMI is missing 5.4 times more often among the positives (18.59% against 3.42%). Imputing it silently would erase that signal, and dropping the rows would remove 18.59% of the training positives; the pipeline imputes and keeps an indicator.
+- *Missing values that carry information.* BMI is missing 5.4 times more often among the training positives (18.59% against 3.42%). Imputing it silently would erase that signal, and dropping the rows would remove 18.59% of the training positives; the pipeline imputes and keeps an indicator.
 - *Outliers that are a population.* The 503 glucose values that the 1.5×IQR rule flags are the second mode of a bimodal distribution, with a stroke rate of 13.12%. Nothing is deleted or clipped; the tails are compressed with `log1p`.
-- *Categories that are age in disguise.* Marriage, work type and smoking status look like risk factors until age is held fixed. Section 3C re-tests them within disjoint age bands, and one effect changes sign.
+- *Categories that are age in disguise.* Marriage, work type and smoking status look like risk factors until age is held fixed. Section 3C re-tests them within disjoint age bands, and one effect appears to change sign.
 - *Islands that are encoding geometry.* t-SNE and UMAP break the data into dozens of islands. A control run on independently shuffled columns measures how much of that structure the one-hot encoding produces on its own.
 
 ``` python title="code/main.py"
@@ -96,7 +96,7 @@ The run takes about 90 seconds on a laptop. It writes Figures 1–13 to `figures
 | smoking_status | 0 | 0.00 |
 | stroke | 0 | 0.00 |
 
-**Disguised missing values.** Table 2 misses one: **`smoking_status = Unknown`**, carried by 1,544 rows (30.22% of the file) and defined by the publisher as "information unavailable". It is not random: 682 of these rows are patients under 18, and in training 498 of the 554 `children` rows are `Unknown`. Children were apparently not asked, which makes the category informative rather than noise (section 4A keeps it as its own category).
+**Disguised missing values.** Table 2 misses one: **`smoking_status = Unknown`**, carried by 1,544 rows (30.22% of the file), which the publisher says means "the information is unavailable for this patient". It is not random: 682 of these rows are patients under 18, and in training 498 of the 554 `children` rows are `Unknown`. Children were apparently not asked, which makes the category informative rather than noise (section 4A keeps it as its own category).
 
 **Duplicates, impossible and inconsistent values.** Every check is quantified in Table 3.
 
@@ -122,7 +122,7 @@ The run takes about 90 seconds on a laptop. It writes Figures 1–13 to `figures
 
 - No duplicates of any kind, no constant column and no value outside the documented vocabularies.
 - No value violates a hard domain constraint: ages lie in (0, 82], glucose in [55.12, 271.74] and BMI in [10.3, 97.6], all positive. The 115 fractional ages are all below 2 years (maximum 1.88), so they are infants' ages written as fractions of a year (0.08 ≈ 1 month), not errors.
-- **Implausible but not impossible values** are flagged, not deleted. 13 BMIs are above 60 (maximum 97.6, then 92.0, 78.0 and 71.9). Three are below 12: a 1.24-year-old at 10.3, and two adults (40 years at 11.5, 79 years at 11.3) whose values are very likely entry errors. One 10-year-old is recorded as a current smoker, and `gender = Other` occurs once.
+- **Implausible but not impossible values** are flagged, not deleted. Thirteen BMIs are above 60 (maximum 97.6, then 92.0, 78.0 and 71.9). Three are below 12: a 1.24-year-old at 10.3, and two adults (40 years at 11.5, 79 years at 11.3) whose values are probably entry errors. One 10-year-old is recorded as a current smoker, and `gender = Other` occurs once.
 - **Consistent cross-column relations:** no `children` row is 18 or older (the oldest is 16), no one under 18 is married, and `Never_worked` covers ages 13–23 only.
 
 **Leakage audit and columns to drop.** For every column, the course's question is asked: *"Would I have had this, exactly this, at the moment I had to make the prediction?"*
@@ -130,7 +130,7 @@ The run takes about 90 seconds on a laptop. It writes Figures 1–13 to `figures
 - **`id` — dropped.** It is an identifier, not a measurement. Its Spearman correlation with the target is 0.0065 (p = 0.64), so it shows no association with the target. It is also unique, so there are no repeated patients to group in the split.
 - **Row order leaks the target.** The 249 positives occupy rows 1–249 of the CSV, and every negative comes after them (Figure 1, right). A sequential cut that keeps the last 20% of the file as the test set would hold **0 positives**. Positional information (the row index, or a sequential cut) must never reach a model, and the split below shuffles.
 - **The BMI missingness is suspiciously related to the target.** The stroke rate is 19.90% (40 of 201) when `bmi` is missing, against 4.26% (209 of 4,909) when it is observed (on the training rows alone, 21.76% against 4.13%, Figure 9). A plausible mechanism is that BMI was not recorded for patients admitted *because of* a stroke. If so, "BMI is missing" is partly a consequence of the label. It is kept as an indicator (4A) because the information is real in this file, but it is listed as a leakage risk with a test plan (section 5).
-- **No smoking-gun feature.** The course flags any feature with a correlation above 0.95 with the target. The largest Pearson correlation with `stroke` is 0.245, for `age` (then 0.135 for `heart_disease`, 0.132 for glucose, 0.128 for `hypertension` and 0.042 for BMI), and the relation of age to stroke is clinically expected; as a single feature, age reaches an AUC of 0.834 (Table 10). Among the categorical features, the largest Cramér's V is 0.133 (Table 9).
+- **No smoking-gun feature.** The course flags any feature with a correlation above 0.95 with the target. The largest Pearson correlation with `stroke` is 0.245, for `age` (then 0.135 for `heart_disease`, 0.132 for glucose, 0.128 for `hypertension` and 0.042 for BMI), and the relation of age to stroke is clinically expected; as a single feature, age reaches an AUC of 0.834 on the training rows (Table 10). Among the categorical features, the largest Cramér's V is 0.133 (Table 9).
 - **Timing of the clinical flags is unknown.** `hypertension` and `heart_disease` might have been recorded after the stroke. Nothing in the file can settle this, so it is a modeling risk, not a reason to drop them.
 - **No constant column** and no other identifier.
 
@@ -187,9 +187,9 @@ Figure 2 — Histograms, with the mean, the median and (for glucose) the valley 
 
 The figure shows histograms, to read the shape and the modes, with boxplots below, to count the points beyond 1.5×IQR. The mean is drawn next to the median because their gap is the cheapest skewness diagnostic.
 
-- **`age`** — roughly uniform between 0 and 82 years, with a slight left skew (−0.16; mean 43.35 < median 45.00) and a flat shape (excess kurtosis −0.98). The two tallest 2-year bins are the last ones, 78–80 (149 rows) and 80–82 (143 rows), and no patient is older than 82. No point lies beyond the IQR fences.
-- **`avg_glucose_level`** — strongly right-skewed (1.56; mean 106.32 > median 91.94) and, above all, **bimodal**. On a histogram with 10 mg/dL bins, the main mode is near 85 mg/dL and a second mode near 205 mg/dL, separated by a valley near 175 mg/dL (dotted line in Figure 2); 487 training rows (11.91%) lie to the right of the valley. The boxplot flags 503 points as "outliers", but they are not isolated errors: they are the second mode — a subpopulation, plausibly diabetic patients, whose diagnosis is not a column of the file.
-- **`bmi`** — right-skewed (1.12; mean 28.92 > median 28.00) with a heavy right tail (excess kurtosis 3.84). 90 points lie beyond the upper fence of 47.35, and the maximum is 97.6.
+- **`age`** — roughly uniform between 0 and 82 years, with a slight left skew (−0.16; mean 43.35 < median 45.00) and a flat shape (excess kurtosis −0.98). The tallest 2-year bin is 78–80 (149 rows), just above 54–56 (141 rows), and no patient is older than 82. No point lies beyond the IQR fences.
+- **`avg_glucose_level`** — strongly right-skewed (1.56; mean 106.32 > median 91.94) and, above all, **bimodal**. On the 10 mg/dL bins of Figure 2, the main mode is near 85 mg/dL and a second mode near 205 mg/dL, separated by a valley near 175 mg/dL (dotted line in Figure 2); 487 training rows (11.91%) lie to the right of the valley. The boxplot flags 503 points as "outliers", but they are not isolated errors: they are the second mode — a subpopulation, plausibly diabetic patients, whose diagnosis is not a column of the file.
+- **`bmi`** — right-skewed (1.12; mean 28.92 > median 28.00) with a heavy right tail (excess kurtosis 3.84). Ninety points lie beyond the upper fence of 47.35, and the maximum is 97.6.
 
 **Conclusion — Figure 2.** Age needs only rescaling. Glucose and BMI exceed the course's skewness threshold of 1, and glucose additionally mixes two populations. *This implies that* glucose and BMI need a log transform before standardization (4A), and that the 1.5×IQR rule cannot be used to delete glucose rows, since it would delete the second mode.
 
@@ -248,7 +248,7 @@ Figure 3 — Frequency of every category in the training rows, rare categories (
 **Method: Spearman.** Spearman ρ is the primary coefficient. Glucose is bimodal and BMI heavy-tailed (Table 5), and Pearson's r measures only linear association and is pulled by extreme points. Following the course's advice to compute both side by side, the gap between them is itself read as a diagnostic:
 
 - **age × bmi** — ρ = 0.381 > r = 0.336. The relation is monotonic but curved: BMI rises quickly through childhood, then flattens (Figure 5, middle).
-- **age × glucose** — r = 0.233 > ρ = 0.141. A group of aligned points inflates r: the second glucose mode is concentrated in older patients (median age 62 to the right of the valley, against 42 to its left).
+- **age × glucose** — r = 0.233 > ρ = 0.141. A cluster of older, high-glucose patients inflates r: the second glucose mode is concentrated in older patients (median age 62 to the right of the valley, against 42 to its left).
 
 ![Figure 4 — Pearson and Spearman correlation matrices](figures/fig4.png)
 /// caption
@@ -262,7 +262,7 @@ Figure 4 — Pearson and Spearman correlation matrices of the numerical features
 Figure 5 — Scatter plots of the three numerical pairs, training rows, with the stroke cases drawn on top.
 ///
 
-**Conclusion — Figure 5.** The age × BMI association is a **childhood growth effect**. Among adults with an observed BMI (age ≥ 18, n = 3,259), the same Spearman coefficient falls from 0.381 to 0.083 (Table 7, last row): the pooled correlation is mostly a mixture effect of children and adults. The plots also show where the positives sit: at older ages, in both glucose modes, and with BMI in the bulk of its distribution (20–45 kg/m²). *This implies that* correlations computed on the pooled data overstate the redundancy between age and BMI, and that age is the variable organizing the positives.
+**Conclusion — Figure 5.** The age × BMI association comes mostly from **childhood growth**. Among adults with an observed BMI (age ≥ 18, n = 3,259), the same Spearman coefficient falls from 0.381 to 0.083 (Table 7, last row): the pooled correlation is mostly a mixture effect of children and adults. The plots also show where the positives sit: at older ages, in both glucose modes, and with BMI in the central range of its distribution. *This implies that* correlations computed on the pooled data overstate the redundancy between age and BMI, and that age is the variable organizing the positives.
 
 ### B — Categorical × target
 
@@ -296,19 +296,19 @@ Figure 5 — Scatter plots of the three numerical pairs, training rows, with the
 | feature | χ² | dof | p-value | Cramér's V | min expected count | p-value without the sparse categories |
 |---|---|---|---|---|---|---|
 | hypertension | 72.4 | 1 | 1.7e-17 | 0.133 | 19.33 | — |
-| heart_disease | 65.8 | 1 | 5e-16 | 0.127 | 10.76 | — |
+| heart_disease | 65.8 | 1 | 5.0e-16 | 0.127 | 10.76 | — |
 | ever_married | 46.8 | 1 | 7.9e-12 | 0.107 | 67.57 | — |
 | work_type | 43.7 | 4 | 7.5e-09 | 0.103 | 0.63 | 2.6e-09 (without Never_worked) |
 | smoking_status | 23.1 | 3 | 3.9e-05 | 0.075 | 30.47 | — |
 | Residence_type | 1.1 | 1 | 0.29 | 0.017 | 98.28 | — |
-| gender | 0.5 | 2 | 0.77 | 0.011 | 0.05 | 0.5 (without Other) |
+| gender | 0.5 | 2 | 0.77 | 0.011 | 0.05 | 0.50 (without Other) |
 
 ![Figure 6 — Stroke rate by category](figures/fig6.png)
 /// caption
 Figure 6 — Stroke rate per category with 95% Wilson intervals against the training base rate, and Cramér's V per feature.
 ///
 
-**Conclusion — Figure 6.** Five features change the stroke rate well beyond the training base rate of 4.87%:
+**Conclusion — Figure 6.** Five features move the stroke rate away from the training base rate of 4.87%, with 95% intervals that exclude it:
 
 - `heart_disease`: 16.29% when present against 4.22% when absent (3.9×).
 - `hypertension`: 13.60% against 3.93% (3.5×).
@@ -316,7 +316,7 @@ Figure 6 — Stroke rate per category with 95% Wilson intervals against the trai
 - `work_type`: from 0.18% for `children` (1 of 554) to 8.25% for `Self-employed`.
 - `smoking_status`: from 3.05% for `Unknown` to 7.84% for `formerly smoked`.
 
-`Residence_type` (Cramér's V 0.017, p = 0.29) and `gender` (V 0.011, p = 0.77) show no detectable association. The χ² approximation is unreliable for `work_type` and `gender`, whose minimum expected cell counts (0.63 and 0.05) fall below the minimum of 5 set by the course's EDA handout, because of `Never_worked` and `Other`. The handout's instruction is to remove or group those categories and show that the conclusion does not change; repeated without them (last column of Table 9), `work_type` stays significant (p = 2.6e-09) and `gender` stays null (p = 0.5). *This implies that* the clinical flags carry real signal. The social categories (marriage, work, smoking) need the age check of 3C before being read as risk factors.
+`Residence_type` (Cramér's V 0.017, p = 0.29) and `gender` (V 0.011, p = 0.77) show no detectable association. The χ² approximation is unreliable for `work_type` and `gender`, whose minimum expected cell counts (0.63 and 0.05) fall below the expected count of 5 that the course's EDA handout requires in most cells, because of `Never_worked` and `Other`. The handout's instruction is to remove or group those categories and show that the conclusion does not change; repeated without them (last column of Table 9), `work_type` stays significant (p = 2.6e-09) and `gender` stays null (p = 0.50). *This implies that* the clinical flags carry real signal. The social categories (marriage, work, smoking) need the age check of 3C before being read as risk factors.
 
 ### C — Numerical × categorical
 
@@ -328,8 +328,8 @@ Figure 6 — Stroke rate per category with 95% Wilson intervals against the trai
 | age | stroke = 1 | 199 | 70.00 | 58.50 | 78.00 | 19.50 | 3.4e-57 | 0.834 |
 | avg_glucose_level | stroke = 0 | 3,889 | 91.65 | 77.28 | 112.98 | 35.70 | 3.4e-06 | 0.597 |
 | avg_glucose_level | stroke = 1 | 199 | 104.86 | 78.44 | 195.47 | 117.03 | 3.4e-06 | 0.597 |
-| bmi | stroke = 0 | 3,756 | 27.95 | 23.50 | 33.10 | 9.60 | 0.00027 | 0.584 |
-| bmi | stroke = 1 | 162 | 29.90 | 26.52 | 33.70 | 7.18 | 0.00027 | 0.584 |
+| bmi | stroke = 0 | 3,756 | 27.95 | 23.50 | 33.10 | 9.60 | 2.7e-04 | 0.584 |
+| bmi | stroke = 1 | 162 | 29.90 | 26.52 | 33.70 | 7.18 | 2.7e-04 | 0.584 |
 
 ![Figure 7 — Numerical features by class](figures/fig7.png)
 /// caption
@@ -338,11 +338,11 @@ Figure 7 — Boxplots of the numerical features by target class, training rows.
 
 **Conclusion — Figure 7.**
 
-- **Age differs in location and spread.** The median rises from 44 to 70 years, and the IQR shrinks from 35 to 19.5, since positives are concentrated in old age. 143 of the 199 training positives (71.86%) are 60 or older, and the stroke rate is 12.95% at 60+ against 1.88% below 60. Age alone reaches an AUC of 0.834.
+- **Age differs in location and spread.** The median rises from 44 to 70 years, and the IQR shrinks from 35 to 19.5, since positives are concentrated in old age. Of the 199 training positives, 143 (71.86%) are 60 or older, and the stroke rate is 12.95% at 60+ against 1.88% below 60. Age alone reaches an AUC of 0.834.
 - **Glucose differs mainly in spread.** The median rises only from 91.65 to 104.86, but the IQR more than triples, from 35.70 to 117.03, because positives populate both glucose modes (AUC 0.597). To the right of the valley (above 175 mg/dL) the stroke rate is 12.94%, against 3.78% to its left.
 - **BMI differs only slightly in both.** The median goes from 27.95 to 29.90 and the IQR narrows from 9.60 to 7.18 (AUC 0.584).
 
-*This implies that* no single numerical feature separates the classes. Age is the strongest signal, and glucose matters through its second mode rather than through its center.
+*This implies that* no single numerical feature separates the classes cleanly (the best AUC is 0.834, for age). Age is the strongest signal, and glucose matters through its second mode rather than through its center.
 
 **Table 11 — Numerical features grouped by categorical features (train).**
 
@@ -373,7 +373,7 @@ Figure 8 — Grouped boxplots: age by work type, age by smoking status and gluco
 
 *This implies that* the categorical effects of 3B have to be re-checked with age held fixed. Table 12 does it.
 
-**Table 12 — Stroke rate per category within disjoint adult age bands (train).** The bands 18–59 and 60 or more hold age roughly fixed; the last column tests the association inside the 60+ band (Fisher's exact test for the binary features, Pearson's χ² without correction for the others). `children` and `Never_worked` are omitted because they have no member aged 60 or more, and `gender` and `Residence_type` because they show no association to begin with (Table 9).
+**Table 12 — Stroke rate per category within disjoint adult age bands (train).** The bands 18–59 and 60 or more reduce, but do not remove, the age differences between categories; the last column tests the association inside the 60+ band (Fisher's exact test for the binary features, Pearson's χ² without correction for the others). `children` and `Never_worked` are omitted because they have no member aged 60 or more, and `gender` and `Residence_type` because they show no association to begin with (Table 9).
 
 | feature | category | rate, all ages (%) | n, 18–59 | rate, 18–59 (%) | n, ≥ 60 | rate, ≥ 60 (%) | test p, ≥ 60 |
 |---|---|---|---|---|---|---|---|
@@ -393,9 +393,11 @@ Figure 8 — Grouped boxplots: age by work type, age by smoking status and gluco
 
 The age bands separate the real signals from the age proxies:
 
-- **The clinical flags survive the control.** Within each band, hypertension still goes with a higher stroke rate (2.00% → 7.45% at 18–59, 11.62% → 17.87% at 60+, Fisher p = 0.016), and so does heart disease (2.25% → 8.51% and 11.94% → 18.39%, p = 0.026). At 60+ the ratio is about 1.5×, far below the unadjusted 3.5–3.9×.
-- **The work and smoking effects disappear.** Within the 60+ band neither feature is associated with stroke (χ² p = 0.84 and 0.76): `Self-employed` (12.40%) is no longer above `Private` (13.53%), and `formerly smoked` (14.47%) is close to `never smoked` (12.86%).
+- **The clinical flags survive the control.** Within each band, hypertension still goes with a higher stroke rate (2.00% → 7.45% at 18–59, Fisher p = 0.00027; 11.62% → 17.87% at 60+, p = 0.016), and so does heart disease (2.25% → 8.51%, p = 0.024; 11.94% → 18.39%, p = 0.026). At 60+ the ratio is about 1.5×, far below the unadjusted 3.5–3.9×.
+- **The work and smoking effects disappear at 60+.** Within that band neither feature is associated with stroke (χ² p = 0.84 and 0.76): `Self-employed` (12.40%) is no longer above `Private` (13.53%), and `formerly smoked` (14.47%) is close to `never smoked` (12.86%).
 - **Marriage changes sign.** At 18–59 the married still have the higher rate (2.98% against 0.79%, Fisher p = 0.0011), but at 60+ the never-married do: 20.48% (17 of 83; 95% Wilson 13.2–30.4%) against 12.34% (10.5–14.5%), Fisher p = 0.041, uncorrected for the five tests of the table. A sign change between strata is the pattern of Simpson's paradox: overall the median age is 54 for the married and 18 for the never-married, so the unadjusted 3.9× mostly reflects age. With 17 events, and the never-married still slightly older within the 60+ band (median 73 against 71), the reversal itself is only suggestive.
+
+All p-values in Table 12 and above are uncorrected. With a Holm correction over the five tests of the 60+ band none would stay below 0.05, so the evidence for the clinical flags rests on their consistency across both bands rather than on any single test.
 
 *This implies that* the network must see age together with the categorical features, and that none of the social categories can be presented as a risk factor.
 
@@ -457,7 +459,7 @@ Figure 9 — Stroke rate by BMI missingness (left) and the distributions of gluc
 **3 — Categorical encoding.**
 
 - **One-hot encoding for all 7 categorical features**, the two integer flags included. They have only 2–5 categories each (Table 6), which is far below the 20–50 categories up to which the course calls one-hot "the honest choice". Their categories have no order, so an ordinal code would invent comparisons.
-- **Full one-hot, no dropped level.** The same matrix feeds the distance-based projections of 4B. Dropping a level, as `drop="first"` does, would place the dropped category closer to every other one (41% closer with three categories, as the course lab shows). A neural network is not hurt by the redundant column.
+- **Full one-hot, no dropped level.** The same matrix feeds the distance-based projections of 4B. Dropping a level, as `drop="first"` does, would place the dropped category closer to every other one: with three categories it sits at distance 1 from the others, against √2 between them, as the course lab shows. A neural network is not hurt by the redundant column.
 - **Rare categories are kept as they are.** The course's normalization handout recommends grouping rare levels only for features with 10–50 levels ("below 10 levels, one-hot is fine"); here every feature has at most 5. Grouping would also only rename the two rare categories, since each feature has just one: the single `Other` row for `gender` and the 13 `Never_worked` rows for `work_type`.
 - **A category that is new in the test set** is encoded as an all-zero block (`handle_unknown="ignore"`), never as a known category. The real test set happens to contain no unseen category; the behavior is therefore verified with a probe (4C).
 
@@ -483,10 +485,10 @@ The three projections all use the same matrix: the 4,088 training rows transform
 
 **PCA.**
 
-- **Variance.** Fitted with all 24 components. The total variance is 6.08: 3.00 from the three standardized numerical columns, the rest from 0/1 columns, each holding at most p(1−p) ≤ 0.25. **7 components have zero variance**, one per categorical feature, because each full one-hot block always sums to 1. So only 17 directions carry information.
+- **Variance.** Fitted with all 24 components. The total variance is 6.08: 3.00 from the three standardized numerical columns, the rest from 0/1 columns, each holding at most p(1−p) ≤ 0.25. **Seven components have zero variance**, one per categorical feature, because each full one-hot block always sums to 1. So only 17 directions carry information.
 - **PC1 explains 30.80% and PC2 15.20%, so PC1 + PC2 = 46.00%.** Reaching 80% takes 7 components, 90% takes 10, and 95% takes 12 (Table 16). A 2D picture therefore hides more than half of the variance.
 
-**Table 16 — PCA explained variance (first 8 of 24 components).**
+**Table 16 — PCA explained variance (first 12 of 24 components).**
 
 | component | explained (%) | cumulative (%) |
 |---|---|---|
@@ -538,7 +540,7 @@ Figure 10 — PCA of the transformed training matrix: scores colored by the targ
 Figure 11 — t-SNE of the transformed training matrix at perplexity 5, 30 and 50, colored by the target.
 ///
 
-**Conclusion — Figure 11.** Perplexity 5 breaks the data into hundreds of short filaments; perplexities 30 and 50 gather them into a few dozen islands. The positives are scattered over many islands, denser on the right of the perplexity-30 and -50 maps, with no island of their own. *This implies that* the local structure is real and stable across perplexities (Table 18), but it is not a stroke/no-stroke structure.
+**Conclusion — Figure 11.** Perplexity 5 breaks the data into hundreds of short filaments; perplexities 30 and 50 gather them into a few dozen islands. The positives are scattered over many islands, denser on the right of the perplexity-30 and -50 maps, with no island of their own. *This implies that* the local structure is stable across perplexities (Table 18), though part of it comes from the one-hot encoding itself (the control row of Table 18), and it is not a stroke/no-stroke structure.
 
 ![Figure 12 — UMAP with three n_neighbors values](figures/fig12.png)
 /// caption
@@ -554,7 +556,7 @@ Figure 12 — UMAP of the transformed training matrix at n_neighbors 5, 15 and 5
 Figure 13 — PCA, t-SNE and UMAP (one per row) colored by work type (left) and by age, with the stroke cases circled (right).
 ///
 
-**Conclusion — Figure 13.** Colored by `work_type` (left column), the t-SNE and UMAP islands are homogeneous blocks of categories — children form islands of their own — while PCA separates only `children`, at low PC1, and overlaps the other categories. Colored by age (right column), every map shows the positives on the oldest points, whatever the island. *This implies that* the nonlinear maps are organized by the categorical profiles while the risk follows age across them, so the islands are not stroke subtypes.
+**Conclusion — Figure 13.** Colored by `work_type` (left column), the t-SNE and UMAP islands are largely single-category blocks — `children` and `Private` form islands of their own, while `Self-employed` and `Govt_job` share the central ones — whereas PCA separates only `children`, at low PC1, and overlaps the other categories. Colored by age (right column), almost all positives sit on the oldest points in every map, whatever the island. *This implies that* the nonlinear maps are organized by the categorical profiles while the risk follows age across them, so the islands are not stroke subtypes.
 
 **Table 18 — Projection diagnostics (train, 4,088 rows; base rate 4.87%).** Trustworthiness measures how well each map keeps the original neighbors (k = 5 and k = 30). The last two columns count, among each point's 10 nearest neighbors in the map, the share that are positive (computed around the positives only) and the share with exactly the same categorical profile — the 7 categorical features plus the BMI indicator.
 
@@ -570,10 +572,10 @@ Figure 13 — PCA, t-SNE and UMAP (one per row) colored by work type (left) and 
 | UMAP n_neighbors 50 | 0.981 | 0.971 | 10.50 | 68.2 |
 | Control: t-SNE perplexity 30 on independently shuffled columns | 0.992 | 0.944 | 3.97 | 59.7 |
 
-- **The islands are categorical profiles.** The training set holds 364 distinct combinations of the seven categorical features plus the BMI indicator. In the original 24-dimensional space, on average 75.5% of a point's 10 nearest neighbors share its exact profile. t-SNE (76.7–78.2%) and UMAP (68.2–76.9%) keep that level, but PCA keeps only **4.5%**: it superimposes the profiles, because its two components are spent on the three continuous features. In Figure 13 (left column), the `children` profiles form islands of their own in t-SNE and UMAP, while PCA only shades them along PC1.
-- **Part of the island structure is encoding geometry — the null control shows how much.** The course's reduction handout recommends rerunning the method on independently shuffled columns. With every raw column permuted separately (no association left between features or with the target), t-SNE at perplexity 30 still keeps 59.7% profile agreement over 440 profiles (Table 18, last row). Two full one-hot profiles that differ in d categorical features sit √(2d) apart whatever their numerical values, so islands form even in pure noise. The real data reach 77.7% with 364 profiles: the excess comes from real associations between the categorical features, such as children with unknown smoking status and no marriage.
+- **The islands are categorical profiles.** The training set holds 364 distinct combinations of the seven categorical features plus the BMI indicator. In the original 24-dimensional space, on average 75.5% of a point's 10 nearest neighbors share its exact profile. t-SNE (76.7–78.2%) and UMAP (68.2–76.9%) keep a similar level, but PCA keeps only **4.5%**: it superimposes the profiles, because its two components are spent on the three continuous features. In Figure 13 (left column), the `children` profiles form islands of their own in t-SNE and UMAP, while PCA only shades them along PC1.
+- **Part of the island structure is encoding geometry — the null control shows how much.** The course's reduction handout recommends rerunning the method on independently shuffled columns. With every raw column permuted separately (no association left between features or with the target), t-SNE at perplexity 30 still keeps 59.7% profile agreement over 440 profiles (Table 18, last row). Two points whose profiles differ in d of the seven categorical features are at least √(2d) apart (one more unit of squared distance if the BMI indicator differs), whatever their numerical values, so islands form even in pure noise. The real data reach 77.7% with 364 profiles: the excess is consistent with real associations between the categorical features, such as children with unknown smoking status and no marriage (the real data also have fewer profiles, 364 against 440, which by itself raises agreement).
 - **t-SNE and UMAP preserve local neighborhoods far better than PCA.** At k = 5, trustworthiness is 0.996–0.997 for t-SNE and 0.981–0.994 for UMAP, against 0.817 for PCA. As in the course lab, PCA is the only map that improves from k = 5 to k = 30 (0.817 → 0.820): it keeps the broad structure and sacrifices the local one. t-SNE with perplexity 5 drops from 0.996 to 0.954, because it keeps only the closest neighbors, while perplexity 50 drops less, to 0.978.
-- **The positives are not a cluster in any space.** Around each positive, on average 8.89% of its 10 nearest neighbors are positive in the original space: 1.8× the base rate, but far from a pure group. The 2D maps stay in the same range (8.84–10.65%), and none forms a positive cluster. In the shuffled control the share falls to 3.97%, below the 4.87% base rate, so the enrichment in the real maps is signal, which Figure 13 attributes to age, and not an artifact of the method. Figure 13 (right column) shows why the enrichment exists at all: in the islands that contain positives, they sit at the old-age end.
+- **The positives are not a cluster in any space.** Around each positive, on average 8.89% of its 10 nearest neighbors are positive in the original space: 1.8× the base rate, but far from a pure group. The 2D maps stay in the same range (8.84–10.65%), and none forms a positive cluster. In the shuffled control the share falls to 3.97%, below the 4.87% base rate, so the enrichment in the real maps comes from the data, not from the method. Figure 13 (right column) suggests it follows age: in the islands that contain positives, they sit at the old-age end.
 
 **Comparison.** PCA gives a global, linear and interpretable view: two axes (life stage, glucose), measurable variance, and loadings that can be read. t-SNE and UMAP reveal what PCA flattens: the data are a mosaic of categorical profiles, and age orders the risk inside each one. Within the course's rules — no reading of island sizes or of distances between islands, and conclusions only from patterns stable across all three parameter values — the three methods agree: **no 2D view separates the classes**. *This implies that* the classifier should receive the full 24-column matrix and combine age with the clinical flags and glucose. t-SNE coordinates cannot be features in any case: t-SNE has no `transform` for new rows, so it cannot sit inside a cross-validated pipeline.
 
@@ -592,7 +594,7 @@ Figure 13 — PCA, t-SNE and UMAP (one per row) colored by work type (left) and 
 | Shape after the pipeline | **train (4088, 24), test (1022, 24)** |
 | NaN after the pipeline | **0 in train, 0 in test** (and 0 infinite values) |
 | Fitted only on train | imputation medians are the training medians (BMI 28.0 against 28.1 on the full file; glucose 91.945 against 91.885) |
-| Evidence that the test set was not used | scaled numerical columns have mean exactly 0 and std 1 on train, but means −0.028 / −0.023 / −0.011 and stds 1.003 / 0.999 / 0.979 on test |
+| Evidence that the test set was not used | scaled numerical columns have mean 0 and std 1 on train (to six decimals), but means −0.028 / −0.023 / −0.011 and stds 1.003 / 0.999 / 0.979 on test |
 | New category | a copy of a training row with `gender = "Nonbinary"` and `work_type = "Freelancer"` gives all-zero `gender` and `work_type` blocks and a finite row of width 24 |
 | All-missing row | a row with every value missing is still finite, with the BMI indicator set to 1 |
 
@@ -631,10 +633,10 @@ Figure 13 — PCA, t-SNE and UMAP (one per row) colored by work type (left) and 
 
 1. **Severe imbalance:** 4.87% positives, 19.52 negatives per positive, and only 199 positives in training (Table 4, Figure 1).
 2. **The CSV is sorted by the target.** All 249 positives come first, so a sequential cut with the last 20% as the test set gives 0 positives (Figure 1).
-3. **Age is the dominant signal.** It has a single-feature AUC of 0.834, and 71.86% of the positives are 60 or older (Table 10, Figure 7). Within the projection islands that hold positives, they sit at the old-age end (Figure 13).
+3. **Age is the dominant signal.** It has a single-feature AUC of 0.834, and 71.86% of the positives are 60 or older (Table 10, section 3C, Figure 7). Within the projection islands that hold positives, they sit at the old-age end (Figure 13).
 4. **Glucose is bimodal.** 11.91% of the training rows lie to the right of the valley at 175 mg/dL, with a stroke rate of 12.94% against 3.78% to its left. The variable that splits the two modes, possibly diabetes, is not in the file (Figure 2, section 3C).
-5. **Hypertension and heart disease are real risk markers.** They survive age stratification, though weaker: 17.87% against 11.62% and 18.39% against 11.94% at 60+ (Table 12).
-6. **Marriage, work type and smoking status are age proxies.** Within age bands, the work and smoking effects vanish and the marriage effect changes sign (Tables 11–12, Figure 8).
+5. **Hypertension and heart disease remain associated with stroke after age stratification**, though more weakly: 17.87% against 11.62% and 18.39% against 11.94% at 60+ (Table 12).
+6. **Marriage, work type and smoking status are age proxies.** Within the 60+ band the work and smoking effects vanish (χ² p = 0.84 and 0.76), and the marriage effect reverses, though only suggestively (17 events, Fisher p = 0.041 uncorrected) (Tables 11–12, Figure 8).
 7. **BMI missingness is informative:** a 21.76% stroke rate among rows with missing BMI against 4.13% among the others (Figure 9).
 8. **No redundant numerical pair.** The strongest is age × BMI, with ρ = 0.381, which falls to 0.083 among adults aged 18 or more (Table 7, Figure 5).
 9. **The geometry is a mosaic of 364 categorical profiles.** No 2D projection separates the classes (Table 18, Figures 10–13).
@@ -652,7 +654,7 @@ Figure 13 — PCA, t-SNE and UMAP (one per row) colored by work type (left) and 
 | Implausible values and rare categories | 13 BMIs > 60, 2 adult BMIs < 12, `Other` (1 row), `Never_worked` (13) (Tables 3, 6) | Keep them; run a sensitivity check that sets the 2 adult BMIs below 12 to missing (so the imputer and the indicator handle them) and compare the validation scores. Unseen categories already map to all-zero blocks |
 | Unknown provenance and timing | Section 1A | Present the model as a classifier of the recorded label, not as a validated prospective risk predictor |
 
-**Reproducibility.** The code runs from a clean clone (`pip install -r requirements.txt`, then `python docs/projects/eda/code/main.py`). Every table and figure comes from that run, and every number quoted is either stored in `results/` or simple arithmetic on those values (ratios such as 1.8× or 19.5); `python docs/projects/eda/code/check_report.py` then confirms that the 17 tables embedded here equal the generated ones and that the results summary carries the stored numbers. The run recorded here used Python 3.14.3, numpy 2.5.2, pandas 3.0.5, scipy 1.18.1, scikit-learn 1.9.0, umap-learn 0.5.12 and matplotlib 3.11.1 (saved in `results/reduction_metrics.json`). A rerun from a fresh clone reproduced every file in `results/` byte for byte; other library versions may move the t-SNE and UMAP coordinates.
+**Reproducibility.** The code runs from a clean clone (`pip install -r requirements.txt`, then `python docs/projects/eda/code/main.py`). Every table and figure comes from that run, and every number quoted is either stored in `results/` or simple arithmetic on those values (ratios such as 1.8× or 19.5); `python docs/projects/eda/code/check_report.py` then confirms that the 17 generated tables (Tables 2–18) embedded here equal the generated ones and that the results summary carries the stored numbers. The run recorded here used Python 3.14.3, numpy 2.5.2, pandas 3.0.5, scipy 1.18.1, scikit-learn 1.9.0, umap-learn 0.5.12 and matplotlib 3.11.1 (saved in `results/reduction_metrics.json`). A rerun from a fresh clone reproduced every file in `results/` byte for byte; other library versions may move the t-SNE and UMAP coordinates.
 
 ## Results summary
 

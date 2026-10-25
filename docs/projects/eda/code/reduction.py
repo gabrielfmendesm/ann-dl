@@ -74,7 +74,7 @@ def outliers(X_train, y_train, res):
     m["bmi_minmax_q1_median_q3"] = [float((b.quantile(q) - b.min()) / span) for q in (.25, .5, .75)]
 
 
-def pipeline_checks(pre, X_train, X_test, X_train_t, X_test_t, names, res):
+def pipeline_checks(pre, X_train, X_train_t, X_test_t, names, res):
     """4C contract: no NaN, shapes, names, train-only statistics, unseen categories."""
     m = res.metrics
     m["train_shape"], m["test_shape"] = list(X_train_t.shape), list(X_test_t.shape)
@@ -92,7 +92,7 @@ def pipeline_checks(pre, X_train, X_test, X_train_t, X_test_t, names, res):
                      "scaler mean": log["scale"].mean_[i], "scaler std": log["scale"].scale_[i]})
     res.table(15, "Parameters fitted by the pipeline (training rows only)", pd.DataFrame(rows),
               {"imputation median (raw scale)": ".3f", "scaler mean": ".4f", "scaler std": ".4f"})
-    assert np.isclose(log["impute"].statistics_[1], X_train.bmi.median())
+    assert np.isclose(log["impute"].statistics_[SKEWED_FEATURES.index("bmi")], X_train.bmi.median())
     m["bmi_median_train"], m["glucose_median_train"] = (float(X_train.bmi.median()),
                                                         float(X_train.avg_glucose_level.median()))
     scaled = [i for i, n in enumerate(names) if n.startswith(("num__", "log__"))]
@@ -161,7 +161,7 @@ def main():
     X_train_t = pre.fit_transform(X_train)     # fit on train only
     X_test_t = pre.transform(X_test)          # test is only transformed
     names = pre.get_feature_names_out()
-    pipeline_checks(pre, X_train, X_test, X_train_t, X_test_t, names, res)
+    pipeline_checks(pre, X_train, X_train_t, X_test_t, names, res)
 
     # BMI missingness vs target in train (motivates the indicator)
     miss = X_train.bmi.isna().to_numpy()
@@ -207,10 +207,10 @@ def main():
         m[f"pca_k_{int(t * 100)}"] = int(np.searchsorted(cum, t) + 1)
     m["pca_zero_components"] = int((pca.explained_variance_ < 1e-10).sum())
     m["total_variance"] = float(pca.explained_variance_.sum())
-    shown = m["pca_k_95"]   # down to the component that reaches 95%
-    var_table = pd.DataFrame({"component": [f"PC{i + 1}" for i in range(shown)], "explained (%)": evr[:shown] * 100,
-                              "cumulative (%)": cum[:shown] * 100})
-    res.table(16, f"PCA explained variance (first {shown} of {len(evr)} components)", var_table,
+    n_shown = m["pca_k_95"]   # down to the component that reaches 95%
+    var_table = pd.DataFrame({"component": [f"PC{i + 1}" for i in range(n_shown)],
+                              "explained (%)": evr[:n_shown] * 100, "cumulative (%)": cum[:n_shown] * 100})
+    res.table(16, f"PCA explained variance (first {n_shown} of {len(evr)} components)", var_table,
               {"explained (%)": ".2f", "cumulative (%)": ".2f"})
     load = pd.DataFrame({"feature": names, "PC1": pca.components_[0], "PC2": pca.components_[1]})
     # ranked by the larger |loading|, rounded so that the +/- pairs of a binary one-hot block (equal up to
@@ -237,14 +237,14 @@ def main():
     ax.legend(loc="center right")
     ax = axes[2]
     show = top.iloc[::-1]
-    pos = np.arange(len(show))
-    ax.barh(pos - 0.2, show.PC1, height=0.4, color=CLASS_COLORS[0], label="PC1")
-    ax.barh(pos + 0.2, show.PC2, height=0.4, color=CLASS_COLORS[1], label="PC2")
+    bar_y = np.arange(len(show))
+    ax.barh(bar_y - 0.2, show.PC1, height=0.4, color=CLASS_COLORS[0], label="PC1")
+    ax.barh(bar_y + 0.2, show.PC2, height=0.4, color=CLASS_COLORS[1], label="PC2")
     ax.axvline(0, color="#0b0b0b", lw=0.8)
-    ax.set_yticks(pos, show.feature, fontsize=8)
+    ax.set_yticks(bar_y, show.feature, fontsize=8)
     ax.set(title="10 largest loadings", xlabel="Loading (eigenvector coefficient)", ylabel="Feature (pipeline output)")
     ax.legend(loc="lower right")
-    save_figure(fig, 10, "PCA of the scaled training features: two components keep under half the variance")
+    save_figure(fig, 10, "PCA of the transformed training matrix: two components keep under half the variance")
 
     # t-SNE and UMAP, three parameter values each, on the same training matrix
     embeddings = {"PCA (2 components)": P[:, :2]}
@@ -299,13 +299,14 @@ def main():
             scatter_by_class(ax, embeddings[f"{method} {key} {p}"], y, f"{key} = {p}", legend=False)
         fig.legend(*axes[0].get_legend_handles_labels(), loc="lower center", ncol=2, markerscale=2,
                    bbox_to_anchor=(0.5, -0.05), fontsize=10)
-        save_figure(fig, number, f"{method} of the scaled training features: three {key} values, colored by the target")
+        save_figure(fig, number, f"{method} of the transformed training matrix: three {key} values, "
+                                 "colored by the target")
 
     # Figure 13 — what the nonlinear maps group by: color by a categorical feature and by age
     fig, axes = plt.subplots(3, 2, figsize=(12, 16))   # one row per method: work_type on the left, age on the right
     shown = ["PCA (2 components)", "t-SNE perplexity 30", "UMAP n_neighbors 15"]
     work = X_train.work_type.to_numpy()
-    order = ["Private", "Self-employed", "Govt_job", "children", "Never_worked"]
+    order = X_train.work_type.value_counts().index.tolist()   # most frequent first; every category is drawn
     axis_names = {"PCA (2 components)": ("PC1 score", "PC2 score")}
     for ax, name in zip(axes[:, 0], shown):
         Z = embeddings[name]
@@ -319,9 +320,9 @@ def main():
     for ax, name in zip(axes[:, 1], shown):
         Z = embeddings[name]
         sc = ax.scatter(Z[:, 0], Z[:, 1], c=X_train.age, cmap="Blues", s=4, edgecolors="none", rasterized=True)
-        pos = y == 1
-        ax.scatter(Z[pos, 0], Z[pos, 1], s=14, facecolors="none", edgecolors=CLASS_COLORS[1], lw=0.8,
-                   label=f"{CLASS_LABELS[1]} · n = {pos.sum()}")
+        positive = y == 1
+        ax.scatter(Z[positive, 0], Z[positive, 1], s=14, facecolors="none", edgecolors=CLASS_COLORS[1], lw=0.8,
+                   label=f"{CLASS_LABELS[1]} · n = {positive.sum()}")
         fig.colorbar(sc, ax=ax, fraction=0.046, label=UNITS["age"])
         xl, yl = axis_names.get(name, ("Dimension 1 (no units)", "Dimension 2 (no units)"))
         ax.set(title=f"{name} — colored by age", xlabel=xl, ylabel=yl)
