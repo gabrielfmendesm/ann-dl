@@ -1,0 +1,204 @@
+{
+  "ex1": {
+    "z1": [
+      0.27,
+      -0.18
+    ],
+    "h1": [
+      0.263625,
+      -0.178081
+    ],
+    "u2": 0.385237,
+    "y_hat": 0.367247,
+    "loss": 0.400377,
+    "W1": [
+      [
+        0.376405,
+        -0.130562
+      ],
+      [
+        0.152295,
+        0.419082
+      ]
+    ],
+    "b1": [
+      0.252811,
+      -0.29541
+    ],
+    "W2": [
+      0.586587,
+      -0.35849
+    ],
+    "b2": 0.528448,
+    "loss_after": 0.083417
+  },
+  "max_gradient_check_error": 6.638243727224244e-08,
+  "ex2": {
+    "baseline_accuracy": 0.475,
+    "layers": [
+      2,
+      16,
+      1
+    ],
+    "accuracy": 0.915,
+    "n_parameters": 65,
+    "final_loss": 0.10221781257955595
+  },
+  "ex3": {
+    "layers": [
+      4,
+      16,
+      3
+    ],
+    "accuracy": 0.8466666666666667,
+    "baseline_accuracy": 0.6633333333333333,
+    "n_parameters": 131,
+    "final_loss": 0.2504148797393259,
+    "worst_pair": [
+      0,
+      1
+    ],
+    "confusion": [
+      [
+        88,
+        9,
+        3
+      ],
+      [
+        12,
+        77,
+        11
+      ],
+      [
+        6,
+        5,
+        89
+      ]
+    ]
+  },
+  "ex4": {
+    "deep_layers": [
+      4,
+      16,
+      16,
+      3
+    ],
+    "deep_accuracy": 0.8566666666666667,
+    "seeds": [
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51
+    ],
+    "diff_mean": -0.0070000000000000175,
+    "diff_std": 0.030366079190967312,
+    "shallow": {
+      "layers": [
+        4,
+        16,
+        3
+      ],
+      "hidden": 1,
+      "n_parameters": 131,
+      "test_mean": 0.8463333333333333,
+      "test_std": 0.015271210709803269,
+      "loss_mean": 0.25946087467593193,
+      "loss_std": 0.008253571993040117,
+      "train_acc_mean": 0.9061666666666668,
+      "rising_epochs": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "largest_rise": 0.0
+    },
+    "deep": {
+      "layers": [
+        4,
+        16,
+        16,
+        3
+      ],
+      "hidden": 2,
+      "n_parameters": 403,
+      "test_mean": 0.8393333333333335,
+      "test_std": 0.02077510380892487,
+      "loss_mean": 0.16605823486317384,
+      "loss_std": 0.006070246290241619,
+      "train_acc_mean": 0.9388333333333332,
+      "rising_epochs": [
+        429,
+        16,
+        560,
+        743,
+        547,
+        722,
+        812,
+        715,
+        781,
+        688
+      ],
+      "largest_rise": 0.16490646657712865
+    }
+  },
+  "summary_rows": [
+    {
+      "#": 1,
+      "quantity": "Ex. 1 \u2014 z(1) and h(1)",
+      "value": "z(1) = [0.2700, -0.1800], h(1) = [0.2636, -0.1781]"
+    },
+    {
+      "#": 2,
+      "quantity": "Ex. 1 \u2014 u(2), y_hat and L",
+      "value": "u(2) = 0.3852, y_hat = 0.3672, L = 0.4004"
+    },
+    {
+      "#": 3,
+      "quantity": "Ex. 1 \u2014 the eight updated parameters",
+      "value": "W(1) = [[0.3764, -0.1306], [0.1523, 0.4191]], b(1) = [0.2528, -0.2954], W(2) = [0.5866, -0.3585], b(2) = 0.5284"
+    },
+    {
+      "#": 4,
+      "quantity": "Ex. 2 \u2014 linear baseline test accuracy",
+      "value": "47.50%"
+    },
+    {
+      "#": 5,
+      "quantity": "Ex. 2 \u2014 architecture and test accuracy",
+      "value": "[2, 16, 1], 91.50%"
+    },
+    {
+      "#": 6,
+      "quantity": "Ex. 3 \u2014 architecture and test accuracy",
+      "value": "[4, 16, 3], 84.67%"
+    },
+    {
+      "#": 7,
+      "quantity": "Ex. 3 \u2014 most-confused class pair",
+      "value": "Class 0 and Class 1"
+    },
+    {
+      "#": 8,
+      "quantity": "Ex. 4 \u2014 architecture and test accuracy",
+      "value": "[4, 16, 16, 3], 85.67%"
+    },
+    {
+      "#": 9,
+      "quantity": "Ex. 4 \u2014 accuracy difference against Ex. 3 (mean over seeds)",
+      "value": "-0.70 points (83.93% vs 84.63%, 10 seeds)"
+    }
+  ]
+}
