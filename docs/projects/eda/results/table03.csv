@@ -5,7 +5,7 @@ Repeated id,0
 Constant columns,0
 Values outside the documented vocabulary,0
 age <= 0 or age > 120,0
-Fractional age (all below 2 years),115
+Fractional age,115
 avg_glucose_level <= 0,0
 bmi < 12 (observed),3
 bmi > 60 (observed),13

@@ -51,9 +51,7 @@
     "cat__smoking_status_smokes"
   ],
   "bmi_median_train": 28.0,
-  "bmi_median_full": 28.1,
   "glucose_median_train": 91.945,
-  "glucose_median_full": 91.88499999999999,
   "num_means_train": [
     -0.0,
     -0.0,
@@ -78,6 +76,10 @@
     1.92,
     2.8,
     4.87
+  ],
+  "adult_bmi_below_12_z": [
+    -3.34,
+    -3.4
   ],
   "unseen_category_probe": {
     "gender_block": [

@@ -30,7 +30,7 @@ def outliers(X_train, y_train, res):
     m = res.metrics
     rows, flags = [], {}
     for c in NUMERICAL_FEATURES:
-        x = X_train[c]
+        x = X_train[c]   # NaN compares False, so a missing value is never flagged
         q1, q3 = x.quantile(.25), x.quantile(.75)
         lo, hi = q1 - 1.5 * (q3 - q1), q3 + 1.5 * (q3 - q1)
         iqr_flag = (x < lo) | (x > hi)
@@ -39,12 +39,13 @@ def outliers(X_train, y_train, res):
         mz_flag = 0.6745 * (x - med).abs() / mad > 3.5
         flags[c] = iqr_flag
         rows.append({"feature": c, "lower fence": lo, "upper fence": hi, "flagged (1.5×IQR)": int(iqr_flag.sum()),
-                     "flagged (%)": iqr_flag.mean() * 100, "stroke rate among flagged (%)":
+                     "flagged (% of observed)": iqr_flag.sum() / x.notna().sum() * 100,
+                     "stroke rate among flagged (%)":
                      y_train[iqr_flag].mean() * 100 if iqr_flag.any() else 0.0,
                      "flagged (modified z > 3.5)": int(mz_flag.sum())})
     table = pd.DataFrame(rows)
     res.table(13, "Outliers in the training set (fences fitted on train; no row removed)", table,
-              {"lower fence": ".2f", "upper fence": ".2f", "flagged (%)": ".2f",
+              {"lower fence": ".2f", "upper fence": ".2f", "flagged (% of observed)": ".2f",
                "stroke rate among flagged (%)": ".2f"})
     any_flag = pd.concat(flags, axis=1).any(axis=1)
     m["outlier_rows"] = int(any_flag.sum())
@@ -60,8 +61,8 @@ def outliers(X_train, y_train, res):
                      "max/median (raw)": x.max() / x.median(),
                      "max/median (log1p)": np.log1p(x.max()) / np.log1p(x.median())})
     res.table(14, "Skewness of the right-skewed features before and after log1p (train, observed values)",
-              pd.DataFrame(rows), {k: ".2f" for k in ["skewness (raw)", "skewness (log1p)",
-                                                        "max/median (raw)", "max/median (log1p)"]})
+              pd.DataFrame(rows),
+              {k: ".2f" for k in ["skewness (raw)", "skewness (log1p)", "max/median (raw)", "max/median (log1p)"]})
 
     # What plain standardization or min-max scaling would do with the raw tails (scaling choice, 4A). The
     # z-scores use the same median-imputed base as the pipeline, so they compare with max_abs_z_train
@@ -73,38 +74,37 @@ def outliers(X_train, y_train, res):
     m["bmi_minmax_q1_median_q3"] = [float((b.quantile(q) - b.min()) / span) for q in (.25, .5, .75)]
 
 
-def pipeline_checks(pre, raw, X_train, X_test, Xt, Xv, names, res):
+def pipeline_checks(pre, X_train, X_test, X_train_t, X_test_t, names, res):
     """4C contract: no NaN, shapes, names, train-only statistics, unseen categories."""
     m = res.metrics
-    m["train_shape"], m["test_shape"] = list(Xt.shape), list(Xv.shape)
-    m["nan_train"], m["nan_test"] = int(np.isnan(Xt).sum()), int(np.isnan(Xv).sum())
-    m["inf_train"], m["inf_test"] = int(np.isinf(Xt).sum()), int(np.isinf(Xv).sum())
+    m["train_shape"], m["test_shape"] = list(X_train_t.shape), list(X_test_t.shape)
+    m["nan_train"], m["nan_test"] = int(np.isnan(X_train_t).sum()), int(np.isnan(X_test_t).sum())
+    m["inf_train"], m["inf_test"] = int(np.isinf(X_train_t).sum()), int(np.isinf(X_test_t).sum())
     m["feature_names"] = list(names)
 
     # Fitted parameters equal the training statistics (not the full-file ones)
     num = pre.named_transformers_["num"]
     log = pre.named_transformers_["log"]
-    rows = [{"feature": "age", "imputation median": num["impute"].statistics_[0],
+    rows = [{"feature": "age", "imputation median (raw scale)": num["impute"].statistics_[0],
              "scaler mean": num["scale"].mean_[0], "scaler std": num["scale"].scale_[0]}]
     for i, c in enumerate(SKEWED_FEATURES):
-        rows.append({"feature": f"log1p({c})", "imputation median": log["impute"].statistics_[i],
+        rows.append({"feature": f"log1p({c})", "imputation median (raw scale)": log["impute"].statistics_[i],
                      "scaler mean": log["scale"].mean_[i], "scaler std": log["scale"].scale_[i]})
     res.table(15, "Parameters fitted by the pipeline (training rows only)", pd.DataFrame(rows),
-              {"imputation median": ".3f", "scaler mean": ".4f", "scaler std": ".4f"})
+              {"imputation median (raw scale)": ".3f", "scaler mean": ".4f", "scaler std": ".4f"})
     assert np.isclose(log["impute"].statistics_[1], X_train.bmi.median())
-    # the full-file medians come from the raw file, read once in stage 1, to show what fitting there would give
-    m["bmi_median_train"], m["bmi_median_full"] = float(X_train.bmi.median()), float(raw.bmi.median())
-    m["glucose_median_train"], m["glucose_median_full"] = (float(X_train.avg_glucose_level.median()),
-                                                           float(raw.avg_glucose_level.median()))
+    m["bmi_median_train"], m["glucose_median_train"] = (float(X_train.bmi.median()),
+                                                        float(X_train.avg_glucose_level.median()))
     scaled = [i for i, n in enumerate(names) if n.startswith(("num__", "log__"))]
-    m["num_means_train"] = Xt[:, scaled].mean(axis=0).round(6).tolist()
-    m["num_stds_train"] = Xt[:, scaled].std(axis=0).round(6).tolist()
-    m["num_means_test"] = Xv[:, scaled].mean(axis=0).round(4).tolist()
-    m["num_stds_test"] = Xv[:, scaled].std(axis=0).round(4).tolist()
-    m["max_abs_z_train"] = np.abs(Xt[:, scaled]).max(axis=0).round(2).tolist()
+    m["num_means_train"] = X_train_t[:, scaled].mean(axis=0).round(6).tolist()
+    m["num_stds_train"] = X_train_t[:, scaled].std(axis=0).round(6).tolist()
+    m["num_means_test"] = X_test_t[:, scaled].mean(axis=0).round(4).tolist()
+    m["num_stds_test"] = X_test_t[:, scaled].std(axis=0).round(4).tolist()
+    m["max_abs_z_train"] = np.abs(X_train_t[:, scaled]).max(axis=0).round(2).tolist()
 
-    # A category never seen in training, and missing values everywhere, still give a finite row of the same width
-    probe = X_test.iloc[:2].copy()
+    # A category never seen in training, and missing values everywhere, still give a finite row of the same
+    # width. The two probe rows are copies of training rows, so the test set is not touched
+    probe = X_train.iloc[:2].copy()
     probe.iloc[0, probe.columns.get_loc("gender")] = "Nonbinary"
     probe.iloc[0, probe.columns.get_loc("work_type")] = "Freelancer"
     probe.iloc[1] = np.nan
@@ -115,6 +115,9 @@ def pipeline_checks(pre, raw, X_train, X_test, Xt, Xv, names, res):
     work_cols = [i for i, n in enumerate(names) if n.startswith("cat__work_type_")]
     assert out.shape == (2, len(names)) and np.isfinite(out).all()
     assert out[0, gender_cols].sum() == 0 and out[0, work_cols].sum() == 0
+    bmi_col = list(names).index("log__bmi")
+    low_bmi = (X_train.bmi < 12) & (X_train.age >= 18)
+    m["adult_bmi_below_12_z"] = X_train_t[low_bmi.to_numpy(), bmi_col].round(2).tolist()
     indicator = list(names).index("missing__missingindicator_bmi")
     m["unseen_category_probe"] = {"gender_block": out[0, gender_cols].tolist(),
                                   "work_type_block": out[0, work_cols].tolist(),
@@ -132,7 +135,7 @@ def neighborhood_stats(Z, y, profile):
     return enrichment, agreement
 
 
-def scatter_by_class(ax, Z, y, title, xlabel="Dimension 1 (no units)", ylabel="Dimension 2 (no units)"):
+def scatter_by_class(ax, Z, y, title, xlabel="Dimension 1 (no units)", ylabel="Dimension 2 (no units)", legend=True):
     """2D projection colored by the target, with the positives drawn larger and on top."""
     for k in (0, 1):
         sel = y == k
@@ -140,7 +143,8 @@ def scatter_by_class(ax, Z, y, title, xlabel="Dimension 1 (no units)", ylabel="D
                    color=CLASS_COLORS[k], label=f"{CLASS_LABELS[k]} · n = {sel.sum():,}", edgecolors="none",
                    rasterized=True)
     ax.set(title=title, xlabel=xlabel, ylabel=ylabel)
-    ax.legend(loc="best", markerscale=2)
+    if legend:
+        ax.legend(loc="best", markerscale=2)
 
 
 def main():
@@ -148,16 +152,16 @@ def main():
     res = Results("reduction")
     m = res.metrics
     raw = load_raw()
-    X_train, X_test, y_train, y_test = split(raw)
+    X_train, X_test, y_train, _ = split(raw)
     y = y_train.to_numpy()
 
     outliers(X_train, y_train, res)
 
     pre = build_preprocessor()
-    Xt = pre.fit_transform(X_train)     # fit on train only
-    Xv = pre.transform(X_test)          # test is only transformed
+    X_train_t = pre.fit_transform(X_train)     # fit on train only
+    X_test_t = pre.transform(X_test)          # test is only transformed
     names = pre.get_feature_names_out()
-    pipeline_checks(pre, raw, X_train, X_test, Xt, Xv, names, res)
+    pipeline_checks(pre, X_train, X_test, X_train_t, X_test_t, names, res)
 
     # BMI missingness vs target in train (motivates the indicator)
     miss = X_train.bmi.isna().to_numpy()
@@ -173,7 +177,7 @@ def main():
         k, n = int(y[sel].sum()), int(sel.sum())
         lo, hi = wilson_interval(k, n)
         ax.bar(i, k / n * 100, color=[CLASS_COLORS[0], CLASS_COLORS[1]][i], width=0.55,
-               label=f"{label}: {k}/{n} = {k / n:.1%}")
+               label=f"{label}: {k:,} / {n:,} = {k / n:.2%}")
         ax.errorbar(i, k / n * 100, yerr=[[k / n * 100 - lo * 100], [hi * 100 - k / n * 100]], color="#0b0b0b",
                     capsize=4)
     ax.axhline(y.mean() * 100, color=NEUTRAL, ls="--", label=f"Train base rate {y.mean():.2%}")
@@ -181,40 +185,44 @@ def main():
     ax.set(title="Stroke rate by bmi missingness (95% Wilson)", xlabel="bmi status", ylabel="Stroke rate (%)")
     ax.legend(loc="upper left")
     for ax, c in zip(axes[1:], SKEWED_FEATURES):
-        raw = X_train[c].dropna()
+        observed = X_train[c].dropna()
         j = list(names).index(f"log__{c}")
-        z = Xt[~miss, j] if c == "bmi" else Xt[:, j]
+        z = X_train_t[~miss, j] if c == "bmi" else X_train_t[:, j]
         ax.hist(z, bins=40, color=CLASS_COLORS[0], alpha=0.85, edgecolor="white", linewidth=0.4,
                 label=f"log1p + standardized (n = {len(z):,})")
-        ax.set(title=f"{c}: skewness {raw.skew():.2f} → {np.log1p(raw).skew():.2f}",
+        ax.set(title=f"{c}: skewness {observed.skew():.2f} → {np.log1p(observed).skew():.2f}",
                xlabel=f"Standardized log1p({c}) (train z-score)", ylabel="Training rows")
         ax.axvline(0, color="#0b0b0b", lw=1, label="Train mean = 0")
         ax.legend(loc="upper right")
     save_figure(fig, 9, "What the pipeline answers: informative missingness and right skew")
 
     # PCA on the full transformed training matrix
-    pca = PCA(random_state=SEED).fit(Xt)
+    pca = PCA().fit(X_train_t)
     evr = pca.explained_variance_ratio_
     cum = np.cumsum(evr)
-    P = pca.transform(Xt)
+    P = pca.transform(X_train_t)
     m["pca_evr"] = evr.round(6).tolist()
     m["pca_pc1"], m["pca_pc2"], m["pca_pc12"] = float(evr[0] * 100), float(evr[1] * 100), float(cum[1] * 100)
     for t in (0.80, 0.90, 0.95):
         m[f"pca_k_{int(t * 100)}"] = int(np.searchsorted(cum, t) + 1)
     m["pca_zero_components"] = int((pca.explained_variance_ < 1e-10).sum())
     m["total_variance"] = float(pca.explained_variance_.sum())
-    var_table = pd.DataFrame({"component": [f"PC{i + 1}" for i in range(8)], "explained (%)": evr[:8] * 100,
-                              "cumulative (%)": cum[:8] * 100})
-    res.table(16, "PCA explained variance (first 8 of 24 components)", var_table,
+    shown = m["pca_k_95"]   # down to the component that reaches 95%
+    var_table = pd.DataFrame({"component": [f"PC{i + 1}" for i in range(shown)], "explained (%)": evr[:shown] * 100,
+                              "cumulative (%)": cum[:shown] * 100})
+    res.table(16, f"PCA explained variance (first {shown} of {len(evr)} components)", var_table,
               {"explained (%)": ".2f", "cumulative (%)": ".2f"})
     load = pd.DataFrame({"feature": names, "PC1": pca.components_[0], "PC2": pca.components_[1]})
-    top = load.reindex(load[["PC1", "PC2"]].abs().max(axis=1).sort_values(ascending=False).index).head(10)
+    # ranked by the larger |loading|, rounded so that the +/- pairs of a binary one-hot block (equal up to
+    # floating-point noise) keep the order of the pipeline output on every machine
+    size = load[["PC1", "PC2"]].abs().max(axis=1).round(6)
+    top = load.assign(size=size).sort_values("size", ascending=False, kind="stable").drop(columns="size").head(10)
     res.table(17, "Largest PCA loadings (eigenvector coefficients) of PC1 and PC2", top,
               {"PC1": "+.3f", "PC2": "+.3f"})
     m["loadings"] = load.set_index("feature").to_dict(orient="index")
     # correlation of the PC scores with the scaled numerical columns and the indicator (helps naming the components)
     for i in (0, 1):
-        m[f"pc{i + 1}_corr"] = {n: float(np.corrcoef(P[:, i], Xt[:, j])[0, 1])
+        m[f"pc{i + 1}_corr"] = {n: float(np.corrcoef(P[:, i], X_train_t[:, j])[0, 1])
                                 for j, n in enumerate(names) if not n.startswith("cat__")}
 
     # Figure 10 — PCA scatter, cumulative variance, loadings
@@ -242,41 +250,42 @@ def main():
     embeddings = {"PCA (2 components)": P[:, :2]}
     for perp in PERPLEXITIES:
         tsne = TSNE(n_components=2, perplexity=perp, init="pca", learning_rate="auto", random_state=SEED)
-        embeddings[f"t-SNE perplexity {perp}"] = tsne.fit_transform(Xt)
+        embeddings[f"t-SNE perplexity {perp}"] = tsne.fit_transform(X_train_t)
         m[f"tsne_kl_{perp}"] = float(tsne.kl_divergence_)
     for nn in N_NEIGHBORS:
         um = UMAP(n_components=2, n_neighbors=nn, min_dist=0.1, random_state=SEED, n_jobs=1)
-        embeddings[f"UMAP n_neighbors {nn}"] = um.fit_transform(Xt)
+        embeddings[f"UMAP n_neighbors {nn}"] = um.fit_transform(X_train_t)
 
-    # Null control (reduction handout): permute every raw column independently, which keeps each marginal
-    # distribution and every categorical profile valid but destroys the associations between columns and target
+    # Null control (reduction handout): permute every raw column independently, which keeps each column's
+    # distribution but destroys every association between columns and with the target (it also creates
+    # combinations the data never shows, such as married children)
     rng = np.random.default_rng(SEED)
     shuffled = X_train.apply(lambda col: col.to_numpy()[rng.permutation(len(col))])
-    Xs = pre.transform(shuffled)
-    ys = y[rng.permutation(len(y))]
+    X_shuffled_t = pre.transform(shuffled)
+    y_shuffled = y[rng.permutation(len(y))]
     tsne = TSNE(n_components=2, perplexity=30, init="pca", learning_rate="auto", random_state=SEED)
-    Zs = tsne.fit_transform(Xs)
+    Z_shuffled = tsne.fit_transform(X_shuffled_t)
 
     # Diagnostics: neighborhood preservation, class enrichment and categorical-profile agreement
     cat_cols = [i for i, n in enumerate(names) if n.startswith("cat__") or n.startswith("missing__")]
-    profile = np.array(["".join(str(int(v)) for v in row) for row in Xt[:, cat_cols]])
+    profile = np.array(["".join(str(int(v)) for v in row) for row in X_train_t[:, cat_cols]])
     m["n_profiles"] = int(len(set(profile)))
     rows = []
-    enr, agr = neighborhood_stats(Xt, y, profile)
+    enr, agr = neighborhood_stats(X_train_t, y, profile)
     rows.append({"space": "Original 24 dimensions", "trustworthiness k=5": "—", "trustworthiness k=30": "—",
                  "positives among 10-NN of positives (%)": enr, "same categorical profile among 10-NN (%)": agr})
     for name, Z in embeddings.items():
         enr, agr = neighborhood_stats(Z, y, profile)
-        rows.append({"space": name, "trustworthiness k=5": trustworthiness(Xt, Z, n_neighbors=5),
-                     "trustworthiness k=30": trustworthiness(Xt, Z, n_neighbors=30),
+        rows.append({"space": name, "trustworthiness k=5": trustworthiness(X_train_t, Z, n_neighbors=5),
+                     "trustworthiness k=30": trustworthiness(X_train_t, Z, n_neighbors=30),
                      "positives among 10-NN of positives (%)": enr, "same categorical profile among 10-NN (%)": agr})
-    cat_s = np.array(["".join(str(int(v)) for v in row) for row in Xs[:, cat_cols]])
-    enr, agr = neighborhood_stats(Zs, ys, cat_s)
+    profile_shuffled = np.array(["".join(str(int(v)) for v in row) for row in X_shuffled_t[:, cat_cols]])
+    enr, agr = neighborhood_stats(Z_shuffled, y_shuffled, profile_shuffled)
     rows.append({"space": "Control: t-SNE perplexity 30 on independently shuffled columns",
-                 "trustworthiness k=5": trustworthiness(Xs, Zs, n_neighbors=5),
-                 "trustworthiness k=30": trustworthiness(Xs, Zs, n_neighbors=30),
+                 "trustworthiness k=5": trustworthiness(X_shuffled_t, Z_shuffled, n_neighbors=5),
+                 "trustworthiness k=30": trustworthiness(X_shuffled_t, Z_shuffled, n_neighbors=30),
                  "positives among 10-NN of positives (%)": enr, "same categorical profile among 10-NN (%)": agr})
-    m["n_profiles_shuffled"] = int(len(set(cat_s)))
+    m["n_profiles_shuffled"] = int(len(set(profile_shuffled)))
     diag = pd.DataFrame(rows)
     res.table(18, f"Projection diagnostics (train, {len(y):,} rows; base rate {y.mean():.2%})", diag,
               {"trustworthiness k=5": ".3f", "trustworthiness k=30": ".3f",
@@ -287,7 +296,9 @@ def main():
                                         (12, "UMAP", N_NEIGHBORS, "n_neighbors")]:
         fig, axes = plt.subplots(1, 3, figsize=(18, 5.4))
         for ax, p in zip(axes, params):
-            scatter_by_class(ax, embeddings[f"{method} {key} {p}"], y, f"{key} = {p}")
+            scatter_by_class(ax, embeddings[f"{method} {key} {p}"], y, f"{key} = {p}", legend=False)
+        fig.legend(*axes[0].get_legend_handles_labels(), loc="lower center", ncol=2, markerscale=2,
+                   bbox_to_anchor=(0.5, -0.05), fontsize=10)
         save_figure(fig, number, f"{method} of the scaled training features: three {key} values, colored by the target")
 
     # Figure 13 — what the nonlinear maps group by: color by a categorical feature and by age
@@ -321,7 +332,7 @@ def main():
                      ["numpy", "pandas", "scipy", "scikit-learn", "umap-learn", "matplotlib"]}
     m["python"] = platform.python_version()
     res.write()
-    print(f"Stage 4 done: train {Xt.shape}, test {Xv.shape}, Figures 9-13 written.")
+    print(f"Stage 4 done: train {X_train_t.shape}, test {X_test_t.shape}, Figures 9-13 written.")
 
 
 if __name__ == "__main__":

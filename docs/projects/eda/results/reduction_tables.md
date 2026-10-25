@@ -1,10 +1,10 @@
 ### Table 13 — Outliers in the training set (fences fitted on train; no row removed)
 
-| feature | lower fence | upper fence | flagged (1.5×IQR) | flagged (%) | stroke rate among flagged (%) | flagged (modified z > 3.5) |
+| feature | lower fence | upper fence | flagged (1.5×IQR) | flagged (% of observed) | stroke rate among flagged (%) | flagged (modified z > 3.5) |
 |---|---|---|---|---|---|---|
-| age | -26.50 | 113.50 | 0 | 0.00 | 0.00 | 0 |
+| age | −26.50 | 113.50 | 0 | 0.00 | 0.00 | 0 |
 | avg_glucose_level | 21.98 | 169.53 | 503 | 12.30 | 13.12 | 458 |
-| bmi | 9.35 | 47.35 | 90 | 2.20 | 3.33 | 47 |
+| bmi | 9.35 | 47.35 | 90 | 2.30 | 3.33 | 47 |
 
 ### Table 14 — Skewness of the right-skewed features before and after log1p (train, observed values)
 
@@ -15,13 +15,13 @@
 
 ### Table 15 — Parameters fitted by the pipeline (training rows only)
 
-| feature | imputation median | scaler mean | scaler std |
+| feature | imputation median (raw scale) | scaler mean | scaler std |
 |---|---|---|---|
 | age | 45.000 | 43.3533 | 22.5941 |
 | log1p(avg_glucose_level) | 91.945 | 4.6048 | 0.3587 |
 | log1p(bmi) | 28.000 | 3.3655 | 0.2515 |
 
-### Table 16 — PCA explained variance (first 8 of 24 components)
+### Table 16 — PCA explained variance (first 12 of 24 components)
 
 | component | explained (%) | cumulative (%) |
 |---|---|---|
@@ -33,21 +33,25 @@
 | PC6 | 5.35 | 78.51 |
 | PC7 | 4.74 | 83.24 |
 | PC8 | 3.26 | 86.51 |
+| PC9 | 3.08 | 89.58 |
+| PC10 | 2.67 | 92.26 |
+| PC11 | 2.47 | 94.73 |
+| PC12 | 2.24 | 96.97 |
 
 ### Table 17 — Largest PCA loadings (eigenvector coefficients) of PC1 and PC2
 
 | feature | PC1 | PC2 |
 |---|---|---|
 | log__avg_glucose_level | +0.303 | +0.940 |
-| num__age | +0.626 | -0.139 |
-| log__bmi | +0.541 | -0.215 |
-| cat__ever_married_No | -0.256 | +0.088 |
-| cat__ever_married_Yes | +0.256 | -0.088 |
-| cat__work_type_children | -0.181 | +0.090 |
-| cat__smoking_status_Unknown | -0.161 | +0.071 |
-| cat__work_type_Private | +0.084 | -0.062 |
-| cat__gender_Female | +0.014 | -0.084 |
-| cat__gender_Male | -0.013 | +0.083 |
+| num__age | +0.626 | −0.139 |
+| log__bmi | +0.541 | −0.215 |
+| cat__ever_married_No | −0.256 | +0.088 |
+| cat__ever_married_Yes | +0.256 | −0.088 |
+| cat__work_type_children | −0.181 | +0.090 |
+| cat__smoking_status_Unknown | −0.161 | +0.071 |
+| cat__work_type_Private | +0.084 | −0.062 |
+| cat__gender_Female | +0.014 | −0.084 |
+| cat__gender_Male | −0.013 | +0.083 |
 
 ### Table 18 — Projection diagnostics (train, 4,088 rows; base rate 4.87%)
 
