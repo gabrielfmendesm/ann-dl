@@ -31,6 +31,7 @@ Each report's code lives in its own `code/` folder (`docs/exercises/<slug>/code/
 ``` shell
 python docs/exercises/data/code/exercise1.py        # also exercise2.py and exercise3.py
 python docs/exercises/perceptron/code/main.py
+python docs/exercises/mlp/code/main.py               # then: python docs/exercises/mlp/code/check_report.py
 python docs/projects/eda/code/main.py               # EDA project: Figures 1-13, results/tableNN.csv and metrics
 python docs/projects/eda/code/check_report.py       # then: the report's tables and summary match results/
 ```
