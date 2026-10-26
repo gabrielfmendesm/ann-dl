@@ -58,7 +58,8 @@ def run():
     print(f"  w = {np.round(w, 4).tolist()}, b = {b:.4f}, ||w|| = {np.linalg.norm(w):.4f}; "
           f"test probabilities of Class 1 between {p_te.min():.3f} and {p_te.max():.3f}; "
           f"predicted as Class 1: {base_pred.mean():.2%}")
-    print("  test accuracy per cluster: " + ", ".join(f"{n} {a:.2%}" for n, a in zip(CLUSTERS, per_cluster(base_pred, y_te, c_te))))
+    print("  test accuracy per cluster: "
+          + ", ".join(f"{n} {a:.2%}" for n, a in zip(CLUSTERS, per_cluster(base_pred, y_te, c_te))))
     best_tr, best_te = best_line_accuracy(X_tr, y_tr), best_line_accuracy(X_te, y_te)
     print(f"  best straight line (exact): {best_tr:.2%} on the training set, {best_te:.2%} on the test set")
 
@@ -70,10 +71,13 @@ def run():
     train_acc = float(np.mean(net.predict(X_tr) == y_tr))
     print(f"\nMLP {LAYERS}, tanh hidden layer, sigmoid output, binary cross-entropy, full-batch gradient descent, "
           f"lr {LR}, {EPOCHS} epochs, {net.n_parameters()} parameters")
-    print(f"  training loss: {history[0]:.4f} at epoch 0, {history[100]:.4f} at epoch 100, {history[500]:.4f} at epoch 500, "
+    print(f"  training loss: {history[0]:.4f} at epoch 0, {history[100]:.4f} at epoch 100, "
+          f"{history[500]:.4f} at epoch 500, "
           f"{history[-1]:.4f} at epoch {EPOCHS}")
-    print(f"  accuracy: train {train_acc:.2%}, test {acc:.2%} ({int(np.sum(pred != y_te))} of {len(y_te)} test points wrong)")
-    print("  test accuracy per cluster: " + ", ".join(f"{n} {a:.2%}" for n, a in zip(CLUSTERS, per_cluster(pred, y_te, c_te))))
+    print(f"  accuracy: train {train_acc:.2%}, test {acc:.2%} "
+          f"({int(np.sum(pred != y_te))} of {len(y_te)} test points wrong)")
+    print("  test accuracy per cluster: "
+          + ", ".join(f"{n} {a:.2%}" for n, a in zip(CLUSTERS, per_cluster(pred, y_te, c_te))))
 
     # Figure 2: training loss per epoch
     fig, ax = plt.subplots(figsize=(8, 5))
@@ -96,16 +100,19 @@ def run():
     print(f"  Class 1 covers {region.mean():.2%} of the plotted grid")
     fig, ax = plt.subplots(figsize=(9, 7))
     ax.contourf(G1, G2, region, levels=[-0.5, 0.5, 1.5], colors=["#cfe0f3", "#fde0c5"])
-    scatter_classes(ax, X_te, y_te, [f"{name} (test)" for name in LABELS], size=16, alpha=0.9, edgecolors="white", linewidths=0.3)
+    scatter_classes(ax, X_te, y_te, [f"{name} (test)" for name in LABELS], size=16, alpha=0.9,
+                    edgecolors="white", linewidths=0.3)
     ax.plot(x1, -(w[0] * x1 + b) / w[1], color="black", ls="--", lw=1.3,
             label=f"logistic-regression boundary (test accuracy {base_acc:.2%})")
     handles, names = ax.get_legend_handles_labels()
-    handles = [Patch(color="#cfe0f3", label="MLP region: Class 0"), Patch(color="#fde0c5", label="MLP region: Class 1")] + handles
+    handles = [Patch(color="#cfe0f3", label="MLP region: Class 0"),
+               Patch(color="#fde0c5", label="MLP region: Class 1")] + handles
     ax.set(title=f"Figure 3 — Exercise 2: MLP decision regions over the {len(X_te)} test points\n"
                  f"MLP test accuracy {acc:.2%}", xlabel="$x_1$", ylabel="$x_2$",
            xlim=(x1[0], x1[-1]), ylim=(x2[0], x2[-1]))
     ax.set_aspect("equal")
-    ax.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=2, fontsize=9)  # below: covers nothing
+    ax.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=2,
+              fontsize=9)  # below the axes: covers no data
     save(fig, "fig3.png")
 
     return {"baseline_accuracy": base_acc, "layers": LAYERS, "accuracy": acc, "n_parameters": net.n_parameters(),

@@ -303,7 +303,7 @@ Averaged over N samples, the code uses ∂L/∂U = (P − Y)/N.
 
 **Why it is so simple, and why that matters.** The log in the cross-entropy undoes the exponential in the softmax. In isolation, each factor has a complicated derivative: the softmax Jacobian pₖ(δₖⱼ − pⱼ) and the 1/pₖ of the log. In the product, the pₖ cancels and only "prediction minus target" survives. Binary cross-entropy with a sigmoid gives the same p − y (item 2C), because it is the two-class case of the same pair. Two consequences:
 
-- The error signal is proportional to how wrong the prediction is, and it **does not vanish when the output saturates**. Pairing a softmax with the squared error would multiply the error by pₖ(1 − pₖ), which goes to 0 exactly when a confident prediction is wrong.
+- The error signal is proportional to how wrong the prediction is, and it **does not vanish when the output saturates**. Pairing a softmax with the squared error would multiply the error by the softmax Jacobian, whose entries pₖ(δₖⱼ − pⱼ) all go to 0 when the output saturates, including when a confident prediction is wrong.
 - One backward pass serves every task: the output layer always starts the chain with P − Y, which is what makes the verbatim reuse above possible.
 
 ### C — Train and evaluate

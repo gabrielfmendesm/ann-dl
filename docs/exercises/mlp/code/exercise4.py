@@ -33,7 +33,8 @@ def run(ex3):
     runs = {name: [train(layers, s, X_tr, y_tr, X_te, y_te) for s in SEEDS]
             for name, layers in (("shallow", SHALLOW), ("deep", DEEP))}
     # The seed-42 shallow run is the Exercise 3 network itself
-    assert runs["shallow"][0]["test_accuracy"] == ex3["accuracy"] and np.allclose(runs["shallow"][0]["history"], ex3["history"])
+    assert runs["shallow"][0]["test_accuracy"] == ex3["accuracy"]
+    assert np.allclose(runs["shallow"][0]["history"], ex3["history"])
 
     deep_42 = runs["deep"][0]
     print(f"A — deeper network {DEEP}, seed {SEED}, lr {LR}, {EPOCHS} epochs: {deep_42['n_parameters']} parameters, "
@@ -62,10 +63,12 @@ def run(ex3):
               f"final train loss {loss.mean():.4f} ± {loss.std(ddof=1):.4f} | train accuracy {train_acc.mean():.2%} | "
               f"test accuracy {test.mean():.2%} ± {test.std(ddof=1):.2%} (min {test.min():.2%}, max {test.max():.2%})")
         print("          mean training loss at epochs 50 / 100 / 200 / 500: " + " / ".join(f"{v:.4f}" for v in early))
-        print(f"          epochs in which the update raised the training loss: {summary[name]['rising_epochs'].tolist()} "
+        print("          epochs in which the update raised the training loss: "
+              f"{summary[name]['rising_epochs'].tolist()} "
               f"(per seed); largest single rise {summary[name]['largest_rise']:.4f}")
     diff = np.array([b["test_accuracy"] - a["test_accuracy"] for a, b in zip(runs["shallow"], runs["deep"])])
-    gap = summary["deep"]["train_acc_mean"] - summary["deep"]["test_mean"], summary["shallow"]["train_acc_mean"] - summary["shallow"]["test_mean"]
+    gap = (summary["deep"]["train_acc_mean"] - summary["deep"]["test_mean"],
+           summary["shallow"]["train_acc_mean"] - summary["shallow"]["test_mean"])
     print(f"  deep - shallow test accuracy: mean {diff.mean():+.2%}, standard deviation {diff.std(ddof=1):.2%} "
           f"(standard error {diff.std(ddof=1) / np.sqrt(len(diff)):.2%}); deep ahead in {int(np.sum(diff > 0))}, "
           f"tied in {int(np.sum(diff == 0))}, behind in {int(np.sum(diff < 0))} of {len(diff)} seeds")
@@ -79,7 +82,8 @@ def run(ex3):
         for curve in s["curves"]:
             ax.plot(epochs, curve, color=color, lw=0.6, alpha=0.25)
         ax.plot(epochs, s["curves"].mean(axis=0), color=color, lw=2.2,
-                label=f"{'Exercise 3' if name == 'shallow' else 'Exercise 4'} {s['layers']}: mean of {len(SEEDS)} seeds "
+                label=f"{'Exercise 3' if name == 'shallow' else 'Exercise 4'} {s['layers']}: "
+                      f"mean of {len(SEEDS)} seeds "
                       f"(final {s['loss_mean']:.4f})")
         ax.plot([], [], color=color, lw=0.6, alpha=0.5, label=f"{s['layers']}: individual seeds")
     ax.set(title=f"Figure 6 — Training loss per epoch: one hidden layer against two\n"
