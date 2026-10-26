@@ -34,7 +34,7 @@ def per_cluster(pred, y, c):
 def run():
     print("\n" + "=" * 72 + "\nEXERCISE 2 — binary classification\n" + "=" * 72)
 
-    # --- A: data and split ---------------------------------------------------------------------
+    # --- A: data and split -----------------------------------------------------------------------
     X, y, c = blobs_data()
     X_tr, X_te, y_tr, y_te, c_tr, c_te = split(X, y, c)
     print(f"{len(X)} points: Class 0 = {int(np.sum(y == 0))}, Class 1 = {int(np.sum(y == 1))} | "

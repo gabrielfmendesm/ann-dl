@@ -37,7 +37,7 @@ def cluster_of_each_sample(X):
 def run():
     print("\n" + "=" * 72 + "\nEXERCISE 3 — three classes\n" + "=" * 72)
 
-    # --- A: data and split ---------------------------------------------------------------------
+    # --- A: data and split -----------------------------------------------------------------------
     X, y = classification_data()
     cluster = cluster_of_each_sample(X)
     X_tr, X_te, y_tr, y_te, k_tr, k_te = split(X, y, cluster)
@@ -48,7 +48,7 @@ def run():
           f"labels differing from their cluster's class (the generator's 1% label noise, flip_y=0.01): "
           f"{int(flipped.sum())} in total, {int(np.sum(y_te != k_te % N_CLASSES))} in the test set")
 
-    # --- B/C: the same MLP class, softmax output and categorical cross-entropy ------------------
+    # --- B/C: the same MLP class, softmax output and categorical cross-entropy -------------------
     net = MLP(LAYERS, CategoricalCrossEntropy(N_CLASSES), np.random.default_rng(SEED))
     history = net.fit(X_tr, y_tr, EPOCHS, LR)
     pred = net.predict(X_te)
@@ -93,7 +93,7 @@ def run():
     fig.colorbar(image, ax=ax, label="number of test samples")
     save(fig, "fig5.png")
 
-    # --- D: which pair is confused most, and where in the cluster structure ---------------------
+    # --- D: which pair is confused most, and where in the cluster structure ----------------------
     print(f"\n  confusion matrix (rows = true class, columns = predicted):\n{cm}")
     pairs = {(i, j): int(cm[i, j] + cm[j, i]) for i in range(N_CLASSES) for j in range(i + 1, N_CLASSES)}
     for (i, j), n in pairs.items():

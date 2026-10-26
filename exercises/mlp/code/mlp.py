@@ -16,7 +16,7 @@ dL/du, the error that the backward pass propagates. Hidden layers use tanh.
 import numpy as np
 
 
-# --- Losses: each one pairs an output activation with its loss -------------------------------
+# --- Losses: each one pairs an output activation with its loss -----------------------------------
 # Every method receives the output pre-activation U (one row per sample). The loss is the mean
 # over the N samples, so dL/dU carries the factor 1/N.
 
@@ -76,7 +76,7 @@ class MeanSquaredError:
         return 2.0 * (Y_hat - Y) * (1.0 - Y_hat ** 2) / len(Y)   # dL/dy_hat * dy_hat/du
 
 
-# --- The network -----------------------------------------------------------------------------
+# --- The network ---------------------------------------------------------------------------------
 
 class MLP:
     """Fully connected network: tanh hidden layers, the loss's activation on the output layer.
