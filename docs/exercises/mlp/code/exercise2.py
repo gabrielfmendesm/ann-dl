@@ -105,7 +105,7 @@ def run():
                  f"MLP test accuracy {acc:.2%}", xlabel="$x_1$", ylabel="$x_2$",
            xlim=(x1[0], x1[-1]), ylim=(x2[0], x2[-1]))
     ax.set_aspect("equal")
-    ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize=9)
+    ax.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=2, fontsize=9)  # below: covers nothing
     save(fig, "fig3.png")
 
     return {"baseline_accuracy": base_acc, "layers": LAYERS, "accuracy": acc, "n_parameters": net.n_parameters(),

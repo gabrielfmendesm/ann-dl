@@ -35,11 +35,11 @@ python docs/exercises/mlp/code/check_report.py
 The network has 2 inputs, one hidden layer of 2 tanh neurons and 1 tanh output, with the squared error on one sample, L = (y − ŷ)². The values of the statement are
 
 $$
-\mathbf{x} = \begin{bmatrix} 0.5 \\ -0.2 \end{bmatrix},\quad y = 1.0,\quad
-\mathbf{W}^{(1)} = \begin{bmatrix} 0.3 & -0.1 \\ 0.2 & 0.4 \end{bmatrix},\quad
-\mathbf{b}^{(1)} = \begin{bmatrix} 0.1 \\ -0.2 \end{bmatrix},\quad
-\mathbf{W}^{(2)} = \begin{bmatrix} 0.5 & -0.3 \end{bmatrix},\quad
-b^{(2)} = 0.2,\quad \eta = 0.3 .
+\begin{aligned}
+\mathbf{x} &= \begin{bmatrix} 0.5 \\ -0.2 \end{bmatrix},\qquad y = 1.0,\qquad \eta = 0.3, \\
+\mathbf{W}^{(1)} &= \begin{bmatrix} 0.3 & -0.1 \\ 0.2 & 0.4 \end{bmatrix},\qquad \mathbf{b}^{(1)} = \begin{bmatrix} 0.1 \\ -0.2 \end{bmatrix}, \\
+\mathbf{W}^{(2)} &= \begin{bmatrix} 0.5 & -0.3 \end{bmatrix},\qquad b^{(2)} = 0.2 .
+\end{aligned}
 $$
 
 Every number below is computed by hand and shown to 6 decimal places; each step uses the unrounded value of the previous one. `code/exercise1.py` runs the same network through the MLP code of the other exercises and prints every one of these numbers as a check.
@@ -49,10 +49,10 @@ Every number below is computed by hand and shown to 6 decimal places; each step 
 **Hidden pre-activations**, one row of W⁽¹⁾ per hidden neuron:
 
 $$
-\mathbf{z}^{(1)} = \mathbf{W}^{(1)}\mathbf{x} + \mathbf{b}^{(1)} =
-\begin{bmatrix} 0.3 \cdot 0.5 + (-0.1)(-0.2) + 0.1 \\ 0.2 \cdot 0.5 + 0.4 \cdot (-0.2) + (-0.2) \end{bmatrix} =
-\begin{bmatrix} 0.15 + 0.02 + 0.1 \\ 0.10 - 0.08 - 0.2 \end{bmatrix} =
-\begin{bmatrix} 0.270000 \\ -0.180000 \end{bmatrix}
+\begin{aligned}
+\mathbf{z}^{(1)} = \mathbf{W}^{(1)}\mathbf{x} + \mathbf{b}^{(1)} &= \begin{bmatrix} 0.3 \cdot 0.5 + (-0.1)(-0.2) + 0.1 \\ 0.2 \cdot 0.5 + 0.4 \cdot (-0.2) + (-0.2) \end{bmatrix} \\
+&= \begin{bmatrix} 0.15 + 0.02 + 0.1 \\ 0.10 - 0.08 - 0.2 \end{bmatrix} = \begin{bmatrix} 0.270000 \\ -0.180000 \end{bmatrix}
+\end{aligned}
 $$
 
 **Hidden activations:**
@@ -64,13 +64,19 @@ $$
 **Output pre-activation:**
 
 $$
-u^{(2)} = \mathbf{W}^{(2)}\mathbf{h}^{(1)} + b^{(2)} = 0.5 \cdot 0.263625 + (-0.3)(-0.178081) + 0.2 = 0.131812 + 0.053424 + 0.2 = 0.385237
+\begin{aligned}
+u^{(2)} = \mathbf{W}^{(2)}\mathbf{h}^{(1)} + b^{(2)} &= 0.5 \cdot 0.263625 + (-0.3)(-0.178081) + 0.2 \\
+&= 0.131812 + 0.053424 + 0.2 = 0.385237
+\end{aligned}
 $$
 
 **Output and loss:**
 
 $$
-\hat{y} = \tanh(0.385237) = 0.367247, \qquad L = (y - \hat{y})^2 = (1 - 0.367247)^2 = 0.632753^2 = 0.400377
+\begin{aligned}
+\hat{y} &= \tanh(0.385237) = 0.367247, \\
+L &= (y - \hat{y})^2 = (1 - 0.367247)^2 = 0.632753^2 = 0.400377
+\end{aligned}
 $$
 
 ### B — Backward pass
@@ -92,8 +98,11 @@ $$
 **3. Output layer.** u⁽²⁾ = W⁽²⁾₁ h₁ + W⁽²⁾₂ h₂ + b⁽²⁾, so ∂u⁽²⁾/∂W⁽²⁾ⱼ = hⱼ and ∂u⁽²⁾/∂b⁽²⁾ = 1:
 
 $$
-\frac{\partial L}{\partial \mathbf{W}^{(2)}} = \delta^{(2)}\,\mathbf{h}^{(1)\top} = -1.094828 \cdot \begin{bmatrix} 0.263625 & -0.178081 \end{bmatrix} = \begin{bmatrix} -0.288624 & 0.194968 \end{bmatrix},
-\qquad \frac{\partial L}{\partial b^{(2)}} = \delta^{(2)} = -1.094828
+\begin{aligned}
+\frac{\partial L}{\partial \mathbf{W}^{(2)}} &= \delta^{(2)}\,\mathbf{h}^{(1)\top} = -1.094828 \cdot \begin{bmatrix} 0.263625 & -0.178081 \end{bmatrix} \\
+&= \begin{bmatrix} -0.288624 & 0.194968 \end{bmatrix}, \\
+\frac{\partial L}{\partial b^{(2)}} &= \delta^{(2)} = -1.094828
+\end{aligned}
 $$
 
 **4. Back to the hidden activations.** Each hᵢ reaches u⁽²⁾ through its weight W⁽²⁾ᵢ, so ∂u⁽²⁾/∂hᵢ = W⁽²⁾ᵢ:
@@ -105,17 +114,20 @@ $$
 **5. Through the hidden tanh.** With 1 − h₁² = 1 − 0.069498 = 0.930502 and 1 − h₂² = 1 − 0.031713 = 0.968287, element by element:
 
 $$
-\delta^{(1)} = \frac{\partial L}{\partial \mathbf{z}^{(1)}} = \frac{\partial L}{\partial \mathbf{h}^{(1)}} \odot \left(1 - \mathbf{h}^{(1)} \odot \mathbf{h}^{(1)}\right) =
-\begin{bmatrix} -0.547414 \cdot 0.930502 \\ 0.328448 \cdot 0.968287 \end{bmatrix} = \begin{bmatrix} -0.509370 \\ 0.318032 \end{bmatrix}
+\begin{aligned}
+\delta^{(1)} = \frac{\partial L}{\partial \mathbf{z}^{(1)}} &= \frac{\partial L}{\partial \mathbf{h}^{(1)}} \odot \left(1 - \mathbf{h}^{(1)} \odot \mathbf{h}^{(1)}\right) \\
+&= \begin{bmatrix} -0.547414 \cdot 0.930502 \\ 0.328448 \cdot 0.968287 \end{bmatrix} = \begin{bmatrix} -0.509370 \\ 0.318032 \end{bmatrix}
+\end{aligned}
 $$
 
 **6. Hidden layer.** zᵢ = W⁽¹⁾ᵢ₁ x₁ + W⁽¹⁾ᵢ₂ x₂ + b⁽¹⁾ᵢ, so ∂zᵢ/∂W⁽¹⁾ᵢⱼ = xⱼ and ∂zᵢ/∂b⁽¹⁾ᵢ = 1. The weight gradient is the outer product of the deltas with the input:
 
 $$
-\frac{\partial L}{\partial \mathbf{W}^{(1)}} = \delta^{(1)}\,\mathbf{x}^{\top} =
-\begin{bmatrix} -0.509370 \cdot 0.5 & -0.509370 \cdot (-0.2) \\ 0.318032 \cdot 0.5 & 0.318032 \cdot (-0.2) \end{bmatrix} =
-\begin{bmatrix} -0.254685 & 0.101874 \\ 0.159016 & -0.063606 \end{bmatrix},
-\qquad \frac{\partial L}{\partial \mathbf{b}^{(1)}} = \delta^{(1)} = \begin{bmatrix} -0.509370 \\ 0.318032 \end{bmatrix}
+\begin{aligned}
+\frac{\partial L}{\partial \mathbf{W}^{(1)}} &= \delta^{(1)}\,\mathbf{x}^{\top} = \begin{bmatrix} -0.509370 \cdot 0.5 & -0.509370 \cdot (-0.2) \\ 0.318032 \cdot 0.5 & 0.318032 \cdot (-0.2) \end{bmatrix} \\
+&= \begin{bmatrix} -0.254685 & 0.101874 \\ 0.159016 & -0.063606 \end{bmatrix}, \\
+\frac{\partial L}{\partial \mathbf{b}^{(1)}} &= \delta^{(1)} = \begin{bmatrix} -0.509370 \\ 0.318032 \end{bmatrix}
+\end{aligned}
 $$
 
 The signs say what the update will do. δ⁽²⁾ < 0 means that raising u⁽²⁾ lowers the loss, which is right: ŷ = 0.367247 is below the target 1. Through W⁽²⁾ = [0.5, −0.3], the first hidden neuron should therefore move up and the second down, which is exactly the sign pattern of δ⁽¹⁾. The hidden deltas are also smaller than the output delta, |δ⁽¹⁾| = 0.509370 and 0.318032 against |δ⁽²⁾| = 1.094828: on the way back, the output delta is multiplied by a weight (0.5 or −0.3) and by a tanh derivative (0.930502 or 0.968287).
@@ -125,7 +137,10 @@ The signs say what the update will do. δ⁽²⁾ < 0 means that raising u⁽²�
 Gradient descent, p ← p − η ∂L/∂p with η = 0.3, applied to every weight and bias:
 
 $$
-\mathbf{W}^{(2)} \leftarrow \begin{bmatrix} 0.5 & -0.3 \end{bmatrix} - 0.3 \begin{bmatrix} -0.288624 & 0.194968 \end{bmatrix} = \begin{bmatrix} 0.5 + 0.086587 & -0.3 - 0.058490 \end{bmatrix} = \begin{bmatrix} 0.586587 & -0.358490 \end{bmatrix}
+\begin{aligned}
+\mathbf{W}^{(2)} &\leftarrow \begin{bmatrix} 0.5 & -0.3 \end{bmatrix} - 0.3 \begin{bmatrix} -0.288624 & 0.194968 \end{bmatrix} \\
+&= \begin{bmatrix} 0.5 + 0.086587 & -0.3 - 0.058490 \end{bmatrix} = \begin{bmatrix} 0.586587 & -0.358490 \end{bmatrix}
+\end{aligned}
 $$
 
 $$
@@ -133,13 +148,17 @@ b^{(2)} \leftarrow 0.2 - 0.3 \cdot (-1.094828) = 0.2 + 0.328448 = 0.528448
 $$
 
 $$
-\mathbf{W}^{(1)} \leftarrow \begin{bmatrix} 0.3 & -0.1 \\ 0.2 & 0.4 \end{bmatrix} - 0.3 \begin{bmatrix} -0.254685 & 0.101874 \\ 0.159016 & -0.063606 \end{bmatrix} =
-\begin{bmatrix} 0.3 + 0.076405 & -0.1 - 0.030562 \\ 0.2 - 0.047705 & 0.4 + 0.019082 \end{bmatrix} =
-\begin{bmatrix} 0.376405 & -0.130562 \\ 0.152295 & 0.419082 \end{bmatrix}
+\begin{aligned}
+\mathbf{W}^{(1)} &\leftarrow \begin{bmatrix} 0.3 & -0.1 \\ 0.2 & 0.4 \end{bmatrix} - 0.3 \begin{bmatrix} -0.254685 & 0.101874 \\ 0.159016 & -0.063606 \end{bmatrix} \\
+&= \begin{bmatrix} 0.3 + 0.076405 & -0.1 - 0.030562 \\ 0.2 - 0.047705 & 0.4 + 0.019082 \end{bmatrix} = \begin{bmatrix} 0.376405 & -0.130562 \\ 0.152295 & 0.419082 \end{bmatrix}
+\end{aligned}
 $$
 
 $$
-\mathbf{b}^{(1)} \leftarrow \begin{bmatrix} 0.1 \\ -0.2 \end{bmatrix} - 0.3 \begin{bmatrix} -0.509370 \\ 0.318032 \end{bmatrix} = \begin{bmatrix} 0.1 + 0.152811 \\ -0.2 - 0.095410 \end{bmatrix} = \begin{bmatrix} 0.252811 \\ -0.295410 \end{bmatrix}
+\begin{aligned}
+\mathbf{b}^{(1)} &\leftarrow \begin{bmatrix} 0.1 \\ -0.2 \end{bmatrix} - 0.3 \begin{bmatrix} -0.509370 \\ 0.318032 \end{bmatrix} \\
+&= \begin{bmatrix} 0.1 + 0.152811 \\ -0.2 - 0.095410 \end{bmatrix} = \begin{bmatrix} 0.252811 \\ -0.295410 \end{bmatrix}
+\end{aligned}
 $$
 
 | Parameter | Before | Gradient | After |
@@ -188,20 +207,28 @@ A logistic regression (`sklearn.linear_model.LogisticRegression`, default settin
 The network is the class `MLP` in `code/mlp.py`. It takes the layer sizes and the loss as arguments, `MLP(layer_sizes, loss, rng)`, so the same code builds any depth and width:
 
 - **Forward pass.** Each layer computes Z = A W⁽ˡ⁾ᵀ + b⁽ˡ⁾ for a batch A with one sample per row; W⁽ˡ⁾ has one row per receiving neuron, as in the lecture. Hidden layers apply tanh, and the last layer returns its pre-activation U to the loss.
+
 - **Loss.** Here the loss is binary cross-entropy with a sigmoid output, p = σ(u), averaged over the N training samples:
 
     $$ L = -\frac{1}{N}\sum_{n=1}^{N} \Big[ y_n \log p_n + (1 - y_n) \log(1 - p_n) \Big]. $$
 
     The code evaluates it in the equivalent form log(1 + eᵘ) − y u, which never takes the log of 0.
+
 - **Backward pass**, derived by hand. Since dσ/du = p(1 − p), the output error is
 
     $$ \frac{\partial L}{\partial u_n} = \frac{1}{N}\left(-\frac{y_n}{p_n} + \frac{1 - y_n}{1 - p_n}\right) p_n (1 - p_n) = \frac{p_n - y_n}{N}. $$
 
     From there, for every layer l going backwards, with δ⁽ˡ⁾ = ∂L/∂Z⁽ˡ⁾ (one row per sample) and A⁽ˡ⁻¹⁾ the input of layer l:
 
-    $$ \frac{\partial L}{\partial \mathbf{W}^{(l)}} = \delta^{(l)\top} \mathbf{A}^{(l-1)}, \qquad \frac{\partial L}{\partial \mathbf{b}^{(l)}} = \sum_{n} \delta^{(l)}_n, \qquad \delta^{(l-1)} = \left(\delta^{(l)} \mathbf{W}^{(l)}\right) \odot \left(1 - \mathbf{A}^{(l-1)} \odot \mathbf{A}^{(l-1)}\right). $$
+    $$
+    \begin{aligned}
+    \frac{\partial L}{\partial \mathbf{W}^{(l)}} &= \delta^{(l)\top} \mathbf{A}^{(l-1)}, \qquad \frac{\partial L}{\partial \mathbf{b}^{(l)}} = \sum_{n} \delta^{(l)}_n, \\
+    \delta^{(l-1)} &= \left(\delta^{(l)} \mathbf{W}^{(l)}\right) \odot \left(1 - \mathbf{A}^{(l-1)} \odot \mathbf{A}^{(l-1)}\right).
+    \end{aligned}
+    $$
 
     These are the six steps of Exercise 1 written for a batch and any number of layers. `gradient_check.py` confirms them against finite differences, with a largest relative error of 6.6 × 10⁻⁸.
+
 - **Update.** p ← p − η ∂L/∂p for every weight and bias (`step`). `fit` repeats forward, backward and update once per epoch on the whole training set, recording the training loss.
 
 ``` python title="code/mlp.py"
@@ -316,7 +343,7 @@ Figure 5 — Confusion matrix on the 300 test samples (rows: true class, columns
 | 4 | 1 | [−1.02, 1.06, 0.97, 1.03] | 1.81 |
 | 5 | 2 | [0.93, 1.01, 0.89, −1.17] | 2.45 |
 
-Six clusters on 16 vertices leave most pairs apart, but three pairs of clusters from different classes sit on **adjacent** vertices, differing in a single coordinate: clusters 0–1 (Classes 0 and 1, centroid distance 2.03), 1–2 (Classes 1 and 2, 2.08) and 2–4 (Classes 2 and 1, 1.92). Each cluster's RMS radius (1.81 to 2.71) exceeds those distances, so adjacent clusters overlap heavily. Measured as distance / (radius₁ + radius₂), as in the Data activity, the closest pair of different classes is clusters 0–1, with a ratio of 0.39. The errors land exactly there: 18 of the 21 Class 0 ↔ Class 1 errors come from clusters 0 and 1 (7 samples of cluster 0 predicted as Class 1, 11 of cluster 1 predicted as Class 0). Classes 1 and 2 share two adjacent pairs, so they are confused second most; cluster 4 is the most compact cluster (radius 1.81), which keeps that count lower. Classes 0 and 2 have no adjacent clusters and are confused least. A small part of the error cannot be removed by any classifier: the generator flips about 1% of the labels (`flip_y=0.01`), 11 samples in total and 2 in the test set.
+Six clusters on 16 vertices leave most pairs apart, but three pairs of clusters from different classes sit on **adjacent** vertices, differing in a single coordinate: clusters 0–1 (Classes 0 and 1, centroid distance 2.03), 1–2 (Classes 1 and 2, 2.08) and 2–4 (Classes 2 and 1, 1.92). In each of these pairs the two RMS radii add up to more than twice the centroid distance (ratios 0.39, 0.40 and 0.45 in the measure below, all under 0.5), so adjacent clusters overlap heavily. Measured by that ratio, distance / (radius₁ + radius₂), as in the Data activity, the closest pair of different classes is clusters 0–1, at 0.39. The errors land exactly there: 18 of the 21 Class 0 ↔ Class 1 errors come from clusters 0 and 1 (7 samples of cluster 0 predicted as Class 1, 11 of cluster 1 predicted as Class 0). Classes 1 and 2 share two adjacent pairs, so they are confused second most; cluster 4 is the most compact cluster (radius 1.81), which keeps that count lower. Classes 0 and 2 have no adjacent clusters and are confused least. A small part of the error cannot be removed by any classifier: the generator flips about 1% of the labels (`flip_y=0.01`), 11 samples in total and 2 in the test set.
 
 **Baseline and what the hidden layer added.** A multinomial logistic regression fitted to the same training set scores **66.33%**; the MLP scores 84.67%, **18.33 points** more. Logistic regression gives each class one linear score and predicts the class with the highest one, so the region where a class wins is an intersection of half-spaces: a single **convex** cell per class, bounded by straight cuts. Here each class is two clusters on vertices two or three coordinates apart (clusters 0 and 3 for Class 0, 1 and 4 for Class 1, 2 and 5 for Class 2), and the baseline's failures sit exactly where that constraint hurts. It handles Class 0 almost as well as the MLP (80 of its 100 test samples correct, against 88), but fails on Classes 1 and 2 (57 and 62 correct, against 77 and 89). By cluster, its two worst are cluster 1 (51.02% correct) and cluster 2 (41.30%). These are exactly the only two clusters with two adjacent neighbors of other classes: cluster 1 sits next to cluster 0 (Class 0) and cluster 2 (Class 2), and cluster 2 sits next to both clusters of Class 1 (1 and 4). A convex cell for Class 1 has to reach both cluster 1 and cluster 4 while leaving out cluster 2, which lies adjacent to both of them; straight cuts shared by one convex cell per class cannot follow that arrangement. The hidden layer removes the constraint: its 16 tanh units carve the space into pieces, and the output assembles each class's region from the pieces around its own clusters, a region that need not be convex.
 
