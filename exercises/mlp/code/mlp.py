@@ -27,7 +27,7 @@ class BinaryCrossEntropy:
         return np.asarray(y, dtype=float).reshape(-1, 1)
 
     def output(self, U):
-        return 1.0 / (1.0 + np.exp(-U))
+        return 0.5 * (1.0 + np.tanh(0.5 * U))           # = 1 / (1 + e^-u), without overflow for large |u|
 
     def value(self, U, Y):
         # log(1 + e^u) - y u is the same loss written from the logit: no log(0) for saturated p
@@ -100,7 +100,7 @@ class MLP:
     def forward(self, X):
         """Return the output pre-activation U; keep every layer's activation for the backward pass."""
         A = np.atleast_2d(np.asarray(X, dtype=float))
-        self.activations = [A]                     # A[0] = inputs, A[l] = tanh(Z[l]) for hidden layers
+        self.activations = [A]                     # activations[l] is the input of layer l (A[0] = the data)
         last = len(self.W) - 1
         for l, (W, b) in enumerate(zip(self.W, self.b)):
             Z = A @ W.T + b

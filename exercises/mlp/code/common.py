@@ -32,7 +32,8 @@ def classification_data(shuffle=True):
     """Exercise 3 and 4: 1500 samples, 4 informative features, 3 classes with 2 clusters each.
 
     shuffle=False returns the same samples in generation order (cluster by cluster): the
-    shuffle is the generator's last step, so everything drawn before it is identical.
+    shuffle, of the rows and of the feature columns, is the generator's last step, so
+    everything drawn before it is identical.
     """
     return make_classification(n_samples=1500, n_features=4, n_informative=4, n_redundant=0, n_repeated=0,
                                n_classes=3, n_clusters_per_class=2, class_sep=1.0, random_state=SEED,
