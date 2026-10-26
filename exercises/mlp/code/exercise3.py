@@ -119,6 +119,14 @@ def run():
     for ratio, d, a, b in sorted(inter):
         print(f"    clusters {a}-{b} (classes {a % 3}-{b % 3}): distance {d:.2f}, ratio {ratio:.2f}")
 
+    # A convex region containing the centers of clusters 1 and 4 (Class 1) contains the segment between
+    # them: how close does that segment pass to the center of cluster 2 (Class 2)?
+    a, b, c = centroids[1], centroids[4], centroids[2]
+    t = np.clip((c - a) @ (b - a) / ((b - a) @ (b - a)), 0.0, 1.0)
+    gap = float(np.linalg.norm(a + t * (b - a) - c))
+    print(f"  segment between the centers of clusters 1 and 4 (Class 1): closest to the center of cluster 2 "
+          f"(Class 2) at distance {gap:.2f} (t = {t:.2f}), against cluster 2's RMS radius {radius[2]:.2f}")
+
     # Where the test errors come from: the generating cluster of every misclassified sample
     wrong = pred != y_te
     print("  test errors by generating cluster (true class -> predicted class):")
