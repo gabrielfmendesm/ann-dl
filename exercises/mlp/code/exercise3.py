@@ -55,7 +55,8 @@ def run():
     acc = float(np.mean(pred == y_te))
     print(f"\nMLP {LAYERS}, tanh hidden layer, softmax output, categorical cross-entropy, full-batch gradient descent, "
           f"lr {LR}, {EPOCHS} epochs, {net.n_parameters()} parameters")
-    print(f"  training loss: {history[0]:.4f} at epoch 0, {history[500]:.4f} at epoch 500, {history[-1]:.4f} at epoch {EPOCHS}")
+    print(f"  training loss: {history[0]:.4f} at epoch 0, {history[500]:.4f} at epoch 500, "
+          f"{history[-1]:.4f} at epoch {EPOCHS}")
     print(f"  accuracy: train {np.mean(net.predict(X_tr) == y_tr):.2%}, test {acc:.2%} "
           f"({int(np.sum(pred != y_te))} of {len(y_te)} test samples wrong)")
 
@@ -63,7 +64,8 @@ def run():
     base_pred = baseline.predict(X_te)
     base_acc = float(np.mean(base_pred == y_te))
     print(f"  logistic-regression baseline (multinomial, one linear score per class): test accuracy {base_acc:.2%}")
-    print(f"    correct test samples per class: {np.diag(confusion_matrix(y_te, base_pred, labels=range(N_CLASSES))).tolist()} of "
+    base_correct = np.diag(confusion_matrix(y_te, base_pred, labels=range(N_CLASSES)))
+    print(f"    correct test samples per class: {base_correct.tolist()} of "
           f"{np.bincount(y_te).tolist()}; accuracy per generating cluster: "
           + ", ".join(f"cluster {k} {np.mean(base_pred[k_te == k] == y_te[k_te == k]):.2%}" for k in range(N_CLUSTERS)))
 
@@ -95,12 +97,15 @@ def run():
     print(f"\n  confusion matrix (rows = true class, columns = predicted):\n{cm}")
     pairs = {(i, j): int(cm[i, j] + cm[j, i]) for i in range(N_CLASSES) for j in range(i + 1, N_CLASSES)}
     for (i, j), n in pairs.items():
-        print(f"  Class {i} <-> Class {j}: {n} test errors ({cm[i, j]} true {i} predicted {j}, {cm[j, i]} the other way)")
+        print(f"  Class {i} <-> Class {j}: {n} test errors "
+              f"({cm[i, j]} true {i} predicted {j}, {cm[j, i]} the other way)")
     worst = max(pairs, key=pairs.get)
-    print(f"  most confused pair: Class {worst[0]} and Class {worst[1]} ({pairs[worst]} of {int(np.sum(pred != y_te))} errors)")
+    print(f"  most confused pair: Class {worst[0]} and Class {worst[1]} "
+          f"({pairs[worst]} of {int(np.sum(pred != y_te))} errors)")
 
     centroids = np.array([X[cluster == k].mean(axis=0) for k in range(N_CLUSTERS)])
-    radius = np.array([np.sqrt(np.mean(np.sum((X[cluster == k] - centroids[k]) ** 2, axis=1))) for k in range(N_CLUSTERS)])
+    radius = np.array([np.sqrt(np.mean(np.sum((X[cluster == k] - centroids[k]) ** 2, axis=1)))
+                       for k in range(N_CLUSTERS)])
     print("  cluster centroids (4D) and RMS radius:")
     for k in range(N_CLUSTERS):
         print(f"    cluster {k} (class {k % 3}): centroid {centroids[k].round(2).tolist()}, RMS radius {radius[k]:.2f}")
@@ -122,7 +127,8 @@ def run():
         if sel.any():
             moves = {f"{t}->{p}": int(np.sum((y_te[sel] == t) & (pred[sel] == p))) for t in range(3) for p in range(3)
                      if np.any((y_te[sel] == t) & (pred[sel] == p))}
-            print(f"    cluster {k} (class {k % 3}): {int(sel.sum())} errors of {int(np.sum(k_te == k))} test samples, {moves}")
+            print(f"    cluster {k} (class {k % 3}): {int(sel.sum())} errors of "
+                  f"{int(np.sum(k_te == k))} test samples, {moves}")
 
     return {"layers": LAYERS, "accuracy": acc, "baseline_accuracy": base_acc, "n_parameters": net.n_parameters(),
             "final_loss": float(history[-1]), "history": history, "confusion": cm, "worst_pair": worst}

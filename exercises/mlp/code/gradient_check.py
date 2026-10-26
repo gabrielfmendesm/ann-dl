@@ -36,9 +36,13 @@ def run():
     print("\n" + "=" * 72 + "\nGRADIENT CHECK — analytic backward pass vs. central finite differences\n" + "=" * 72)
     rng = np.random.default_rng(SEED)
     X = rng.normal(size=(20, 3))
-    cases = [("binary cross-entropy, sizes [3, 5, 4, 1]", MLP([3, 5, 4, 1], BinaryCrossEntropy(), rng), rng.integers(0, 2, 20)),
-             ("categorical cross-entropy, sizes [3, 5, 4, 3]", MLP([3, 5, 4, 3], CategoricalCrossEntropy(3), rng), rng.integers(0, 3, 20)),
-             ("mean squared error, sizes [3, 5, 4, 2]", MLP([3, 5, 4, 2], MeanSquaredError(), rng), rng.uniform(-1, 1, (20, 2)))]
+    # each case: (name, network, targets); the generator is consumed in this order
+    cases = [("binary cross-entropy, sizes [3, 5, 4, 1]",
+              MLP([3, 5, 4, 1], BinaryCrossEntropy(), rng), rng.integers(0, 2, 20)),
+             ("categorical cross-entropy, sizes [3, 5, 4, 3]",
+              MLP([3, 5, 4, 3], CategoricalCrossEntropy(3), rng), rng.integers(0, 3, 20)),
+             ("mean squared error, sizes [3, 5, 4, 2]",
+              MLP([3, 5, 4, 2], MeanSquaredError(), rng), rng.uniform(-1, 1, (20, 2)))]
     errors = {}
     for name, net, y in cases:
         errors[name] = max_relative_error(net, X, y)

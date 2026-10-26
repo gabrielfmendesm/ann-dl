@@ -30,10 +30,12 @@ expected = {
     "b2": f"{ex1['b2']:.6f}", "loss after the update": f"L = {ex1['loss_after']:.4f}",
     # Exercise 2
     "Ex. 2 baseline": pct(ex2["baseline_accuracy"]), "Ex. 2 test accuracy": f"test {pct(ex2['accuracy'])}",
-    "Ex. 2 parameters": f"{ex2['n_parameters']} parameters", "Ex. 2 final loss": f"{ex2['final_loss']:.4f} at epoch 2000",
+    "Ex. 2 parameters": f"{ex2['n_parameters']} parameters",
+    "Ex. 2 final loss": f"{ex2['final_loss']:.4f} at epoch 2000",
     # Exercise 3
     "Ex. 3 test accuracy": f"test {pct(ex3['accuracy'])}", "Ex. 3 baseline": f"**{pct(ex3['baseline_accuracy'])}**",
-    "Ex. 3 parameters": f"{ex3['n_parameters']} parameters", "Ex. 3 final loss": f"{ex3['final_loss']:.4f} at epoch 2000",
+    "Ex. 3 parameters": f"{ex3['n_parameters']} parameters",
+    "Ex. 3 final loss": f"{ex3['final_loss']:.4f} at epoch 2000",
     "Ex. 3 most-confused pair": f"Class {ex3['worst_pair'][0]} and Class {ex3['worst_pair'][1]}",
     "Ex. 3 gain over the baseline": f"{100 * (ex3['accuracy'] - ex3['baseline_accuracy']):.2f} points",
     # Exercise 4
