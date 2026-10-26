@@ -2,7 +2,7 @@
 
 | feature | lower fence | upper fence | flagged (1.5×IQR) | flagged (% of observed) | stroke rate among flagged (%) | flagged (modified z > 3.5) |
 |---|---|---|---|---|---|---|
-| age | −26.50 | 113.50 | 0 | 0.00 | 0.00 | 0 |
+| age | −26.50 | 113.50 | 0 | 0.00 | — | 0 |
 | avg_glucose_level | 21.98 | 169.53 | 503 | 12.30 | 13.12 | 458 |
 | bmi | 9.35 | 47.35 | 90 | 2.30 | 3.33 | 47 |
 

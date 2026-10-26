@@ -21,7 +21,7 @@ This report explores the dataset that the classification project will use until 
 python docs/projects/eda/code/main.py
 ```
 
-The run takes about 90 seconds on a laptop. It writes Figures 1–13 to `figures/` and, under `results/`, every generated table as `tableNN.csv` (NN is the table's number in this report) and in Markdown, every number quoted as JSON, and the split as `split.csv`. The CSV is committed at `data/stroke-prediction/` (SHA-256 `644d473b05d2797006bd94865e4f8bb057f0c721617911613c82c8fcfc707420`), so the script runs from a clean clone.
+The run takes about 90 seconds on a laptop. It writes Figures 1–13 to `figures/` and, under `results/`, every generated table as `tableNN.csv` (NN is the table's number in this report) and in Markdown, the numbers quoted in the text as JSON (ratios such as 1.8× are simple arithmetic on them), and the split as `split.csv`. The CSV is committed at `data/stroke-prediction/` (SHA-256 `644d473b05d2797006bd94865e4f8bb057f0c721617911613c82c8fcfc707420`), so the script runs from a clean clone.
 
 **Rule followed throughout.** The full file is used only for the stage-1 inventory: missing values, duplicates, consistency checks, the leakage audit and the target distribution. The split happens right after it (1D). From then on, every statistic, figure and fitted parameter comes from the 4,088 training rows. The 1,022 test rows are only transformed by the finished pipeline, to report their shape and to prove that nothing was learned from them.
 
@@ -245,7 +245,7 @@ Figure 3 — Frequency of every category in the training rows, rare categories (
 | avg_glucose_level × bmi | 3,918 | 0.172 | 0.113 |
 | age × bmi, adults only (age ≥ 18) | 3,259 | 0.032 | 0.083 |
 
-**Method: Spearman.** Spearman ρ is the primary coefficient. Glucose is bimodal and BMI heavy-tailed (Table 5), and Pearson's r measures only linear association and is pulled by extreme points. Following the course's advice to compute both side by side, the gap between them is itself read as a diagnostic:
+**Method: Spearman.** Spearman ρ is the primary coefficient. Glucose is bimodal and BMI heavy-tailed (Figure 2, Table 5), and Pearson's r measures only linear association and is pulled by extreme points. Following the course's advice to compute both side by side, the gap between them is itself read as a diagnostic:
 
 - **age × bmi** — ρ = 0.381 > r = 0.336. The relation is monotonic but curved: BMI rises quickly through childhood, then flattens (Figure 5, middle).
 - **age × glucose** — r = 0.233 > ρ = 0.141. A cluster of older, high-glucose patients inflates r: the second glucose mode is concentrated in older patients (median age 62 to the right of the valley, against 42 to its left).
@@ -439,7 +439,7 @@ Figure 9 — Stroke rate by BMI missingness (left) and the distributions of gluc
 
 | feature | lower fence | upper fence | flagged (1.5×IQR) | flagged (% of observed) | stroke rate among flagged (%) | flagged (modified z > 3.5) |
 |---|---|---|---|---|---|---|
-| age | −26.50 | 113.50 | 0 | 0.00 | 0.00 | 0 |
+| age | −26.50 | 113.50 | 0 | 0.00 | — | 0 |
 | avg_glucose_level | 21.98 | 169.53 | 503 | 12.30 | 13.12 | 458 |
 | bmi | 9.35 | 47.35 | 90 | 2.30 | 3.33 | 47 |
 

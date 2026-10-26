@@ -40,8 +40,8 @@ def outliers(X_train, y_train, res):
         flags[c] = iqr_flag
         rows.append({"feature": c, "lower fence": lo, "upper fence": hi, "flagged (1.5×IQR)": int(iqr_flag.sum()),
                      "flagged (% of observed)": iqr_flag.sum() / x.notna().sum() * 100,
-                     "stroke rate among flagged (%)":
-                     y_train[iqr_flag].mean() * 100 if iqr_flag.any() else 0.0,
+                     "stroke rate among flagged (%)":   # undefined when nothing is flagged
+                     y_train[iqr_flag].mean() * 100 if iqr_flag.any() else "—",
                      "flagged (modified z > 3.5)": int(mz_flag.sum())})
     table = pd.DataFrame(rows)
     res.table(13, "Outliers in the training set (fences fitted on train; no row removed)", table,
