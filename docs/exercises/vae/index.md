@@ -55,7 +55,7 @@ $$
 The four VAE-specific parts are the functions of `code/vae.py`, all written out:
 
 - `reparameterize`: z = μ + σ ⊙ ε with σ = exp(½ log σ²) and ε ~ N(0, I). The noise enters as an input, so the gradient of the reconstruction reaches both heads.
-- `reconstruction_term`: −log p(x | z) for a decoder that outputs, per pixel, the probability x̂ⱼ that it is "on" (a Bernoulli likelihood). It is the formula above, summed over the 784 pixels and averaged over the images. As in `F.binary_cross_entropy`, each log is floored at −100, so a saturated sigmoid would cost 100 nats rather than an infinite loss.
+- `reconstruction_term`: −log p(x | z) for a decoder that outputs, per pixel, the probability \(\hat{x}_j\) that it is "on" (a Bernoulli likelihood). It is the formula above, summed over the 784 pixels and averaged over the images. As in `F.binary_cross_entropy`, each log is floored at −100, so a saturated sigmoid would cost 100 nats rather than an infinite loss.
 - `kl_term`: the KL from N(μ, σ²) to N(0, I) in closed form, summed over the d dimensions and averaged over the images; `torch.distributions` is not used anywhere.
 - `sample`: decodes z ~ N(0, I).
 
@@ -84,7 +84,7 @@ On the test set, after training:
 | KL | **19.48** |
 | Negative ELBO (their sum) | **101.78** |
 
-The statement's reference values are about 81 and 20. The reconstruction term cannot reach zero: for a grey pixel the BCE is smallest at x̂ⱼ = xⱼ, where it equals the pixel's entropy, so even a perfect decoder would pay 45.53 nats per test image (the summed pixel entropies). The 82.30 nats are 36.77 above that floor.
+The statement's reference values are about 81 and 20. The reconstruction term cannot reach zero: for a grey pixel the BCE is smallest at \(\hat{x}_j = x_j\), where it equals the pixel's entropy, so even a perfect decoder would pay 45.53 nats per test image (the summed pixel entropies). The 82.30 nats are 36.77 above that floor.
 
 ![Figure 1](figures/fig1.png)
 /// caption
@@ -119,7 +119,7 @@ The untrained encoder returns almost the prior for every image (KL 0.0291 nats),
 
 **Why Figure 3 looks worse than Figure 2: two reasons.**
 
-1. *Where the prior samples land.* The decoder is trained only on codes drawn from q(z | x) for training images, and the KL pulls each of those Gaussians toward N(0, I) without making their union fill N(0, I). That mismatch is the second term of the split above, and it is far from zero. With 50 000 training images the code can carry at most log 50 000 = 10.82 nats about which image it came from, so of the mean training KL of 19.51 nats at least 8.69 nats are KL(q(z) ‖ p(z)). Measured directly: at the codes of the test images, the density of the cloud of training codes has a median log q(z) of −31.28 and a 1st percentile of −73.02. At the 64 codes of Figure 3 the median is −51.32, 20.04 nats lower, and 10 of the 64 codes fall below that 1st percentile, where 1% of 64 would be 0.64. Those samples come from regions where the decoder was hardly trained ("off the manifold, nothing was trained"), and that is where shapes that are no digit at all can come from.
+1. *Where the prior samples land.* The decoder is trained only on codes drawn from q(z | x) for training images, and the KL pulls each of those Gaussians toward N(0, I) without making the cloud they form together equal to N(0, I). That mismatch is the second term of the split above, and it is far from zero. With 50 000 training images the code can carry at most log 50 000 = 10.82 nats about which image it came from, so of the mean training KL of 19.51 nats at least 8.69 nats are KL(q(z) ‖ p(z)). Measured directly: at the codes of the test images, the density of the cloud of training codes has a median log q(z) of −31.28 and a 1st percentile of −73.02. At the 64 codes of Figure 3 the median is −51.32, 20.04 nats lower, and 10 of the 64 codes fall below that 1st percentile, where 1% of 64 would be 0.64. Those samples come from regions where the decoder was hardly trained ("off the manifold, nothing was trained"), and that is where shapes that are no digit at all can come from.
 2. *What the decoder outputs for a given z.* The decoder does not output an image, it outputs the probability of each pixel, which is the mean of p(x | z). If several images are consistent with a code, the loss-minimizing output is their average, and averages of digits whose strokes fall in slightly different places are grey where real digits are black or white (the lecture's section on blur: maximum likelihood is mode-covering and returns the conditional mean). The share of grey pixels, strictly between 0.1 and 0.9, shows it: 8.59% in the test images, 14.53% in their reconstructions from μ and 16.53% in the samples of Figure 3, the blurriest of the three.
 
 **Why μ in Figure 2.** μ is the centre of q(z | x), the single most likely code for the image. A sampled z = μ + σε moves the code by the encoder's uncertainty, a mean σ between 0.09 and 0.32 on the active dimensions, toward codes of other images. The reconstruction would then change from one draw to the next and show that noise on top of what the code keeps. Decoding μ shows the code itself, the same image every time, and it is also the better reconstruction: 77.02 nats on the test set against 82.30 with a sampled z.
@@ -171,7 +171,7 @@ Figure 5 — The decoder of the d = 2 model on a 15 × 15 grid, z = Φ⁻¹(q) w
 
 ### D — Interpolation
 
-The two images are the first two of the test set, **test index 0 (a 7) and test index 1 (a 2)**, a rule fixed before looking at any interpolation. Figure 6 uses t = 0, 1/9, …, 1. The top row mixes the pixels, (1 − t) x_a + t x_b. The bottom row decodes (1 − t) μ_a + t μ_b with the d = 16 model of Exercise 1, so its two ends are the reconstructions of the two images, not the images themselves.
+The two images are the first two of the test set, **test index 0 (a 7) and test index 1 (a 2)**, a rule fixed before looking at any interpolation. Figure 6 uses t = 0, 1/9, …, 1. The top row mixes the pixels, \((1 - t)\,x_a + t\,x_b\). The bottom row decodes \((1 - t)\,\mu_a + t\,\mu_b\) with the d = 16 model of Exercise 1, so its two ends are the reconstructions of the two images, not the images themselves.
 
 ![Figure 6](figures/fig6.png)
 /// caption
@@ -189,7 +189,7 @@ The same transition is in the right half of Figure 5. The cells whose nearest tr
 **The two rows of Figure 6.** The **bottom (latent) row** passes through images that look like digits; the top (pixel) row does not.
 
 - The pixel row is two digits at once. Between t = 0.22 and 0.56 each image has 209 to 212 ink pixels (above 0.1), close to the 222 that the 7 and the 2 cover together, while the 7 has 105, the 2 has 145 and a test image has 137.7 on average. About a quarter of its pixels are grey (26.0% to 26.1% at t = 0.22 to 0.44, against 8.4% at both ends): the strokes of both digits at partial intensity. Digit images do not form a convex set, so the average of two digits is not a digit.
-- The latent row is decoded, and the decoder only produces the kind of image it was trained on. The straight line from μ_a to μ_b stays inside the cloud of training codes: its lowest log q(z), −40.25, is far above the 1st percentile of the test codes, −73.02. The KL term makes the posteriors overlap, and the lecture credits that overlap with filling the space between training examples. Along the row the 7 bends into a 3-like shape (t = 0.33 to 0.56; at t = 0.56 the majority digit of the 10 nearest training images is a 3) and then into the 2, one stroke at a time: the ink stays between 104 and 175 pixels, one digit's worth. Like every output of the decoder, these images are blurrier than real digits (10.1% to 21.4% grey pixels), but each is a single digit.
+- The latent row is decoded, and the decoder only produces the kind of image it was trained on. The straight line from \(\mu_a\) to \(\mu_b\) stays inside the cloud of training codes: its lowest log q(z), −40.25, is far above the 1st percentile of the test codes, −73.02. The KL term makes the posteriors overlap, and the lecture credits that overlap with filling the space between training examples. Along the row the 7 bends into a 3-like shape (t = 0.33 to 0.56; at t = 0.56 the majority digit of the 10 nearest training images is a 3) and then into the 2, one stroke at a time: the ink stays between 104 and 175 pixels, one digit's worth. Like every output of the decoder, these images are blurrier than real digits (10.1% to 21.4% grey pixels), but each is a single digit.
 
 ### Code
 
