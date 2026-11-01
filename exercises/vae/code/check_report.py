@@ -35,6 +35,11 @@ def epoch_row(e):
     return f"| {e} | {f2(tr)} | {f2(tk)} | {f2(vr)} | {f2(vk)} | {f2(vr + vk)} |"
 
 
+def gap(term, first=4):
+    """Largest |training average - validation value| of a term from epoch `first` to the last epoch."""
+    return max(abs(h1[f"train_{term}"][e - 1] - h1[f"val_{term}"][e]) for e in range(first, len(h1[f"val_{term}"])))
+
+
 def nearest(values, v):
     """1-based position of the grid value closest to v."""
     return min(range(len(values)), key=lambda k: abs(values[k] - v)) + 1
@@ -75,7 +80,7 @@ expected = {
                   if checks["bce_saturated_grad_finite"] and checks["bce_saturated_grad_error"] == 0
                   and checks["bce_saturated_grad_max"] == 0 and checks["bce_saturated"][0] == checks["bce_saturated"][1]
                   else "SATURATION MISMATCH",
-    "KL Monte Carlo": f"within {checks['kl_mc_worst_stderr']:.2f} standard errors "
+    "KL Monte Carlo": f"the largest of the five gaps is {checks['kl_mc_worst_stderr']:.2f} standard errors "
                       f"({100 * checks['kl_mc_worst_rel']:.2f}%)",
     "reparameterization exact": "exactly" if checks["reparam_grad_error"] == 0 else "MISMATCH",
     "sum over mean": f"divide the reconstruction term by {checks['sum_over_mean_ratio']:.2f}",
@@ -90,6 +95,7 @@ expected = {
     "BCE floor": f"{f2(ex1['bce_floor_test'])} nats per test image",
     "above the floor": f"{f2(ex1['test_rec'])} nats are {f2(ex1['test_rec'] - ex1['bce_floor_test'])} above",
     "epoch 1 train vs val": f"({f2(h1['train_rec'][0])} against {f2(h1['val_rec'][1])})",
+    "gaps from epoch 4": f"differ by at most {f2(gap('rec'))} nats in reconstruction and {f2(gap('kl'))} nats in KL",
     "end of training": f"the reconstruction is {f2(ex1['train_rec_end'])} nats on the training set and "
                        f"{f2(h1['val_rec'][-1])} on the validation set, a gap of "
                        f"{f2(h1['val_rec'][-1] - ex1['train_rec_end'])} nats, and the KL on the training set is "
@@ -130,10 +136,11 @@ expected = {
     "cells in neither list": "two others, at (2, 2) and (8, 2), are not"
                              if all(c not in ex1["mixed_prior_cells"] + ex1["prior_cells_below_test_p01"]
                                     for c in ([2, 2], [8, 2])) else "(2, 2) OR (8, 2) IS IN A LIST",
-    "grey pixels": f"the reconstructions from μ of the test images have {100 * ex1['grey_recon_test']:.2f}% grey "
-                   f"pixels (strictly between 0.1 and 0.9), against {100 * ex1['grey_test']:.2f}% in the images "
-                   f"themselves",
-    "grey Figure 3": f"blurriest of the three, with {100 * ex1['grey_prior_samples']:.2f}% grey pixels",
+    "grey share of ink": f"is {100 * ex1['grey_ink_test']:.2f}% in the test images, "
+                         f"{100 * ex1['grey_ink_recon_test']:.2f}% in their reconstructions from μ and "
+                         f"{100 * ex1['grey_ink_prior_samples']:.2f}% in the samples of Figure 3, the blurriest"
+                         if ex1["grey_ink_test"] < ex1["grey_ink_recon_test"] < ex1["grey_ink_prior_samples"]
+                         else "GREY SHARES NOT IN ORDER",
     "why mu": f"{f2(ex1['test_rec_from_mu'])} nats on the test set against {f2(ex1['test_rec'])} with a sampled z",
     # Exercise 2
     "d = 2 validation": f"validation reconstruction is {f2(ex2['history']['val_rec'][-1])} nats and its KL "
@@ -173,7 +180,8 @@ expected = {
     "pixel row ink": f"{min(ink['pixel_row'][2:6])} to {max(ink['pixel_row'][2:6])} ink pixels",
     "union and endpoints": f"close to the {ink['union']} that the {da} and the {db} cover together, while the {da} "
                            f"has {ink['x_a']}, the {db} has {ink['x_b']} and a test image has {ink['test_mean']:.1f}",
-    "latent path density": f"at log q(z) = {f2(ex2['logq_latent_path_min'])}, is denser than the μ of "
+    "latent path density": f"the lowest of its ten points, at log q(z) = {f2(ex2['logq_latent_path_min'])}, is "
+                           f"denser than the μ of "
                            f"{100 * ex2['latent_path_min_percentile']:.2f}% of the test images (their median is "
                            f"{f2(ex2['logq_test_mu_median'])})",
     "latent row 3": "at t = 0.56 the most common digit among the 10 nearest training images is a 3"

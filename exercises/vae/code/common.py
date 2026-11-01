@@ -1,4 +1,4 @@
-"""Shared settings, the MNIST split of the statement, and plotting helpers."""
+"""Shared settings, the MNIST split of the statement, measuring helpers and plotting helpers."""
 
 from pathlib import Path
 
@@ -28,7 +28,7 @@ SIDE = 28        # MNIST images are 28 x 28
 
 
 def load_mnist():
-    """Exercise 1A, exactly as the statement: pixels in [0, 1] (ToTensor), 50 000 / 10 000 split of the official
+    """Exercise 1A, exactly as in the statement: pixels in [0, 1] (ToTensor), 50 000 / 10 000 split of the official
     training images with generator seed 42; the 10 000 official test images are the test set.
 
     Returns {"train", "val", "test"}: each a pair (X, y), X of shape (n, 784) and float32, y the digit labels."""
@@ -56,6 +56,13 @@ def neighbour_votes(references, labels, queries, k=10, chunk=1000):
 def grey_fraction(X):
     """Fraction of pixels strictly between 0.1 and 0.9: neither background nor full ink."""
     return float(((X > 0.1) & (X < 0.9)).float().mean())
+
+
+def grey_share_of_ink(X):
+    """Among the pixels with ink (above 0.1), the fraction that is grey (below 0.9): a measure of blur that does
+    not depend on how much ink an image has."""
+    ink = X > 0.1
+    return float((ink & (X < 0.9)).sum() / ink.sum())
 
 
 def tile(images, rows, cols):

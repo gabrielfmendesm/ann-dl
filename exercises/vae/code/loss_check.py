@@ -2,7 +2,8 @@
 
 1. The reconstruction term equals F.binary_cross_entropy(..., reduction="sum") divided by the batch size, the
    call the statement names, in value; its gradient, autograd's exact derivative, equals the built-in's
-   wherever the built-in does not floor x_hat (1 - x_hat) at 1e-12 (and reduction="mean" is 784 times smaller).
+   wherever the built-in does not floor x_hat (1 - x_hat) at 1e-12; at outputs saturated at exactly 0 or 1 both
+   give the same value and a zero gradient at the logits (and reduction="mean" is 784 times smaller).
 2. The closed-form KL equals a Monte Carlo estimate of E_q[log q(z) - log p(z)], with both log-densities
    written out, within the estimate's standard error.
 3. The reparameterization passes the gradients dz/dmu = 1 and dz/dlogvar = sigma * eps / 2.
