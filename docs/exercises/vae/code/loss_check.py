@@ -66,6 +66,7 @@ def run(model, X_val):
     edge_ref.backward()
     edge_grad_finite = bool(torch.isfinite(logits_ours.grad).all())
     edge_grad_error = (logits_ours.grad - logits_ref.grad).abs().max().item()
+    edge_grad_max = logits_ours.grad.abs().max().item()
     edge_ours, edge_ref = edge_ours.item(), edge_ref.item()
     ratio = (F.binary_cross_entropy(x_hat, x, reduction="sum") / len(x)
              / F.binary_cross_entropy(x_hat, x, reduction="mean")).item()
@@ -78,7 +79,7 @@ def run(model, X_val):
     print(f"  so it is smaller than the exact derivative on the {n_floored} of {n_pixels} pixels "
           f"({n_floored / n_pixels:.2%}) below that floor, {n_floored_ink} of them with ink (x > 0)")
     print(f"  outputs saturated at exactly 0 and 1: {edge_ours:.4f} vs {edge_ref:.4f}; gradient at the logits "
-          f"finite: {edge_grad_finite}, largest difference {edge_grad_error:.1e}")
+          f"finite: {edge_grad_finite}, largest {edge_grad_max:.1e}, largest difference {edge_grad_error:.1e}")
     print(f"  sum / batch over reduction='mean': {ratio:.2f} (= {N_PIXELS} pixels)")
 
     # --- 2. closed-form KL vs Monte Carlo --------------------------------------------------------
@@ -110,5 +111,6 @@ def run(model, X_val):
             "builtin_grad_formula_error": builtin_error, "n_pixels": n_pixels, "n_floored": n_floored,
             "n_floored_ink": n_floored_ink,
             "bce_saturated": [edge_ours, edge_ref], "bce_saturated_grad_finite": edge_grad_finite,
-            "bce_saturated_grad_error": edge_grad_error, "sum_over_mean_ratio": ratio,
+            "bce_saturated_grad_error": edge_grad_error, "bce_saturated_grad_max": edge_grad_max,
+            "sum_over_mean_ratio": ratio,
             "kl_mc_worst_stderr": worst_z, "kl_mc_worst_rel": worst_rel, "reparam_grad_error": reparam_error}

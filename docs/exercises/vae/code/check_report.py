@@ -48,6 +48,8 @@ switch_rows = [r for r in range(len(labels)) if labels[r][10] == i and labels[r]
 contiguous = switch_rows == list(range(switch_rows[0], switch_rows[-1] + 1))
 boundary = ex2["boundary_cells"]
 ink = ex2["ink_area"]
+faint = ink["latent_row_sum"]
+group = {tuple(p["pair"]): p["count"] for p in ex2["top_pairs"] if set(p["pair"]) <= {3, 5, 8}}
 mass = ex2["linear_grid_mass"]
 
 
@@ -69,9 +71,10 @@ expected = {
     "BCE gradient check": f"gradient agrees to {sci(checks['bce_grad_rel_error_regular'])}",
     "floored pixels": f"on {100 * checks['n_floored'] / checks['n_pixels']:.2f}% of the pixels, all but "
                       f"{checks['n_floored_ink']} of them background pixels",
-    "saturation": "give the same value and the same, finite gradient at the logits"
+    "saturation": "give the same value and the same gradient at the logits, exactly zero"
                   if checks["bce_saturated_grad_finite"] and checks["bce_saturated_grad_error"] == 0
-                  and checks["bce_saturated"][0] == checks["bce_saturated"][1] else "SATURATION MISMATCH",
+                  and checks["bce_saturated_grad_max"] == 0 and checks["bce_saturated"][0] == checks["bce_saturated"][1]
+                  else "SATURATION MISMATCH",
     "KL Monte Carlo": f"within {checks['kl_mc_worst_stderr']:.2f} standard errors "
                       f"({100 * checks['kl_mc_worst_rel']:.2f}%)",
     "reparameterization exact": "exactly" if checks["reparam_grad_error"] == 0 else "MISMATCH",
@@ -124,8 +127,13 @@ expected = {
     "mixed codes": f"For {ex1['mixed_prior_count']} of the 64 codes, no digit has a majority among the 10 nearest "
                    f"training codes, against {100 * ex1['mixed_test_fraction']:.2f}% of the test codes",
     **cells("mixed cell", [[1, 5], [2, 7], [3, 2], [5, 5], [8, 4]], ex1["mixed_prior_cells"]),
-    "grey pixels": f"{100 * ex1['grey_test']:.2f}% in the test images, {100 * ex1['grey_recon_test']:.2f}% in their "
-                   f"reconstructions from μ and {100 * ex1['grey_prior_samples']:.2f}% in the samples of Figure 3",
+    "cells in neither list": "two others, at (2, 2) and (8, 2), are not"
+                             if all(c not in ex1["mixed_prior_cells"] + ex1["prior_cells_below_test_p01"]
+                                    for c in ([2, 2], [8, 2])) else "(2, 2) OR (8, 2) IS IN A LIST",
+    "grey pixels": f"the reconstructions from μ of the test images have {100 * ex1['grey_recon_test']:.2f}% grey "
+                   f"pixels (strictly between 0.1 and 0.9), against {100 * ex1['grey_test']:.2f}% in the images "
+                   f"themselves",
+    "grey Figure 3": f"blurriest of the three, with {100 * ex1['grey_prior_samples']:.2f}% grey pixels",
     "why mu": f"{f2(ex1['test_rec_from_mu'])} nats on the test set against {f2(ex1['test_rec'])} with a sampled z",
     # Exercise 2
     "d = 2 validation": f"validation reconstruction is {f2(ex2['history']['val_rec'][-1])} nats and its KL "
@@ -144,6 +152,8 @@ expected = {
     "interpolation indices": f"test index {a} (a {da}) and test index {b} (a {db})",
     "overlap pairs": "; ".join(f"{p['pair'][0]} and {p['pair'][1]}, {p['count']}" for p in pairs[:5]),
     "largest overlap": f"between **{i} and {j}**",
+    "3-5-8 group": f"({' + '.join(str(group[k]) for k in ((5, 8), (3, 5), (3, 8)))} = "
+                   f"{sum(group.values())} codes over its three pairs)",
     "overlap centre": f"μ = ({f2(centre[0])}, {f2(centre[1])})",
     "boundary band": f"from row {boundary[0][0]}, column {boundary[0][1]} down to row {boundary[-1][0]}, "
                      f"column {boundary[-1][1]}",
@@ -152,6 +162,8 @@ expected = {
     "mixed codes cell": f"around row {len(z) + 1 - nearest(z, centre[1])}, column {nearest(z, centre[0])}",
     "bits": f"at most {f2(ex2['test_kl'])} nats per image, that is {ex2['kl_bits_d2']:.1f} bits, and naming the digit "
             f"alone takes log₂ 10 = {ex2['digit_bits']:.1f} bits",
+    "spread lost": f"the {1 - spread['d2'] / spread['images']:.0%} of the within-digit spread that the "
+                   f"reconstructions lose",
     "spread": f"only {spread['d2'] / spread['images']:.0%} as much as the images themselves (summed pixel variance "
               f"{f2(spread['d2'])} against {f2(spread['images'])}), against {spread['d16'] / spread['images']:.0%} "
               f"({f2(spread['d16'])})",
@@ -164,9 +176,15 @@ expected = {
     "latent path density": f"at log q(z) = {f2(ex2['logq_latent_path_min'])}, is denser than the μ of "
                            f"{100 * ex2['latent_path_min_percentile']:.2f}% of the test images (their median is "
                            f"{f2(ex2['logq_test_mu_median'])})",
-    "latent row 3": "at t = 0.56 the majority digit of the 10 nearest training images is a 3"
+    "latent row 3": "at t = 0.56 the most common digit among the 10 nearest training images is a 3"
                     if ex2["latent_row_digits"][5] == 3 and f"{ex2['t'][5]:.2f}" == "0.56" else "NOT A 3",
-    "latent row ink": f"between {min(ink['latent_row'])} and {max(ink['latent_row'])} pixels",
+    "latent row ink": f"never covers more pixels than at the {db}'s end ({ink['latent_row'][-1]}), against "
+                      f"{min(ink['pixel_row'][2:6])} to {max(ink['pixel_row'][2:6])} in the pixel row"
+                      if max(ink["latent_row"]) == ink["latent_row"][-1] else "LATENT INK ABOVE ITS END",
+    "faintest": (f"total intensity (the sum of the pixel values) of {faint[3]:.1f} at t = {ex2['t'][3]:.2f} against "
+                 f"{faint[0]:.1f} and {faint[-1]:.1f} at the two ends")
+                if min(faint) == faint[3] and min(ex2["logq_latent_path"]) == ex2["logq_latent_path"][3]
+                else "FAINTEST IMAGE AND LOWEST DENSITY NOT BOTH AT t = 0.33",
 }
 for row in results["summary_rows"]:
     expected[f"summary row {row['#']}"] = f"| {row['#']} | {row['quantity']} | {row['value']} |"
