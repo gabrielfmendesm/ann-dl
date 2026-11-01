@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from common import (BATCH_SIZE, BETA, EPOCHS, LR, SEED, TEST_SEED, VAL_SEED, grey_fraction, save, show_grid,
-                    tile_ticks)
+from common import (BATCH_SIZE, BETA, EPOCHS, LR, SEED, TEST_SEED, TRAIN_EVAL_SEED, VAL_SEED, grey_fraction,
+                    neighbour_votes, save, show_grid, tile_ticks)
 from vae import VAE, evaluate, kl_term, reconstruction_term, sample, train
 
 D = 16
@@ -43,7 +43,7 @@ def pixel_entropy(X):
 
 def run(data):
     print("\n" + "=" * 72 + "\nEXERCISE 1 — a VAE on MNIST (d = 16)\n" + "=" * 72)
-    X_tr, _ = data["train"]
+    X_tr, y_tr = data["train"]
     X_va, _ = data["val"]
     X_te, y_te = data["test"]
 
@@ -65,6 +65,9 @@ def run(data):
         print(f"{e + 1:5d} | {history['train_rec'][e]:9.2f} {history['train_kl'][e]:9.2f} | "
               f"{history['val_rec'][e + 1]:7.2f} {history['val_kl'][e + 1]:7.2f} "
               f"{history['val_rec'][e + 1] + history['val_kl'][e + 1]:9.2f}")
+    train_rec_end, _ = evaluate(model, X_tr, TRAIN_EVAL_SEED)  # the training set, measured like the validation set
+    print(f"after epoch {EPOCHS}, both sets measured the same way: training reconstruction {train_rec_end:.2f}, "
+          f"validation reconstruction {history['val_rec'][-1]:.2f}")
     test_rec, test_kl = evaluate(model, X_te, TEST_SEED)
     print(f"TEST (d = {D}): reconstruction {test_rec:.2f}, KL {test_kl:.2f}, negative ELBO {test_rec + test_kl:.2f} "
           f"nats per image")
@@ -132,12 +135,18 @@ def run(data):
         assert torch.equal(model.decode(z_prior), samples), "the codes must be the ones of Figure 3"
         logq_te = log_aggregate_posterior(z_te, mu_tr, logvar_tr)
         logq_prior = log_aggregate_posterior(z_prior, mu_tr, logvar_tr)
+        # how mixed the digits are around each code: share of the most common digit among its 10 nearest
+        # training codes (mu); at most 0.5 means that no digit has a majority there
+        share_te = neighbour_votes(mu_tr, y_tr, z_te).max(dim=1).values / 10
+        share_prior = neighbour_votes(mu_tr, y_tr, z_prior).max(dim=1).values / 10
 
     val_kl, val_rec = history["val_kl"], history["val_rec"]
     active = kl_per_dim > 0.1
     logq_p01 = float(torch.quantile(logq_te, 0.01))
     low = torch.nonzero(logq_prior < logq_p01).flatten().tolist()
     low_cells = [[k // GRID + 1, k % GRID + 1] for k in low]  # (row, column) in Figure 3, 1-based
+    mixed = torch.nonzero(share_prior <= 0.5).flatten().tolist()
+    mixed_cells = [[k // GRID + 1, k % GRID + 1] for k in mixed]
     floor = pixel_entropy(X_te)
     info_bound = kl_train - math.log(len(X_tr))
     results = {
@@ -157,6 +166,8 @@ def run(data):
         "logq_test_median": float(logq_te.median()), "logq_test_p01": logq_p01,
         "logq_prior_median": float(logq_prior.median()), "prior_codes_below_test_p01": len(low),
         "prior_cells_below_test_p01": low_cells,
+        "mixed_test_fraction": float((share_te <= 0.5).float().mean()), "mixed_prior_count": len(mixed),
+        "mixed_prior_cells": mixed_cells, "train_rec_end": train_rec_end,
         "grey_test": grey_fraction(X_te), "grey_recon_test": grey_fraction(recon_te),
         "grey_prior_samples": grey_fraction(samples),
         "test_rec_from_mu": rec_from_mu,
@@ -176,6 +187,8 @@ def run(data):
     print(f"     log q(z) of the test codes: median {results['logq_test_median']:.2f}, 1st percentile {logq_p01:.2f}; "
           f"of the {GRID * GRID} codes of Figure 3: median {results['logq_prior_median']:.2f}, {len(low)} below that "
           f"1st percentile, at (row, column) {low_cells}")
+    print(f"     no digit with a majority among the 10 nearest training codes: {results['mixed_test_fraction']:.2%} of "
+          f"the test codes, {len(mixed)} of the {GRID * GRID} codes of Figure 3, at (row, column) {mixed_cells}")
     print(f"1E — Figure 3, reason 2: grey pixels (0.1 < x < 0.9): test images {results['grey_test']:.2%}, "
           f"reconstructions from mu {results['grey_recon_test']:.2%}, Figure 3 samples "
           f"{results['grey_prior_samples']:.2%}; BCE floor of the test images (sum of pixel entropies) {floor:.2f}")
