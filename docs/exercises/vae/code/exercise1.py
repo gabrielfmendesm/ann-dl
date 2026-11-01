@@ -11,7 +11,7 @@ import numpy as np
 import torch
 
 from common import (BATCH_SIZE, BETA, EPOCHS, LR, SEED, TEST_SEED, TRAIN_EVAL_SEED, VAL_SEED, grey_fraction,
-                    neighbour_votes, save, show_grid, tile_ticks)
+                    grey_share_of_ink, neighbour_votes, save, show_grid, tile_ticks)
 from vae import VAE, evaluate, kl_term, reconstruction_term, sample, train
 
 D = 16
@@ -122,8 +122,8 @@ def run(data):
         kl_train = kl_term(mu_tr, logvar_tr).item()
         kl_per_dim = (0.5 * (mu_te ** 2 + logvar_te.exp() - 1 - logvar_te)).mean(dim=0)
         sigma_per_dim = torch.exp(0.5 * logvar_te).mean(dim=0)
-        # a decoder that ignores z outputs one image for every input; on the test set the best such image is
-        # the per-pixel mean of the test images (it minimizes the summed BCE), so no code-free model does better
+        # if the code says nothing about the image, the decoder's output cannot depend on the image; on the test set
+        # no such output beats the per-pixel mean of the test images (it minimizes the summed BCE)
         mean_image = X_te.mean(dim=0, keepdim=True).expand_as(X_te)
         rec_no_code = reconstruction_term(mean_image, X_te).item()
         # where the prior samples land: the density of the cloud of training codes, at the codes of the
@@ -169,7 +169,8 @@ def run(data):
         "mixed_test_fraction": float((share_te <= 0.5).float().mean()), "mixed_prior_count": len(mixed),
         "mixed_prior_cells": mixed_cells, "train_rec_end": train_rec_end,
         "grey_test": grey_fraction(X_te), "grey_recon_test": grey_fraction(recon_te),
-        "grey_prior_samples": grey_fraction(samples),
+        "grey_prior_samples": grey_fraction(samples), "grey_ink_test": grey_share_of_ink(X_te),
+        "grey_ink_recon_test": grey_share_of_ink(recon_te), "grey_ink_prior_samples": grey_share_of_ink(samples),
         "test_rec_from_mu": rec_from_mu,
     }
     print(f"\n1E — rising KL: validation KL {val_kl[0]:.4f} untrained, {val_kl[1]:.2f} after epoch 1, "
@@ -191,6 +192,8 @@ def run(data):
           f"the test codes, {len(mixed)} of the {GRID * GRID} codes of Figure 3, at (row, column) {mixed_cells}")
     print(f"1E — Figure 3, reason 2: grey pixels (0.1 < x < 0.9): test images {results['grey_test']:.2%}, "
           f"reconstructions from mu {results['grey_recon_test']:.2%}, Figure 3 samples "
-          f"{results['grey_prior_samples']:.2%}; BCE floor of the test images (sum of pixel entropies) {floor:.2f}")
+          f"{results['grey_prior_samples']:.2%}; among the pixels with ink: {results['grey_ink_test']:.2%}, "
+          f"{results['grey_ink_recon_test']:.2%}, {results['grey_ink_prior_samples']:.2%}; BCE floor of the test "
+          f"images (sum of pixel entropies) {floor:.2f}")
     print(f"1E — why mu: test reconstruction decoding mu {rec_from_mu:.2f} vs sampled z {test_rec:.2f}")
     return results, model

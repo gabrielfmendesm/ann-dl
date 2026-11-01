@@ -309,6 +309,9 @@
     "grey_test": 0.08591020107269287,
     "grey_recon_test": 0.1453021615743637,
     "grey_prior_samples": 0.1652582883834839,
+    "grey_ink_test": 0.48917481303215027,
+    "grey_ink_recon_test": 0.7285976409912109,
+    "grey_ink_prior_samples": 0.8125428557395935,
     "test_rec_from_mu": 77.02058410644531
   },
   "loss_check": {
