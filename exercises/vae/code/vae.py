@@ -53,10 +53,16 @@ def reparameterize(mu, logvar, generator=None):
 
 def reconstruction_term(x_hat, x):
     """-log p(x|z) for a Bernoulli decoder: -sum_j [x_j log x_hat_j + (1 - x_j) log(1 - x_hat_j)], the binary
-    cross-entropy summed over the 784 pixels and averaged over the images. Each log is floored at -100,
-    exactly as F.binary_cross_entropy does, so a saturated sigmoid output would cost 100 nats, not infinity."""
-    log_p = torch.log(x_hat).clamp(min=LOG_FLOOR)       # log x_hat
-    log_1mp = torch.log1p(-x_hat).clamp(min=LOG_FLOOR)  # log(1 - x_hat)
+    cross-entropy summed over the 784 pixels and averaged over the images.
+
+    Each log is floored at -100, as F.binary_cross_entropy does: a float32 sigmoid returns exactly 0 or 1 for
+    large logits, and that pixel then costs 100 nats instead of infinity. Where the output is exactly 0 (or 1),
+    torch.where puts the floor in place of log x_hat (or log(1 - x_hat)) and feeds the unused log a harmless
+    input, so the gradient there is 0 instead of 0/0 = NaN."""
+    nonzero = x_hat > 0     # log x_hat is finite here
+    below_one = x_hat < 1   # log(1 - x_hat) is finite here
+    log_p = torch.where(nonzero, torch.log(torch.where(nonzero, x_hat, 1.0)), LOG_FLOOR).clamp(min=LOG_FLOOR)
+    log_1mp = torch.where(below_one, torch.log1p(-torch.where(below_one, x_hat, 0.0)), LOG_FLOOR).clamp(min=LOG_FLOOR)
     per_image = -(x * log_p + (1 - x) * log_1mp).sum(dim=1)
     return per_image.mean()
 

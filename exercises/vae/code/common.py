@@ -23,6 +23,7 @@ LR = 1e-3
 BETA = 1.0
 VAL_SEED = 1     # generator of the eps used to evaluate the validation set (the same eps every epoch)
 TEST_SEED = 2    # generator of the eps used to evaluate the test set
+TRAIN_EVAL_SEED = 3  # generator of the eps used to evaluate the training set once training is over
 SIDE = 28        # MNIST images are 28 x 28
 
 
@@ -40,6 +41,16 @@ def load_mnist():
         return torch.stack(images).view(len(dataset), -1), torch.tensor(labels)
 
     return {"train": flatten(train), "val": flatten(val), "test": flatten(test)}
+
+
+def neighbour_votes(references, labels, queries, k=10, chunk=1000):
+    """For each query, how many of its k nearest references (Euclidean distance) carry each digit: (n, 10).
+    A measuring tool only: it says how mixed the digits are around a point."""
+    votes = []
+    for start in range(0, len(queries), chunk):
+        nearest = torch.cdist(queries[start:start + chunk], references).topk(k, largest=False).indices
+        votes.append(torch.nn.functional.one_hot(labels[nearest], 10).sum(dim=1))
+    return torch.cat(votes)
 
 
 def grey_fraction(X):

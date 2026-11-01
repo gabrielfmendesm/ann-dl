@@ -47,8 +47,15 @@ centre = ex2["overlap_centre"]
 switch_rows = [r for r in range(len(labels)) if labels[r][10] == i and labels[r][11] == j]  # columns 11 -> 12
 contiguous = switch_rows == list(range(switch_rows[0], switch_rows[-1] + 1))
 boundary = ex2["boundary_cells"]
-ink, path_grey, pixel_grey = ex2["ink_area"], ex2["grey_latent_row"], ex2["grey_pixel_row"]
-same_ends = f"{100 * pixel_grey[0]:.1f}" == f"{100 * pixel_grey[-1]:.1f}"  # the report gives one value for both
+ink = ex2["ink_area"]
+mass = ex2["linear_grid_mass"]
+
+
+def cells(name, listed, computed):
+    """One entry per cell (row, column) of Figure 3 that the report names; a cell missing from the computed
+    list (the code's own selection) is reported as a mismatch."""
+    return {f"{name} {r},{c}": f"({r}, {c})" if [r, c] in computed else f"({r}, {c}) NOT IN THE CODE'S LIST"
+            for r, c in listed}
 spread = ex2["within_digit_variance"]
 kl_dims = ex1["kl_per_dim"]
 pairs = ex2["top_pairs"]
@@ -62,6 +69,9 @@ expected = {
     "BCE gradient check": f"gradient agrees to {sci(checks['bce_grad_rel_error_regular'])}",
     "floored pixels": f"on {100 * checks['n_floored'] / checks['n_pixels']:.2f}% of the pixels, all but "
                       f"{checks['n_floored_ink']} of them background pixels",
+    "saturation": "give the same value and the same, finite gradient at the logits"
+                  if checks["bce_saturated_grad_finite"] and checks["bce_saturated_grad_error"] == 0
+                  and checks["bce_saturated"][0] == checks["bce_saturated"][1] else "SATURATION MISMATCH",
     "KL Monte Carlo": f"within {checks['kl_mc_worst_stderr']:.2f} standard errors "
                       f"({100 * checks['kl_mc_worst_rel']:.2f}%)",
     "reparameterization exact": "exactly" if checks["reparam_grad_error"] == 0 else "MISMATCH",
@@ -77,18 +87,25 @@ expected = {
     "BCE floor": f"{f2(ex1['bce_floor_test'])} nats per test image",
     "above the floor": f"{f2(ex1['test_rec'])} nats are {f2(ex1['test_rec'] - ex1['bce_floor_test'])} above",
     "epoch 1 train vs val": f"({f2(h1['train_rec'][0])} against {f2(h1['val_rec'][1])})",
-    "final gap": f"{f2(h1['val_rec'][-1] - h1['train_rec'][-1])} nats above the training average",
+    "end of training": f"the reconstruction is {f2(ex1['train_rec_end'])} nats on the training set and "
+                       f"{f2(h1['val_rec'][-1])} on the validation set, a gap of "
+                       f"{f2(h1['val_rec'][-1] - ex1['train_rec_end'])} nats, and the KL on the training set is "
+                       f"{f2(ex1['train_kl_end'])} nats (the {f2(h1['train_kl'][-1])} of the table",
     "Figure 2 indices": "test indices " + ", ".join(str(k) for k in ex1["first_test_index_per_digit"][:-1])
                         + f" and {ex1['first_test_index_per_digit'][-1]}",
     "untrained KL in 1E": f"(KL {ex1['val_kl_untrained']:.4f} nats)",
-    "code-free decoder": f"still costs {f2(ex1['rec_no_code'])} nats",
-    "KL rise": f"rose by {f2(ex1['val_kl_last'] - ex1['val_kl_first'])} nats ({f2(ex1['val_kl_first'])} to "
+    "code-free decoder": f"costs {f2(ex1['rec_no_code'])} nats of reconstruction",
+    "trained total": f"pays {f2(ex1['test_kl'])} nats of KL on the test set and reconstructs at {f2(ex1['test_rec'])}, "
+                     f"a total of {f2(ex1['test_neg_elbo'])}, against at least {f2(ex1['rec_no_code'])}",
+    "epoch 1 jump": f"KL jumps from {ex1['val_kl_untrained']:.4f} to {f2(ex1['val_kl_first'])} nats while the "
+                    f"reconstruction falls from {f2(ex1['val_rec_untrained'])} to {f2(ex1['val_rec_first'])}",
+    "KL rise": f"rises another {f2(ex1['val_kl_last'] - ex1['val_kl_first'])} nats ({f2(ex1['val_kl_first'])} to "
                f"{f2(ex1['val_kl_last'])})",
-    "reconstruction fall": f"fell by {f2(ex1['val_rec_first'] - ex1['val_rec_last'])} ({f2(ex1['val_rec_first'])} "
+    "reconstruction fall": f"falls {f2(ex1['val_rec_first'] - ex1['val_rec_last'])} more ({f2(ex1['val_rec_first'])} "
                            f"to {f2(ex1['val_rec_last'])})",
-    "total fall": f"total fell by "
+    "total fall": f"total falls by "
                   f"{f2(ex1['val_rec_first'] + ex1['val_kl_first'] - ex1['val_rec_last'] - ex1['val_kl_last'])}",
-    "active dimensions": f"{ex1['n_active']} of the 16 dimensions carry between {ex1['min_kl_active']:.3f} and "
+    "active dimensions": f"{ex1['n_active']} of the 16 dimensions cost between {ex1['min_kl_active']:.3f} and "
                          f"{max(kl_dims):.3f} nats",
     "active sigma": f"mean σ between {ex1['sigma_active_range'][0]:.2f} and {ex1['sigma_active_range'][1]:.2f}",
     "inactive dimensions": f"the other {16 - ex1['n_active']} stay on the prior, with at most "
@@ -103,6 +120,10 @@ expected = {
                          f"{f2(ex1['logq_test_median'] - ex1['logq_prior_median'])} nats lower, and "
                          f"{ex1['prior_codes_below_test_p01']} of the 64",
     "expected count": f"1% of 64 would be {0.01 * 64:.2f}",
+    **cells("low-density cell", [[3, 6], [7, 3], [7, 4], [4, 1], [4, 8]], ex1["prior_cells_below_test_p01"]),
+    "mixed codes": f"For {ex1['mixed_prior_count']} of the 64 codes, no digit has a majority among the 10 nearest "
+                   f"training codes, against {100 * ex1['mixed_test_fraction']:.2f}% of the test codes",
+    **cells("mixed cell", [[1, 5], [2, 7], [3, 2], [5, 5], [8, 4]], ex1["mixed_prior_cells"]),
     "grey pixels": f"{100 * ex1['grey_test']:.2f}% in the test images, {100 * ex1['grey_recon_test']:.2f}% in their "
                    f"reconstructions from μ and {100 * ex1['grey_prior_samples']:.2f}% in the samples of Figure 3",
     "why mu": f"{f2(ex1['test_rec_from_mu'])} nats on the test set against {f2(ex1['test_rec'])} with a sampled z",
@@ -117,6 +138,9 @@ expected = {
     "grid edge": f"|z| ≤ {ex2['grid_edge']:.2f}",
     "grid range": f"from {f2(z[0])} to {f2(z[-1])}",
     "cell mass": f"{math.sqrt(ex2['cell_mass']):.4f}² = {ex2['cell_mass']:.4f}",  # the step in q, squared
+    "q slice": f"a slice of width {math.sqrt(ex2['cell_mass']):.4f} in q on each axis",
+    "linear grid": f"centre tile a mass of {mass['centre']:.5f} and a corner tile {mass['corner']:.5f}, "
+                   f"{mass['centre'] / mass['corner']:.1f} times less",
     "interpolation indices": f"test index {a} (a {da}) and test index {b} (a {db})",
     "overlap pairs": "; ".join(f"{p['pair'][0]} and {p['pair'][1]}, {p['count']}" for p in pairs[:5]),
     "largest overlap": f"between **{i} and {j}**",
@@ -126,8 +150,8 @@ expected = {
     "switch rows": (f"rows {switch_rows[0] + 1} to {switch_rows[-1] + 1} the switch happens between columns 11 and "
                     f"12, from z₁ = {f2(z[10])} to {f2(z[11])}") if contiguous else "rows not contiguous",
     "mixed codes cell": f"around row {len(z) + 1 - nearest(z, centre[1])}, column {nearest(z, centre[0])}",
-    "bits": f"{f2(ex2['test_kl'])} nats, that is {ex2['kl_bits_d2']:.1f} bits, against {ex2['kl_bits_d16']:.1f} bits",
-    "digit bits": f"log₂ 10 = {math.log2(10):.1f} bits",
+    "bits": f"at most {f2(ex2['test_kl'])} nats per image, that is {ex2['kl_bits_d2']:.1f} bits, and naming the digit "
+            f"alone takes log₂ 10 = {ex2['digit_bits']:.1f} bits",
     "spread": f"only {spread['d2'] / spread['images']:.0%} as much as the images themselves (summed pixel variance "
               f"{f2(spread['d2'])} against {f2(spread['images'])}), against {spread['d16'] / spread['images']:.0%} "
               f"({f2(spread['d16'])})",
@@ -137,14 +161,12 @@ expected = {
     "pixel row ink": f"{min(ink['pixel_row'][2:6])} to {max(ink['pixel_row'][2:6])} ink pixels",
     "union and endpoints": f"close to the {ink['union']} that the {da} and the {db} cover together, while the {da} "
                            f"has {ink['x_a']}, the {db} has {ink['x_b']} and a test image has {ink['test_mean']:.1f}",
-    "pixel row grey": (f"{100 * min(pixel_grey[2:5]):.1f}% to {100 * max(pixel_grey[2:5]):.1f}% at t = 0.22 to "
-                       f"0.44, against {100 * pixel_grey[0]:.1f}% at both ends") if same_ends else "ends differ",
-    "latent path density": f"lowest log q(z), {f2(ex2['logq_latent_path_min'])}, is far above the 1st percentile of "
-                           f"the test codes, {f2(ex1['logq_test_p01'])}",
+    "latent path density": f"at log q(z) = {f2(ex2['logq_latent_path_min'])}, is denser than the μ of "
+                           f"{100 * ex2['latent_path_min_percentile']:.2f}% of the test images (their median is "
+                           f"{f2(ex2['logq_test_mu_median'])})",
     "latent row 3": "at t = 0.56 the majority digit of the 10 nearest training images is a 3"
                     if ex2["latent_row_digits"][5] == 3 and f"{ex2['t'][5]:.2f}" == "0.56" else "NOT A 3",
     "latent row ink": f"between {min(ink['latent_row'])} and {max(ink['latent_row'])} pixels",
-    "latent row grey": f"{100 * min(path_grey):.1f}% to {100 * max(path_grey):.1f}% grey pixels",
 }
 for row in results["summary_rows"]:
     expected[f"summary row {row['#']}"] = f"| {row['#']} | {row['quantity']} | {row['value']} |"
