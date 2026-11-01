@@ -29,7 +29,7 @@ DRAW_ORDER_SEED = 0                         # Figure 4 draws the points in a fix
 
 
 def knn_predict(references, labels, queries, k=K):
-    """Majority digit among the k nearest references of each query (ties go to the smaller digit, because
+    """Most common digit among the k nearest references of each query (ties go to the smaller digit, because
     argmax returns the first maximum). A measuring tool only."""
     return neighbour_votes(references, labels, queries, k).argmax(dim=1)
 
@@ -84,7 +84,7 @@ def run(data, model16, ex1):
     save(fig, "fig4.png")
 
     # --- C: Figure 5, the decoded plane on the inverse-CDF grid ----------------------------------
-    z_values = norm.ppf(Q)                                # Phi^-1(q): equal prior mass between neighbours
+    z_values = norm.ppf(Q)                                # Phi^-1(q): every tile gets the same prior mass
     Z = torch.tensor([[z1, z2] for z2 in z_values[::-1] for z1 in z_values], dtype=torch.float32)  # top row: z2 max
     with torch.no_grad():
         decoded = model.decode(Z)
@@ -157,7 +157,8 @@ def run(data, model16, ex1):
     ink = {"x_a": ink_area(X_te[[a]])[0], "x_b": ink_area(X_te[[b]])[0],
            "union": int(((X_te[a] > 0.1) | (X_te[b] > 0.1)).sum()),
            "test_mean": float(np.mean(ink_area(X_te))), "pixel_row": ink_area(pixel_row),
-           "latent_row": ink_area(latent_row)}
+           "latent_row": ink_area(latent_row),
+           "pixel_row_sum": pixel_row.sum(dim=1).tolist(), "latent_row_sum": latent_row.sum(dim=1).tolist()}
 
     results = {
         "d": D, "history": history, "test_rec": test_rec, "test_kl": test_kl, "test_neg_elbo": test_rec + test_kl,
@@ -195,6 +196,8 @@ def run(data, model16, ex1):
           f"{latent_digits}")
     print(f"     ink area (pixels > 0.1): x_a {ink['x_a']}, x_b {ink['x_b']}, union {ink['union']}, test mean "
           f"{ink['test_mean']:.1f}; pixel row {ink['pixel_row']}; latent row {ink['latent_row']}")
+    print(f"     total intensity (sum of the pixel values): pixel row {[round(v, 1) for v in ink['pixel_row_sum']]}; "
+          f"latent row {[round(v, 1) for v in ink['latent_row_sum']]}")
     print(f"     log q(z) along the latent path (d = 16): {[round(v, 2) for v in logq_path]}; lowest "
           f"{min(logq_path):.2f}, above the log q of {path_percentile:.2%} of the test images' mu (median "
           f"{results['logq_test_mu_median']:.2f})")
