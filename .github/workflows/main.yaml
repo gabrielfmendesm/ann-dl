@@ -27,9 +27,9 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      # pip
+      # pip (PyTorch from its CPU-only index: the site build needs no GPU, and the CUDA wheels are gigabytes)
       - run: |
-          pip install -r requirements.txt
+          pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
 
       # deploy
       - run: |
