@@ -12,7 +12,7 @@ import pandas as pd
 
 from baselines import make_baselines
 from common import N_FOLDS, Results, build_preprocessor
-from search import DEFAULT
+from network import DEFAULT
 from validation import cv_network, cv_sklearn, fold_matrices, mean_sd, without_indicator
 
 

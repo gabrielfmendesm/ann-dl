@@ -124,6 +124,7 @@ def run(X_test, y_test, final):
     false_alarms = np.flatnonzero(alarm & (y_test == 0))
     picks = [("missed stroke", i) for i in missed[np.argsort(p[missed])][:N_WORST]] + \
             [("false alarm", i) for i in false_alarms[np.argsort(-p[false_alarms])][:N_WORST]]
+    # the id as text, so the table shows it as recorded (49669) rather than as a count (49,669)
     examples = pd.DataFrame([{"error": kind, "id": str(ids[X_test.index[i]]), **X_test.iloc[i][shown].to_dict(),
                               "probability": p[i]} for kind, i in picks])
     examples["bmi"] = examples["bmi"].map(lambda v: "missing" if pd.isna(v) else f"{v:.1f}")
