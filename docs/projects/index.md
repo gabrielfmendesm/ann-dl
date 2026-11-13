@@ -4,4 +4,3 @@ Team project deliverables. Team: Gabriel Fernando Missaka Mendes, Eduardo Takei 
 
 - [EDA — Stroke Prediction](eda/index.md) — October 25, 2026
 - [Classification — Stroke Prediction](classification/index.md) — November 13, 2026
-- Generative Models — date to be announced

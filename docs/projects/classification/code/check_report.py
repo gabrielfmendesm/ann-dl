@@ -162,7 +162,7 @@ def main():
                              f"{f4(ap_of[('16', 0.001, 'weight decay 1')])} at lr 10⁻³, and from "
                              f"{f4(ap_of[('16', 0.003, 'none')])} to {f4(ap_of[('16', 0.003, 'weight decay 1')])}"
                              if max(decay_gain[("16", r)] for r in (0.001, 0.003)) < 0 else "<16 units gain>",
-        "one SE": f"{f4(top['AP (mean)'])} - {f4(top['AP (sd)'])}/√{N_FOLDS} = {search['one_se_threshold']:.4f}",
+        "one SE": f"{f4(top['AP (mean)'])} - {f4(top['AP (sd)'])}/√{N_FOLDS} ≈ {search['one_se_threshold']:.4f}",
         "smallest within one SE": f"Of these {search['n_within_one_se']}, {len(smallest)} have the smallest size, "
                                   f"{eligible.min()} parameters",
         "steps of the final retraining": f"an epoch has {steps_final} mini-batches instead of "
