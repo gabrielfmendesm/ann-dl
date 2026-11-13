@@ -1,0 +1,24 @@
+{
+  "gain": {
+    "Logistic regression": 0.030845930044034464,
+    "Gradient boosting": -0.0017440265193634508,
+    "Network (step 2)": 0.024735898375897236
+  },
+  "drop_indicator": true,
+  "input_widths": {
+    "with": [
+      23,
+      24,
+      24,
+      24,
+      24
+    ],
+    "without": [
+      22,
+      23,
+      23,
+      23,
+      23
+    ]
+  }
+}

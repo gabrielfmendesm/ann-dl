@@ -35,6 +35,8 @@ python docs/exercises/mlp/code/main.py               # then: python docs/exercis
 python docs/exercises/vae/code/main.py               # then: python docs/exercises/vae/code/check_report.py
 python docs/projects/eda/code/main.py               # EDA project: Figures 1-13, results/tableNN.csv and metrics
 python docs/projects/eda/code/check_report.py       # then: the report's tables and summary match results/
+python docs/projects/classification/code/main.py    # Classification project: Figures 1-7, results/tableNN.csv and metrics
+python docs/projects/classification/code/check_report.py   # then: the report's tables and numbers match results/
 ```
 
 ## Layout
@@ -52,11 +54,12 @@ docs/
     vae/
   projects/
     eda/                  # same layout: index.md, code/, figures/, plus results/
+    classification/       # same layout as eda/; its code imports the EDA's pipeline
 mkdocs.yml
 requirements.txt
 data/
   spaceship-titanic/train.csv   # Kaggle Spaceship Titanic training file (Data, Exercise 3)
-  stroke-prediction/healthcare-dataset-stroke-data.csv   # Kaggle Stroke Prediction Dataset (EDA project)
+  stroke-prediction/healthcare-dataset-stroke-data.csv   # Kaggle Stroke Prediction Dataset (EDA and Classification)
   MNIST/                        # downloaded by torchvision on the first run of the VAE code (not committed)
 ```
 
@@ -64,6 +67,6 @@ data/
 
 `data/spaceship-titanic/train.csv` is the training file of the [Spaceship Titanic](https://www.kaggle.com/competitions/spaceship-titanic) Kaggle competition, committed so the script of the Data activity's Exercise 3 runs from a clean checkout.
 
-`data/stroke-prediction/healthcare-dataset-stroke-data.csv` is the [Stroke Prediction Dataset](https://www.kaggle.com/datasets/fedesoriano/stroke-prediction-dataset) (fedesoriano, Kaggle), committed so the EDA project runs from a clean checkout. SHA-256: `644d473b05d2797006bd94865e4f8bb057f0c721617911613c82c8fcfc707420`.
+`data/stroke-prediction/healthcare-dataset-stroke-data.csv` is the [Stroke Prediction Dataset](https://www.kaggle.com/datasets/fedesoriano/stroke-prediction-dataset) (fedesoriano, Kaggle), committed so the EDA and Classification projects run from a clean checkout. SHA-256: `644d473b05d2797006bd94865e4f8bb057f0c721617911613c82c8fcfc707420`.
 
 `data/MNIST/` holds the MNIST digits used by the VAE exercise. It is not committed: `torchvision.datasets.MNIST(..., download=True)` downloads it there on the first run.

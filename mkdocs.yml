@@ -141,9 +141,10 @@ extra_javascript:
   # Para a implementação do mkdocs-jupyter
   - javascripts/mathjax.js
 
-# Machine-generated tables of the EDA scripts: kept in the repository, not published as pages
+# Machine-generated tables of the project scripts: kept in the repository, not published as pages
 exclude_docs: |
   projects/eda/results/
+  projects/classification/results/
 
 nav:
   - Home: index.md
@@ -155,3 +156,4 @@ nav:
   - Projects:
     - Overview: ./projects/index.md
     - EDA: ./projects/eda/index.md
+    - Classification: ./projects/classification/index.md

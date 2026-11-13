@@ -1,0 +1,4 @@
+layer,shape,activation,initialization,parameters
+hidden 1,23 → 32,ReLU,He (Kaiming) normal,768
+hidden 2,32 → 16,ReLU,He (Kaiming) normal,528
+output,16 → 1,none (logit),Glorot (Xavier) normal,17

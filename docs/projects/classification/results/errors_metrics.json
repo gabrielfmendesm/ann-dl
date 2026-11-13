@@ -1,0 +1,249 @@
+{
+  "worst_subgroup": "age: 60 or more",
+  "worst_error_rate": 82.72058823529412,
+  "worst_subgroup_row": {
+    "feature": "age",
+    "subgroup": "60 or more",
+    "patients": 272,
+    "strokes": 38,
+    "missed": 0,
+    "false alarms": 225,
+    "miss rate (%)": 0.0,
+    "false-alarm rate (%)": 96.15384615384616,
+    "error rate (%)": 82.72058823529412,
+    "cost per patient": 0.8272058823529411
+  },
+  "costliest_subgroup_row": {
+    "feature": "BMI",
+    "subgroup": "missing",
+    "patients": 31,
+    "strokes": 3,
+    "missed": 1,
+    "false alarms": 13,
+    "miss rate (%)": 33.333333333333336,
+    "false-alarm rate (%)": 46.42857142857143,
+    "error rate (%)": 45.16129032258065,
+    "cost per patient": 1.064516129032258
+  },
+  "subgroups": [
+    {
+      "feature": "age",
+      "subgroup": "under 18",
+      "patients": 182,
+      "strokes": 1,
+      "missed": 1,
+      "false alarms": 0,
+      "miss rate (%)": 100.0,
+      "false-alarm rate (%)": 0.0,
+      "error rate (%)": 0.5494505494505495,
+      "cost per patient": 0.10989010989010989
+    },
+    {
+      "feature": "age",
+      "subgroup": "18\u201359",
+      "patients": 568,
+      "strokes": 11,
+      "missed": 10,
+      "false alarms": 60,
+      "miss rate (%)": 90.9090909090909,
+      "false-alarm rate (%)": 10.771992818671455,
+      "error rate (%)": 12.32394366197183,
+      "cost per patient": 0.45774647887323944
+    },
+    {
+      "feature": "age",
+      "subgroup": "60 or more",
+      "patients": 272,
+      "strokes": 38,
+      "missed": 0,
+      "false alarms": 225,
+      "miss rate (%)": 0.0,
+      "false-alarm rate (%)": 96.15384615384616,
+      "error rate (%)": 82.72058823529412,
+      "cost per patient": 0.8272058823529411
+    },
+    {
+      "feature": "hypertension",
+      "subgroup": "no",
+      "patients": 921,
+      "strokes": 38,
+      "missed": 10,
+      "false alarms": 209,
+      "miss rate (%)": 26.31578947368421,
+      "false-alarm rate (%)": 23.669309173272932,
+      "error rate (%)": 23.778501628664497,
+      "cost per patient": 0.44408251900108575
+    },
+    {
+      "feature": "hypertension",
+      "subgroup": "yes",
+      "patients": 101,
+      "strokes": 12,
+      "missed": 1,
+      "false alarms": 76,
+      "miss rate (%)": 8.333333333333334,
+      "false-alarm rate (%)": 85.3932584269663,
+      "error rate (%)": 76.23762376237623,
+      "cost per patient": 0.9504950495049505
+    },
+    {
+      "feature": "heart disease",
+      "subgroup": "no",
+      "patients": 967,
+      "strokes": 39,
+      "missed": 11,
+      "false alarms": 247,
+      "miss rate (%)": 28.205128205128204,
+      "false-alarm rate (%)": 26.61637931034483,
+      "error rate (%)": 26.680455015511892,
+      "cost per patient": 0.48293691830403307
+    },
+    {
+      "feature": "heart disease",
+      "subgroup": "yes",
+      "patients": 55,
+      "strokes": 11,
+      "missed": 0,
+      "false alarms": 38,
+      "miss rate (%)": 0.0,
+      "false-alarm rate (%)": 86.36363636363636,
+      "error rate (%)": 69.0909090909091,
+      "cost per patient": 0.6909090909090909
+    },
+    {
+      "feature": "BMI",
+      "subgroup": "recorded",
+      "patients": 991,
+      "strokes": 47,
+      "missed": 10,
+      "false alarms": 272,
+      "miss rate (%)": 21.27659574468085,
+      "false-alarm rate (%)": 28.8135593220339,
+      "error rate (%)": 28.456104944500506,
+      "cost per patient": 0.47628657921291623
+    },
+    {
+      "feature": "BMI",
+      "subgroup": "missing",
+      "patients": 31,
+      "strokes": 3,
+      "missed": 1,
+      "false alarms": 13,
+      "miss rate (%)": 33.333333333333336,
+      "false-alarm rate (%)": 46.42857142857143,
+      "error rate (%)": 45.16129032258065,
+      "cost per patient": 1.064516129032258
+    },
+    {
+      "feature": "glucose",
+      "subgroup": "below 175",
+      "patients": 906,
+      "strokes": 32,
+      "missed": 11,
+      "false alarms": 212,
+      "miss rate (%)": 34.375,
+      "false-alarm rate (%)": 24.25629290617849,
+      "error rate (%)": 24.613686534216335,
+      "cost per patient": 0.4768211920529801
+    },
+    {
+      "feature": "glucose",
+      "subgroup": "175 or more",
+      "patients": 116,
+      "strokes": 18,
+      "missed": 0,
+      "false alarms": 73,
+      "miss rate (%)": 0.0,
+      "false-alarm rate (%)": 74.48979591836735,
+      "error rate (%)": 62.93103448275862,
+      "cost per patient": 0.6293103448275862
+    },
+    {
+      "feature": "gender",
+      "subgroup": "female",
+      "patients": 599,
+      "strokes": 29,
+      "missed": 5,
+      "false alarms": 166,
+      "miss rate (%)": 17.24137931034483,
+      "false-alarm rate (%)": 29.12280701754386,
+      "error rate (%)": 28.547579298831387,
+      "cost per patient": 0.44407345575959933
+    },
+    {
+      "feature": "gender",
+      "subgroup": "male",
+      "patients": 423,
+      "strokes": 21,
+      "missed": 6,
+      "false alarms": 119,
+      "miss rate (%)": 28.571428571428573,
+      "false-alarm rate (%)": 29.601990049751244,
+      "error rate (%)": 29.55082742316785,
+      "cost per patient": 0.5650118203309693
+    }
+  ],
+  "strokes_18_59": 11,
+  "strokes_18_59_with_clinical_flag": 2,
+  "strokes_18_59_with_clinical_flag_missed": 1,
+  "stroke_rate_60_plus": {
+    "hypertension": 0.18032786885245902,
+    "no hypertension": 0.12796208530805686,
+    "n_hypertension": 61,
+    "n_no_hypertension": 211
+  },
+  "test_strokes_hypertension": 12,
+  "importance": [
+    {
+      "feature": "age",
+      "AP drop (mean)": 0.21127090740470847,
+      "AP drop (sd)": 0.023704004151318778
+    },
+    {
+      "feature": "avg_glucose_level",
+      "AP drop (mean)": 0.04913843754748911,
+      "AP drop (sd)": 0.022025393614576335
+    },
+    {
+      "feature": "work_type",
+      "AP drop (mean)": 0.02585864431813548,
+      "AP drop (sd)": 0.01229514019237451
+    },
+    {
+      "feature": "heart_disease",
+      "AP drop (mean)": 0.024223171887921186,
+      "AP drop (sd)": 0.017719996047716093
+    },
+    {
+      "feature": "smoking_status",
+      "AP drop (mean)": 0.01855793145557203,
+      "AP drop (sd)": 0.008360379884037702
+    },
+    {
+      "feature": "ever_married",
+      "AP drop (mean)": 0.01854141521077167,
+      "AP drop (sd)": 0.012153486877897678
+    },
+    {
+      "feature": "bmi",
+      "AP drop (mean)": 0.01579292414361763,
+      "AP drop (sd)": 0.010513426933146611
+    },
+    {
+      "feature": "gender",
+      "AP drop (mean)": 0.007218476109507369,
+      "AP drop (sd)": 0.008729387495600266
+    },
+    {
+      "feature": "Residence_type",
+      "AP drop (mean)": 0.0047679799755138115,
+      "AP drop (sd)": 0.02177216112566449
+    },
+    {
+      "feature": "hypertension",
+      "AP drop (mean)": 0.004146573615082042,
+      "AP drop (sd)": 0.018013473469078677
+    }
+  ],
+  "base_ap": 0.299655807125145
+}

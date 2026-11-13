@@ -1,0 +1,20 @@
+{
+  "train": 4088,
+  "train_positives": 199,
+  "test": 1022,
+  "test_positives": 50,
+  "validation_folds": [
+    818,
+    818,
+    818,
+    817,
+    817
+  ],
+  "validation_positives": [
+    40,
+    40,
+    40,
+    39,
+    40
+  ]
+}

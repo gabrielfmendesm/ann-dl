@@ -1,0 +1,9 @@
+age,flag,non-strokes with it,median age with it,flagged with it (%),non-strokes without it,median age without it,flagged without it (%)
+18–59,hypertension,39,52.0,66.66666666666666,518,39.0,6.563706563706563
+18–59,heart disease,14,52.0,64.28571428571429,543,40.0,9.392265193370166
+18–59,glucose 175 or more,45,49.0,51.11111111111111,512,40.0,7.2265625
+18–59,any of the three,85,51.0,52.94117647058824,472,38.0,3.1779661016949152
+60 or more,hypertension,50,70.5,100.0,184,69.0,95.1086956521739
+60 or more,heart disease,29,72.0,100.0,205,69.0,95.60975609756098
+60 or more,glucose 175 or more,50,73.5,100.0,184,69.0,95.1086956521739
+60 or more,any of the three,97,72.0,100.0,137,67.0,93.43065693430657

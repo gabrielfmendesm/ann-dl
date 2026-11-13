@@ -19,6 +19,7 @@ This site gathers my deliverables for the *Artificial Neural Networks and Deep L
 
 - [Team projects](projects/index.md)
     - [EDA — Stroke Prediction](projects/eda/index.md)
+    - [Classification — Stroke Prediction](projects/classification/index.md)
 
 ## Repository
 

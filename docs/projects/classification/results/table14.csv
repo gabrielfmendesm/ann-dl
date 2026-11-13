@@ -1,0 +1,11 @@
+error,id,age,gender,hypertension,heart_disease,avg_glucose_level,bmi,smoking_status,probability
+missed stroke,49669,14.0,Female,0,0,57.93,30.9,Unknown,0.028300434
+missed stroke,39912,32.0,Female,0,0,76.13,29.9,smokes,0.14747302
+missed stroke,54385,45.0,Male,0,0,64.14,29.4,never smoked,0.16477339
+missed stroke,33879,42.0,Male,0,0,83.41,25.4,Unknown,0.17325655
+missed stroke,33943,39.0,Female,0,0,83.24,26.3,never smoked,0.17597437
+false alarm,65955,81.0,Male,1,1,220.64,30.0,never smoked,0.92974514
+false alarm,19271,82.0,Female,1,1,101.56,31.5,never smoked,0.9282016
+false alarm,57080,81.0,Female,1,1,59.11,20.7,formerly smoked,0.9268479
+false alarm,15120,81.0,Female,1,0,210.23,30.7,never smoked,0.9065372
+false alarm,69284,81.0,Female,1,0,174.54,26.4,never smoked,0.90568703

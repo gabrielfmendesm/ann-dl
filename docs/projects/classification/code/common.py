@@ -25,10 +25,14 @@ EDA_SPLIT = HERE.parents[1] / "eda" / "results" / "split.csv"
 
 # Appended after this folder: `common` stays this file, and `preprocessing` is the EDA's module.
 sys.path.append(str(EDA_CODE))
-from preprocessing import FEATURES, SEED, TARGET, build_preprocessor, load_raw, split  # noqa: E402
+from preprocessing import FEATURES, SEED, build_preprocessor, load_raw, split  # noqa: E402
 
-# --- Step 0: fixed before any model was trained ------------------------------------------------------
-MAIN_METRIC = "average precision"
+__all__ = ["HERE", "REPORT", "FIGURES_DIR", "RESULTS_DIR", "FEATURES", "SEED", "build_preprocessor", "MAIN_METRIC",
+           "CRITERION_GAIN", "COST_MISS", "N_FOLDS", "SEEDS", "CLASS_COLORS", "MODEL_COLORS", "NEUTRAL",
+           "load_raw", "load_data", "folds", "save_figure", "md_table", "Results"]
+
+# --- Step 0: fixed before any model was trained --------------------------------------------------
+MAIN_METRIC = "average precision"   # the decision of step 0, computed with sklearn's average_precision_score
 CRITERION_GAIN = 0.15   # the network's mean test AP (over SEEDS) must be at least 15% above the best baseline's,
 #                         and the gap must be larger than the network's standard deviation across SEEDS
 COST_MISS = 20          # a missed stroke costs as much as 20 false alarms (a false alarm costs 1)
@@ -36,7 +40,6 @@ N_FOLDS = 5             # stratified, shuffled folds of the training rows: the v
 SEEDS = (42, 43, 44, 45, 46)
 
 CLASS_COLORS = {0: "#2a78d6", 1: "#eb6834"}   # the EDA's colorblind-safe pair (blue / orange)
-CLASS_LABELS = {0: "No stroke (0)", 1: "Stroke (1)"}
 MODEL_COLORS = {"Network": "#eb6834", "Logistic regression": "#2a78d6", "Gradient boosting": "#1baf7a",
                 "Majority class": "#898781"}
 NEUTRAL = "#898781"
@@ -76,7 +79,8 @@ def save_figure(fig, number, title):
 def md_table(df, floatfmt=None):
     """Render a DataFrame as a Markdown table; floatfmt maps a column to its format spec (default .4f).
 
-    Integers get a thousands separator and negative numbers a true minus sign, as in the prose.
+    Integers get a thousands separator, negative numbers a true minus sign, as in the prose, and a missing value
+    a dash.
     """
     floatfmt = floatfmt or {}
     header = "| " + " | ".join(str(c) for c in df.columns) + " |"
@@ -85,7 +89,9 @@ def md_table(df, floatfmt=None):
     for values in df.astype(object).itertuples(index=False):   # object dtype keeps each cell's own type
         cells = []
         for c, v in zip(df.columns, values):
-            if isinstance(v, (float, np.floating)):
+            if isinstance(v, (float, np.floating)) and np.isnan(v):
+                text = "—"
+            elif isinstance(v, (float, np.floating)):
                 text = format(v, floatfmt.get(c, ".4f"))
             elif isinstance(v, (int, np.integer)) and not isinstance(v, (bool, np.bool_)):
                 text = f"{v:,}"
