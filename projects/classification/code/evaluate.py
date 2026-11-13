@@ -137,7 +137,7 @@ def mcnemar(y, flag_a, flag_b):
 
 
 def run(X_train, X_test, y_train, y_test, make_preprocessor, chosen, oof_baselines, best_baseline):
-    """Step 5 (Tables 8-11, Figures 3-5). Returns what step 6 analyses: the seed-42 network, the fitted pipeline, the
+    """Step 5 (Tables 8-11, Figures 3-5). Returns what step 6 analyzes: the seed-42 network, the fitted pipeline, the
     test probabilities of every model and the network's threshold."""
     results = Results("evaluation")
 

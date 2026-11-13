@@ -5,7 +5,7 @@ Usage, from the repository root:
 
 The steps run in the order of the report. Steps 0 to 4 use only the training rows and their validation folds.
 Steps 5 and 6 are the only ones that receive the test rows: step 5 evaluates every model on them once, step 6
-analyses the errors of the seed-42 network on those same rows and changes no choice.
+analyzes the errors of the seed-42 network on those same rows and changes no choice.
 Writes Figures 1-7 to figures/ and the tables (Markdown and CSV) and numbers (JSON) to results/.
 """
 
