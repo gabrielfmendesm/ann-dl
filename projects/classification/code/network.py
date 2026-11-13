@@ -16,6 +16,7 @@ from torch.utils.data import DataLoader, TensorDataset
 BATCH_SIZE = 128     # about 6 positives per batch at the 4.87% rate; a batch without any is rare (0.17%)
 MAX_EPOCHS = 300     # an upper bound; early stopping decides
 PATIENCE = 30        # epochs without a lower validation loss before stopping
+DEFAULT = {"hidden": [32, 16], "dropout": 0.0, "lr": 1e-3, "weight_decay": 0.0}   # the network of step 2
 
 
 class MLP(nn.Module):
@@ -81,8 +82,8 @@ def train(X_train, y_train, config, seed, X_val=None, y_val=None, epochs=None):
     y_train = np.asarray(y_train)
     pos_weight = torch.tensor((y_train == 0).sum() / (y_train == 1).sum(), dtype=torch.float32)
     loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
-    weights = [p for name, p in model.named_parameters() if name.endswith("weight")]
-    biases = [p for name, p in model.named_parameters() if name.endswith("bias")]
+    weights = [p for p in model.parameters() if p.ndim > 1]    # the weight matrices
+    biases = [p for p in model.parameters() if p.ndim == 1]
     optimizer = torch.optim.AdamW([{"params": weights, "weight_decay": config["weight_decay"]},
                                    {"params": biases, "weight_decay": 0.0}], lr=config["lr"])
     Xt, yt = to_tensor(X_train), to_tensor(y_train)
@@ -109,6 +110,7 @@ def train(X_train, y_train, config, seed, X_val=None, y_val=None, epochs=None):
             val_logits = model(Xv)
             val_loss = loss_fn(val_logits, yv).item()
         history["val_loss"].append(val_loss)
+        # AP depends only on the ranking, so the logits give the same value as the probabilities
         history["val_ap"].append(average_precision_score(y_val, val_logits.numpy()))
         if val_loss < best_loss:
             best_loss, best_epoch, wait = val_loss, epoch, 0

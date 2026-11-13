@@ -3,7 +3,8 @@
 Usage, from the repository root, after main.py:
     python docs/projects/classification/code/check_report.py
 
-Every table of results/*_tables.md must appear verbatim in index.md, as a whole table; every figure must be
+The step headings must be the statement's, in its order. Every table of results/*_tables.md must appear verbatim in
+index.md, with its title and as a whole table, and the tables must be numbered in order; every figure must be
 committed, shown exactly once and have a "Conclusion — Figure N." paragraph; the key numbers of the text must be the
 ones stored in results/ (the *_metrics.json files, split_sizes.json and five of the table CSVs), compared with the
 report's typographic minus sign normalized to "-"; and the results summary must be the last section, with its eight
@@ -21,6 +22,9 @@ from common import CRITERION_GAIN, FIGURES_DIR, MAIN_METRIC, N_FOLDS, REPORT, RE
 
 STEPS = ("starting_point", "baselines", "search", "evaluation", "errors")
 N_FIGURES = 7
+HEADINGS = ("0. Starting point", "1. Baselines", "2. The network", "3. Training",
+            "4. Regularization and hyperparameters", "5. Test evaluation", "6. Error analysis", "7. Conclusion",
+            "Results summary")   # the statement's steps, in its order
 SUMMARY_ROWS = ("Dataset, task, target and main metric", "Train · validation · test (rows)",
                 "Best baseline and its test metric",
                 "Chosen network: layers × units, number of parameters, regularization",
@@ -30,10 +34,12 @@ SUMMARY_ROWS = ("Dataset, task, target and main metric", "Train · validation ·
 
 
 def f4(x):
+    """A number with the report's four decimals."""
     return f"{x:.4f}"
 
 
 def ci(interval):
+    """A confidence interval as the report writes it."""
     return f"[{interval[0]:.4f}, {interval[1]:.4f}]"
 
 
@@ -51,17 +57,26 @@ def power_of_ten(x):
 
 
 def main():
+    """Print every mismatch between the report and results/ and exit with 1, or confirm that there is none."""
     report = REPORT.read_text()
     text = report.replace("−", "-")
     problems = []
 
+    if tuple(re.findall(r"^## (.+)$", report, re.M)) != HEADINGS:
+        problems.append(f"the step headings are not, in order: {', '.join(HEADINGS)}")
+
     tables = 0
     for step in STEPS:
         generated = (RESULTS_DIR / f"{step}_tables.md").read_text()
-        for number, body in re.findall(r"^### Table (\d+) — .*\n\n((?:\|.*\n)+)", generated, re.M):
+        for number, title, body in re.findall(r"^### Table (\d+) — (.*)\n\n((?:\|.*\n)+)", generated, re.M):
             tables += 1
-            if f"\n\n{body.strip()}\n\n" not in report:   # the whole table, with no row added or missing
+            # its caption, then the whole table, with no row added or missing
+            pattern = rf"\n\*\*Table {number} — {re.escape(title)}\.\*\*[^\n]*\n\n{re.escape(body.strip())}\n\n"
+            if len(re.findall(pattern, report)) != 1:
                 problems.append(f"Table {number} in the report differs from the one in results/{step}_tables.md")
+    captions = [int(n) for n in re.findall(r"^\*\*Table (\d+) — ", report, re.M)]
+    if captions != list(range(1, tables + 1)):
+        problems.append(f"the report's tables are numbered {captions}, not 1 to {tables} in order")
 
     for n in range(1, N_FIGURES + 1):
         if not (FIGURES_DIR / f"fig{n}.png").is_file():

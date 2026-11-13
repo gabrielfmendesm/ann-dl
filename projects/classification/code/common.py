@@ -23,7 +23,8 @@ RESULTS_DIR = HERE.parent / "results"
 EDA_CODE = HERE.parents[1] / "eda" / "code"
 EDA_SPLIT = HERE.parents[1] / "eda" / "results" / "split.csv"
 
-# Appended after this folder: `common` stays this file, and `preprocessing` is the EDA's module.
+# Appended after this folder: `common` stays this file, and `preprocessing` is the EDA's module. The EDA's own
+# common.py cannot be imported under the same name, so the small report helpers below repeat it.
 sys.path.append(str(EDA_CODE))
 from preprocessing import FEATURES, SEED, build_preprocessor, load_raw, split  # noqa: E402
 

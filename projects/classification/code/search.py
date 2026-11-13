@@ -12,10 +12,9 @@ import numpy as np
 import pandas as pd
 
 from common import N_FOLDS, NEUTRAL, Results, save_figure
-from network import BATCH_SIZE, MAX_EPOCHS, MLP, PATIENCE
+from network import BATCH_SIZE, DEFAULT, MAX_EPOCHS, MLP, PATIENCE
 from validation import cv_network, fold_matrices, mean_sd
 
-DEFAULT = {"hidden": [32, 16], "dropout": 0.0, "lr": 1e-3, "weight_decay": 0.0}   # the network of step 2
 REGULARIZATION = {                       # name: (weight_decay, dropout)
     "none": (0.0, 0.0),
     "weight decay 0.1": (0.1, 0.0),
@@ -35,16 +34,19 @@ FOLD_COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4"]
 
 
 def with_regularization(config, name):
+    """The configuration with the weight decay and dropout of the named regularization variant."""
     weight_decay, dropout = REGULARIZATION[name]
     return {**config, "weight_decay": weight_decay, "dropout": dropout}
 
 
 def regularization_name(config):
+    """The name of the regularization variant a configuration uses."""
     return next(name for name, (wd, p) in REGULARIZATION.items()
                 if (wd, p) == (config["weight_decay"], config["dropout"]))
 
 
 def layers(config):
+    """The hidden widths as written in the tables, e.g. "32-16"."""
     return "-".join(map(str, config["hidden"]))
 
 
@@ -56,6 +58,7 @@ def adult_low_bmi_to_missing(X):
 
 
 def summary_row(cv):
+    """Mean and sample sd of the validation AP, mean ROC-AUC and median restored epoch of a cross-validation."""
     (ap, ap_sd), auc = mean_sd(cv["ap"]), np.mean(cv["auc"])
     return {"AP (mean)": ap, "AP (sd)": ap_sd, "ROC-AUC (mean)": auc,
             "best epoch (median)": int(np.median(cv["best_epoch"]))}
@@ -75,7 +78,7 @@ def architecture_table(config, n_inputs):
     return table
 
 
-def plot_curves(cv):
+def plot_training_curves(cv):
     """Figure 1: training and validation loss, and validation AP, per epoch for every fold."""
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.6))
     for k, history in enumerate(cv["histories"]):
@@ -154,13 +157,13 @@ def run(X_train, y_train, folds, make_preprocessor, mats, n_inputs):
         "train_loss_last": [h["train_loss"][-1] for h in default_cv["histories"]],
         "val_loss_last": [h["val_loss"][-1] for h in default_cv["histories"]],
         "val_loss_best": [h["val_loss"][b - 1] for h, b in zip(default_cv["histories"], default_cv["best_epoch"])],
-        # the validation AP after the restored epoch: its maximum over the run, the epoch of that maximum, and its last
-        # value, to compare what the loss and the ranking say about when to stop
+        # the validation AP over the whole run: its maximum, the epoch of that maximum, and its last value, to compare
+        # what the loss and the ranking say about when to stop
         "val_ap_max": [max(h["val_ap"]) for h in default_cv["histories"]],
         "val_ap_max_epoch": [int(np.argmax(h["val_ap"])) + 1 for h in default_cv["histories"]],
         "val_ap_last": [h["val_ap"][-1] for h in default_cv["histories"]],
     }
-    plot_curves(default_cv)
+    plot_training_curves(default_cv)
 
     # --- Step 4: regularization, then the search -------------------------------------------------
     cache = {}

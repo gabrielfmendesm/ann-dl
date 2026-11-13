@@ -23,6 +23,7 @@ from validation import mean_sd
 COST_SENSITIVITY = (10, COST_MISS, 50)   # the threshold under other costs of a miss, on validation only
 N_BOOTSTRAP = 2000                        # resamples of the test rows for the paired bootstrap
 LEARNED_BASELINES = ("Logistic regression", "Gradient boosting")
+COST_COLORS = ["#2a78d6", "#eb6834", "#1baf7a"]   # one per cost of COST_SENSITIVITY; the chosen one in orange
 
 
 def choose_threshold(y, p, cost_miss):
@@ -48,7 +49,7 @@ def decision_metrics(y, p, threshold, cost_miss=COST_MISS):
 def plot_threshold(y, p, chosen):
     """Figure 3: validation cost per patient against the threshold, for three costs of a miss."""
     fig, ax = plt.subplots(figsize=(9, 4.6))
-    for cost, color, lw in zip(COST_SENSITIVITY, ["#2a78d6", "#eb6834", "#1baf7a"], [1.2, 2.2, 1.2]):
+    for cost, color, lw in zip(COST_SENSITIVITY, COST_COLORS, [1.2, 2.2, 1.2]):
         t, costs, candidates = choose_threshold(y, p, cost)
         finite = np.isfinite(candidates)
         ax.plot(candidates[finite], costs[finite] / len(y), color=color, lw=lw,
@@ -61,7 +62,7 @@ def plot_threshold(y, p, chosen):
     save_figure(fig, 3, "Choosing the decision threshold on validation from the cost of the errors")
 
 
-def plot_curves(y, probabilities, metrics, labels):
+def plot_test_curves(y, probabilities, metrics, labels):
     """Figure 4: precision-recall and ROC curves on the test set, with each model's operating point."""
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.8))
     for name, p in probabilities.items():
@@ -168,12 +169,13 @@ def run(X_train, X_test, y_train, y_test, make_preprocessor, chosen, oof_baselin
 
     # --- Once: the final models on the test rows -------------------------------------------------
     preprocessor = make_preprocessor().fit(X_train)
-    X_a, X_b = preprocessor.transform(X_train), preprocessor.transform(X_test)
-    seed_models = {seed: train(X_a, y_train, chosen["config"], seed, epochs=chosen["epochs"])[0] for seed in SEEDS}
-    seed_probs = {seed: predict_proba(model, X_b) for seed, model in seed_models.items()}
+    X_train_t, X_test_t = preprocessor.transform(X_train), preprocessor.transform(X_test)
+    seed_models = {seed: train(X_train_t, y_train, chosen["config"], seed, epochs=chosen["epochs"])[0]
+                   for seed in SEEDS}
+    seed_probs = {seed: predict_proba(model, X_test_t) for seed, model in seed_models.items()}
     probabilities = {"Network": seed_probs[SEED]}
     for name, model in make_baselines().items():
-        probabilities[name] = model.fit(X_a, y_train).predict_proba(X_b)[:, 1]
+        probabilities[name] = model.fit(X_train_t, y_train).predict_proba(X_test_t)[:, 1]
 
     metrics = {}
     for name, p in probabilities.items():
@@ -239,7 +241,7 @@ def run(X_train, X_test, y_train, y_test, make_preprocessor, chosen, oof_baselin
         "trivial_costs": cost_rows, "test_rows": len(y_test), "test_positives": int(y_test.sum()),
         "epochs": chosen["epochs"],
     })
-    plot_curves(y_test, probabilities, metrics, labels)
+    plot_test_curves(y_test, probabilities, metrics, labels)
     plot_confusion({labels.get(name, name): metrics[name] for name in ("Network", *LEARNED_BASELINES)})
     results.write()
     print(seeds.to_string(index=False))
