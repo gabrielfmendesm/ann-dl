@@ -116,6 +116,7 @@ def plot_regularization(runs):
         ax.set(title=f"{technique}: validation (solid) and training (dashed) loss, fold 1", xlabel="epoch")
         ax.legend(title="regularization")
     axes[0].set_ylabel("weighted binary cross-entropy")
+    axes[0].set_ylim(top=1.6)   # headroom so the legends cover no curve (the y axis is shared)
     save_figure(fig, 2, f"The network of step 2 ({layers(DEFAULT)}, lr {DEFAULT['lr']:g}) with each technique at "
                         "three strengths")
 
