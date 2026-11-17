@@ -199,8 +199,8 @@ def main():
         "costliest subgroup": f"has the largest cost per patient, {f4(costliest['cost per patient'])} "
                               f"({costliest['missed']} missed stroke and {costliest['false alarms']} false alarms "
                               f"among {costliest['patients']} patients)",
-        "strokes 18-59": f"Only {young_flag} of the {young} have a clinical flag, and {young_flag_caught} of those "
-                         f"{young_flag} is caught",
+        "strokes 18-59": f"Only {young_flag} of the {young} have a clinical flag",
+        "strokes 18-59 caught": f"and {young_flag_caught} of those {young_flag} is caught",
         "strokes 18-59 without a flag": f"so the {young - young_flag} strokes without one",
         "hypertension at 60 or more": f"{100 * hypertension_60['hypertension']:.2f}% against "
                                       f"{100 * hypertension_60['no hypertension']:.2f}% on the test set",
