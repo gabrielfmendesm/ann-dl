@@ -3,7 +3,7 @@
 Everything that is decided here is decided on validation first: each model's decision threshold comes from its
 out-of-fold validation probabilities and the cost of the errors fixed in step 0. Only then are the chosen network
 (retrained on all training rows, with each seed) and the baselines (refitted on all training rows) applied to the
-test rows, once. Tables 8-11, Figures 3-5.
+test rows, once. Tables 7-10, Figures 3-5.
 """
 
 import json

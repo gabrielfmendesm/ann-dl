@@ -19,7 +19,7 @@
 ### Table 5 — The network of step 2 (32-16, lr 0.001) with each regularization (5 validation folds; the loss gap is at the restored epoch)
 
 | regularization | AP (mean) | AP (sd) | ROC-AUC (mean) | best epoch (median) | validation − training loss |
-|---|---|---|---|---|--- |
+|---|---|---|---|---|---|
 | none | 0.1933 | 0.0465 | 0.8291 | 16 | 0.1018 |
 | weight decay 0.1 | 0.1951 | 0.0416 | 0.8312 | 16 | 0.1064 |
 | weight decay 1 | 0.2038 | 0.0417 | 0.8357 | 20 | 0.0720 |

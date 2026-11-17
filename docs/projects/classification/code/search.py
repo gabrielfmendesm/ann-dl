@@ -1,7 +1,7 @@
 """Steps 2 to 4 — the network, its training with early stopping, regularization and the configuration search.
 
 Everything here is measured on the validation folds of the training rows; the test set is not touched.
-Tables 3-7, Figures 1-2.
+Tables 3-6, Figures 1-2.
 """
 
 import itertools
@@ -12,7 +12,7 @@ import pandas as pd
 
 from common import N_FOLDS, NEUTRAL, Results, save_figure
 from network import BATCH_SIZE, DEFAULT, MAX_EPOCHS, MLP, PATIENCE
-from validation import cv_network, fold_matrices, mean_sd
+from validation import cv_network, mean_sd
 
 # Two techniques at three strengths each, against the plain network, plus one variant combining the middle
 # strengths. The dropout rates run from just below the course's range for fully connected layers (0.2-0.5) to
@@ -119,8 +119,8 @@ def plot_regularization(runs):
                         "three strengths")
 
 
-def run(X_train, y_train, folds, make_preprocessor, mats, n_inputs):
-    """Steps 2 to 4 on the fold matrices `mats` (Tables 3-7, Figures 1-2). Returns the chosen configuration, its
+def run(y_train, mats, n_inputs):
+    """Steps 2 to 4 on the fold matrices `mats` (Tables 3-6, Figures 1-2). Returns the chosen configuration, its
     out-of-fold probabilities and the number of epochs of the final retraining."""
     results = Results("search")
 

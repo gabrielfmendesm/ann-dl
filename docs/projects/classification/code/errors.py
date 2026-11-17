@@ -1,6 +1,6 @@
 """Step 6 — error analysis of the chosen network (seed 42) on the test set, after the single evaluation of step 5:
-errors per subgroup, the use of the clinical flags within age bands, the worst examples and permutation importance.
-Nothing here feeds back into any choice. Tables 12-15, Figures 6-7.
+errors per subgroup, the worst examples and permutation importance.
+Nothing here feeds back into any choice. Tables 11-13, Figures 6-7.
 """
 
 import matplotlib.pyplot as plt
@@ -74,7 +74,7 @@ def clinical_flags(X):
 
 
 def run(X_test, y_test, final):
-    """Step 6 (Tables 12-15, Figures 6-7), on the seed-42 network of step 5 at its validation threshold."""
+    """Step 6 (Tables 11-13, Figures 6-7), on the seed-42 network of step 5 at its validation threshold."""
     results = Results("errors")
     p, t = final["probabilities"]["Network"], final["threshold"]
     alarm = p >= t   # the network's decisions: True flags the patient

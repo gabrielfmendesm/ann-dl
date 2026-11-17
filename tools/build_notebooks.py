@@ -1,4 +1,4 @@
-"""Build notebooks/eda.ipynb and notebooks/classification.ipynb from the code of each report.
+"""Build docs/projects/eda/eda.ipynb and docs/projects/classification/classification.ipynb from each report's code.
 
 Usage, from the repository root:
     python tools/build_notebooks.py
@@ -131,6 +131,10 @@ def show_tables(step):
 
 
 def notebook(cells):
+    # nbformat 4.5 requires an id on every cell. Without one, any tool that opens the notebook writes a random id
+    # of its own and the file changes on every rebuild; a positional id keeps two builds byte for byte identical.
+    for position, cell in enumerate(cells, start=1):
+        cell["id"] = f"cell-{position:03d}"
     return {"cells": cells, "metadata": {"kernelspec": {"display_name": "Python 3", "language": "python",
                                                         "name": "python3"},
                                          "language_info": {"name": "python"}},
@@ -207,7 +211,7 @@ print(f"the pipeline outputs {n_inputs} columns")"""),
 
 The regularization comparison and the 48-configuration search; this is the slow cell (a few minutes on a
 laptop CPU)."""),
-              code("chosen = search_run(X_train, y_train, cv_folds, make_preprocessor, mats, n_inputs)\n"
+              code("chosen = search_run(y_train, mats, n_inputs)\n"
                    "show_figures(1, 2)"),
               code('show_tables("search")')]
     cells += module_cells("classification", "evaluate", "step 5: the threshold, the test set and the seeds")
