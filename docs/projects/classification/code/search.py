@@ -14,6 +14,9 @@ from common import N_FOLDS, NEUTRAL, Results, save_figure
 from network import BATCH_SIZE, DEFAULT, MAX_EPOCHS, MLP, PATIENCE
 from validation import cv_network, fold_matrices, mean_sd
 
+# Two techniques at three strengths each, against the plain network, plus one variant combining the middle
+# strengths. The dropout rates run from just below the course's range for fully connected layers (0.2-0.5) to
+# its top; the weight decays span two orders of magnitude, from barely acting to strong enough to underfit.
 REGULARIZATION = {                       # name: (weight_decay, dropout)
     "none": (0.0, 0.0),
     "weight decay 0.1": (0.1, 0.0),
@@ -24,8 +27,8 @@ REGULARIZATION = {                       # name: (weight_decay, dropout)
     "dropout 0.5": (0.0, 0.5),
     "weight decay 1 + dropout 0.3": (1.0, 0.3),
 }
-LEARNING_RATES = (1e-3, 3e-3)
-ARCHITECTURES = ([16], [32, 16], [64, 32])
+LEARNING_RATES = (1e-3, 3e-3)                # the course's starting point for Adam, and three times it
+ARCHITECTURES = ([16], [32, 16], [64, 32])   # one narrower and one wider network around the 32-16 of step 2
 NONE_COLOR = "#eb6834"
 WEIGHT_DECAY_COLORS = ["#9ec5f0", "#2a78d6", "#0d3b7a"]    # light to dark: a stronger decay
 DROPOUT_COLORS = ["#9be0c4", "#1baf7a", "#0b6b47"]         # light to dark: a higher rate

@@ -15,8 +15,10 @@ from torch.utils.data import DataLoader, TensorDataset
 
 BATCH_SIZE = 128     # about 6 positives per batch at the 4.87% rate; a batch without any is rare (0.17%)
 MAX_EPOCHS = 300     # an upper bound; early stopping decides
-PATIENCE = 30        # epochs without a lower validation loss before stopping
-DEFAULT = {"hidden": [32, 16], "dropout": 0.0, "lr": 1e-3, "weight_decay": 0.0}   # the network of step 2
+PATIENCE = 30        # epochs without a lower validation loss before stopping; long on purpose, since a fold's
+#                      validation loss moves from epoch to epoch with only 39 or 40 positives in it
+DEFAULT = {"hidden": [32, 16], "dropout": 0.0, "lr": 1e-3, "weight_decay": 0.0}   # the network of step 2: a
+#            starting point, not a tuned choice — step 4 searches architectures and learning rates around it
 
 
 class MLP(nn.Module):

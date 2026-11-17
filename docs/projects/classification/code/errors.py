@@ -123,6 +123,8 @@ def run(X_test, y_test, final):
     base = average_precision_score(y_test, p)
     rng = np.random.default_rng(SEED)
     rows = []
+    # Each feature is shuffled as it was recorded and the pipeline is applied after the shuffle, so a categorical
+    # feature moves with all of its one-hot columns instead of having its importance split between them.
     for feature in FEATURES:
         drops = []
         for _ in range(N_REPEATS):
