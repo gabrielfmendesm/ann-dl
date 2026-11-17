@@ -1,4 +1,4 @@
-### Table 12 — Errors of the network by subgroup on the test set, at the validation threshold
+### Table 11 — Errors of the network by subgroup on the test set, at the validation threshold
 
 | feature | subgroup | patients | strokes | missed | false alarms | miss rate (%) | false-alarm rate (%) | error rate (%) | cost per patient |
 |---|---|---|---|---|---|---|---|---|---|
@@ -16,20 +16,7 @@
 | gender | female | 599 | 29 | 5 | 166 | 17.24 | 29.12 | 28.55 | 0.4441 |
 | gender | male | 423 | 21 | 6 | 119 | 28.57 | 29.60 | 29.55 | 0.5650 |
 
-### Table 13 — Share of the non-strokes the network flags, with and without each clinical flag, by age band (test set)
-
-| age | flag | non-strokes with it | median age with it | flagged with it (%) | non-strokes without it | median age without it | flagged without it (%) |
-|---|---|---|---|---|---|---|---|
-| 18–59 | hypertension | 39 | 52.0 | 66.67 | 518 | 39.0 | 6.56 |
-| 18–59 | heart disease | 14 | 52.0 | 64.29 | 543 | 40.0 | 9.39 |
-| 18–59 | glucose 175 or more | 45 | 49.0 | 51.11 | 512 | 40.0 | 7.23 |
-| 18–59 | any of the three | 85 | 51.0 | 52.94 | 472 | 38.0 | 3.18 |
-| 60 or more | hypertension | 50 | 70.5 | 100.00 | 184 | 69.0 | 95.11 |
-| 60 or more | heart disease | 29 | 72.0 | 100.00 | 205 | 69.0 | 95.61 |
-| 60 or more | glucose 175 or more | 50 | 73.5 | 100.00 | 184 | 69.0 | 95.11 |
-| 60 or more | any of the three | 97 | 72.0 | 100.00 | 137 | 67.0 | 93.43 |
-
-### Table 14 — The worst errors: the 5 strokes with the lowest probability and the 5 non-strokes with the highest
+### Table 12 — The worst errors: the 5 strokes with the lowest probability and the 5 non-strokes with the highest
 
 | error | id | age | gender | hypertension | heart_disease | avg_glucose_level | bmi | smoking_status | probability |
 |---|---|---|---|---|---|---|---|---|---|
@@ -44,7 +31,7 @@
 | false alarm | 15120 | 81 | Female | 1 | 0 | 210.23 | 30.7 | never smoked | 0.9065 |
 | false alarm | 69284 | 81 | Female | 1 | 0 | 174.54 | 26.4 | never smoked | 0.9057 |
 
-### Table 15 — Permutation importance on the test set (30 permutations per feature; test AP 0.2997)
+### Table 13 — Permutation importance on the test set (30 permutations per feature; test AP 0.2997)
 
 | feature | AP drop (mean) | AP drop (sd) |
 |---|---|---|

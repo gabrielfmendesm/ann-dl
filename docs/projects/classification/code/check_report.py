@@ -6,7 +6,7 @@ Usage, from the repository root, after main.py:
 The step headings must be the statement's, in its order. Every table of results/*_tables.md must appear verbatim in
 index.md, with its title and as a whole table, and the tables must be numbered in order; every figure must be
 committed, shown exactly once and have a "Conclusion — Figure N." paragraph; the key numbers of the text must be the
-ones stored in results/ (the *_metrics.json files, split_sizes.json and five of the table CSVs), compared with the
+ones stored in results/ (the *_metrics.json files, split_sizes.json and four of the table CSVs), compared with the
 report's typographic minus sign normalized to "-"; and the results summary must be the last section, with its eight
 rows in order, each rebuilt here from those files and compared whole.
 """
@@ -49,13 +49,6 @@ def listing(items):
     return f"{', '.join(items[:-1])} and {items[-1]}"
 
 
-def power_of_ten(x):
-    """1.1196e-09 -> '1.1 × 10⁻⁹', as the report writes small p-values."""
-    mantissa, exponent = f"{x:.1e}".split("e")
-    superscript = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
-    return f"{mantissa} × 10{str(int(exponent)).translate(superscript)}"
-
-
 def main():
     """Print every mismatch between the report and results/ and exit with 1, or confirm that there is none."""
     report = REPORT.read_text()
@@ -92,19 +85,13 @@ def main():
     indicator = pd.read_csv(RESULTS_DIR / "table01.csv", index_col="model")
     validation_ap = pd.read_csv(RESULTS_DIR / "table02.csv", index_col="model")["AP (mean)"]
     regularization = pd.read_csv(RESULTS_DIR / "table05.csv", index_col="regularization")
-    decay, gap = regularization["weights kept by the decay"], regularization["validation − training loss"]
-    flags_by_age = pd.read_csv(RESULTS_DIR / "table13.csv", index_col=["age", "flag"])
-    young_any = flags_by_age.loc[("18–59", "any of the three")]
-    old_any = flags_by_age.loc[("60 or more", "any of the three")]
-    test, seeds, boot, mcnemar = ev["test"], ev["seeds"], ev["bootstrap"], ev["mcnemar"]
+    gap = regularization["validation − training loss"]
+    test, seeds, boot = ev["test"], ev["seeds"], ev["bootstrap"]
     hgb, lr = test["Gradient boosting"]["ap"], test["Logistic regression"]["ap"]
     worst, costliest = err["worst_subgroup_row"], err["costliest_subgroup_row"]
     top, default = search["best_rank1"], search["default"]
     learned = ("Network", "Logistic regression", "Gradient boosting")
     flags = [100 * (test[k]["TP"] + test[k]["FP"]) / ev["test_rows"] for k in learned]
-    later = [i for i in range(len(default["ap"])) if default["val_ap_max_epoch"][i] > default["best_epoch"][i]]
-    earlier = [i for i in range(len(default["ap"])) if default["val_ap_max_epoch"][i] < default["best_epoch"][i]]
-    given_up = [default["val_ap_max"][i] - default["ap"][i] for i in later + earlier]
     with_indicator = indicator.loc[["Logistic regression", "Gradient boosting"], "AP with the indicator"]
     other_seeds = [r["ap"] for seed, r in ev["per_seed"].items() if seed != str(SEED)]
     seed_cost = np.mean([r["cost_per_patient"] for r in ev["per_seed"].values()])
@@ -123,7 +110,6 @@ def main():
     decay_gain = {(h, rate): ap_of[(h, rate, "weight decay 1")] - ap_of[(h, rate, "none")]
                   for h in ("16", "32-16", "64-32") for rate in (0.001, 0.003)}
     larger_gains = [g for (h, _), g in decay_gain.items() if h != "16"]
-    steps_final = -(-sizes["train"] // search["batch_size"])   # mini-batches per epoch on all training rows
     importance = {r["feature"]: r["AP drop (mean)"] for r in err["importance"]}
     # An entry whose condition fails expects a placeholder that the report never contains, so the check reports it.
     expected = {
@@ -137,8 +123,7 @@ def main():
                              else "<the indicator is kept>",
         "best with the indicator": f"with the indicator it would have been {with_indicator.idxmax().lower()} "
                                    f"({f4(with_indicator.max())})",
-        "inputs": f"The pipeline now outputs {search['n_inputs']} columns; in fold 1 it outputs "
-                  f"{search['fold_inputs'][0]}",
+        "inputs": f"The pipeline now outputs {search['n_inputs']} columns.",
         "best baseline": f"**{base['best_baseline']} is the best baseline on validation**",
         "baseline lead": f"It leads logistic regression by "
                          f"{f4(validation_ap['Gradient boosting'] - validation_ap['Logistic regression'])}",
@@ -155,20 +140,9 @@ def main():
         "fold 5": f"fold 5 goes from {f4(default['val_loss_best'][4])} at its best epoch, "
                   f"{default['best_epoch'][4]}, to {f4(default['val_loss_last'][4])} at epoch "
                   f"{default['epochs_run'][4]}",
-        "AP after the restored epoch": f"(to {listing(f4(default['val_ap_max'][i]) for i in later)} at epochs "
-                                       f"{listing(default['val_ap_max_epoch'][i] for i in later)}, against "
-                                       f"{listing(f4(default['ap'][i]) for i in later)} at the restored ones)",
-        "AP before the restored epoch": f"in fold {earlier[0] + 1} it peaks earlier, at epoch "
-                                        f"{default['val_ap_max_epoch'][earlier[0]]} "
-                                        f"({f4(default['val_ap_max'][earlier[0]])} against "
-                                        f"{f4(default['ap'][earlier[0]])})",
-        "AP given up": f"gives up {min(given_up):.3f} to {max(given_up):.3f} of validation AP in "
-                       f"{words[len(given_up)]} folds",
-        "weights kept": f"the decay factor alone leaves the weights {f4(decay['weight decay 0.1'])} of their size",
-        "decay factors": f"The factor falls to {f4(decay['weight decay 1'])}, the gap between validation and training "
-                         f"loss at the restored epoch narrows from {f4(gap['none'])} to {f4(gap['weight decay 1'])}",
-        "strong decay": f"The factor reaches {f4(decay['weight decay 10'])}, the two losses meet at a high level (gap "
-                        f"{f4(gap['weight decay 10'])})",
+        "decay gap": f"The gap between validation and training loss at the restored epoch narrows from "
+                     f"{f4(gap['none'])} to {f4(gap['weight decay 1'])}",
+        "strong decay": f"The two losses meet at a high level (gap {f4(gap['weight decay 10'])})",
         "configs": f"{search['n_configs']} configurations",
         "decay on larger networks": f"raises the mean AP of all four 32-16 and 64-32 networks (by "
                                     f"{min(larger_gains):.4f} to {max(larger_gains):.4f}"
@@ -180,18 +154,12 @@ def main():
         "one SE": f"{f4(top['AP (mean)'])} - {f4(top['AP (sd)'])}/√{N_FOLDS} ≈ {search['one_se_threshold']:.4f}",
         "smallest within one SE": f"Of these {search['n_within_one_se']}, {len(smallest)} have the smallest size, "
                                   f"{eligible.min()} parameters",
-        "steps of the final retraining": f"an epoch has {steps_final} mini-batches instead of "
-                                         f"{search['steps_per_epoch']}, so the {search['final_epochs']} epochs make "
-                                         f"{steps_final * search['final_epochs']} steps against "
-                                         f"{search['steps_per_epoch'] * search['final_epochs']} in a fold",
         "within one SE": f"{search['n_within_one_se']} of the {search['n_configs']} are within one standard error",
         "chosen": f"{search['chosen_params']} parameters** (rank {search['chosen_rank']}",
         "final epochs": f"restored (best) epochs in the five folds are "
                         f"{listing(search['chosen_cv']['best_epoch'])} — training ran {search['patience']} epochs "
                         f"past each — and the final network is retrained for their median, "
                         f"**{search['final_epochs']} epochs**",
-        "low BMI": f"moves the validation AP by "
-                   f"{np.mean(search['chosen_cv']['ap']) - np.mean(search['low_bmi_ap']):.4f}",
         "threshold": f"the cheapest cut is **{f4(ev['thresholds']['Network'])}**",
         "corrected threshold": f"w = {ev['pos_weight']:.2f}, the ratio of negatives to positives in training. "
                                f"Dividing the odds of {f4(ev['thresholds']['Network'])} by w gives odds of "
@@ -205,10 +173,6 @@ def main():
                           f"({f4(ev['trivial_costs']['flag nobody'])})"
                           if test["Majority class"]["FN"] == 0 else "<the majority class no longer flags everyone>",
         "flagged range": f"between {min(flags):.2f}% and {max(flags):.2f}% of the test patients",
-        "McNemar vs LR": f"({mcnemar['Logistic regression']['only_first_right']} that only the network gets right, "
-                         f"{mcnemar['Logistic regression']['only_second_right']} that only logistic regression "
-                         f"does) gives p = {mcnemar['Logistic regression']['p']:.2f}",
-        "McNemar vs HGB": f"the same test gives p = {power_of_ten(mcnemar['Gradient boosting']['p'])}",
         "criterion": f"**{f4(seeds['ap_mean'])} ± {f4(seeds['ap_sd'])}**",
         "criterion gain": f"The network is {100 * ev['criterion_gain']:.2f}% higher, more than the "
                           f"{100 * CRITERION_GAIN:.0f}% required, and the gap ({f4(seeds['ap_mean'] - hgb)})",
@@ -238,12 +202,6 @@ def main():
         "strokes 18-59": f"Only {young_flag} of the {young} have a clinical flag, and {young_flag_caught} of those "
                          f"{young_flag} is caught",
         "strokes 18-59 without a flag": f"so the {young - young_flag} strokes without one",
-        "flags at 18-59": f"{young_any['flagged with it (%)']:.2f}% of the non-strokes with one, against "
-                          f"{young_any['flagged without it (%)']:.2f}% of those with none",
-        "median ages at 18-59": f"have a median age of {young_any['median age with it']:.0f}, against "
-                                f"{young_any['median age without it']:.0f} for those with none",
-        "no flag at 60 or more": f"{old_any['flagged without it (%)']:.2f}% of their non-strokes with none of the "
-                                 "three",
         "hypertension at 60 or more": f"{100 * hypertension_60['hypertension']:.2f}% against "
                                       f"{100 * hypertension_60['no hypertension']:.2f}% on the test set",
         "gender error rates": f"close error rates ({gender['female']:.2f}% and {gender['male']:.2f}%)",
@@ -257,10 +215,6 @@ def main():
         "conclusion cost": f"at a lower cost per patient ({f4(lr_cost)} against {f4(seed_cost)} for the network's "
                            f"seed mean; only seed {cheaper_seeds[0][0]}, at {f4(cheaper_seeds[0][1])}, is marginally "
                            "below it)" if len(cheaper_seeds) == 1 else "<a different number of seeds beat it>",
-        "test against validation": f"(network {f4(seeds['ap_mean'])} against "
-                                   f"{f4(np.mean(search['chosen_cv']['ap']))}, logistic regression {f4(lr)} against "
-                                   f"{f4(validation_ap['Logistic regression'])}, gradient boosting {f4(hgb)} against "
-                                   f"{f4(validation_ap['Gradient boosting'])})",
         "limitation interval": f"(95% bootstrap interval {ci(boot['network_ap_ci']['mean of the seeds'])} for the "
                                "seed mean)",
     }

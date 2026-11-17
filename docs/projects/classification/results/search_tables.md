@@ -18,16 +18,16 @@
 
 ### Table 5 — The network of step 2 (32-16, lr 0.001) with each regularization (5 validation folds; the loss gap is at the restored epoch)
 
-| regularization | AP (mean) | AP (sd) | ROC-AUC (mean) | best epoch (median) | validation − training loss | weights kept by the decay |
-|---|---|---|---|---|---|---|
-| none | 0.1933 | 0.0465 | 0.8291 | 16 | 0.1018 | 1.0000 |
-| weight decay 0.1 | 0.1951 | 0.0416 | 0.8312 | 16 | 0.1064 | 0.9593 |
-| weight decay 1 | 0.2038 | 0.0417 | 0.8357 | 20 | 0.0720 | 0.5944 |
-| weight decay 10 | 0.1814 | 0.0380 | 0.8235 | 25 | 0.0062 | 0.0015 |
-| dropout 0.1 | 0.1957 | 0.0417 | 0.8292 | 17 | 0.0977 | 1.0000 |
-| dropout 0.3 | 0.1693 | 0.0242 | 0.8289 | 39 | 0.1177 | 1.0000 |
-| dropout 0.5 | 0.1721 | 0.0266 | 0.8319 | 70 | 0.1092 | 1.0000 |
-| weight decay 1 + dropout 0.3 | 0.1899 | 0.0396 | 0.8386 | 43 | 0.0585 | 0.3268 |
+| regularization | AP (mean) | AP (sd) | ROC-AUC (mean) | best epoch (median) | validation − training loss |
+|---|---|---|---|---|--- |
+| none | 0.1933 | 0.0465 | 0.8291 | 16 | 0.1018 |
+| weight decay 0.1 | 0.1951 | 0.0416 | 0.8312 | 16 | 0.1064 |
+| weight decay 1 | 0.2038 | 0.0417 | 0.8357 | 20 | 0.0720 |
+| weight decay 10 | 0.1814 | 0.0380 | 0.8235 | 25 | 0.0062 |
+| dropout 0.1 | 0.1957 | 0.0417 | 0.8292 | 17 | 0.0977 |
+| dropout 0.3 | 0.1693 | 0.0242 | 0.8289 | 39 | 0.1177 |
+| dropout 0.5 | 0.1721 | 0.0266 | 0.8319 | 70 | 0.1092 |
+| weight decay 1 + dropout 0.3 | 0.1899 | 0.0396 | 0.8386 | 43 | 0.0585 |
 
 ### Table 6 — The search: 48 configurations on the 5 validation folds, sorted by mean AP
 
@@ -82,9 +82,3 @@
 | 47 | 0.001 | 16 | weight decay 10 | 401 | 0.1647 | 0.0223 | 0.7951 | 57 |  |  |
 | 48 | 0.003 | 16 | weight decay 10 | 401 | 0.1642 | 0.0254 | 0.7990 | 29 |  |  |
 
-### Table 7 — The chosen configuration with the adult BMIs below 12 set to missing (5 validation folds)
-
-| data | AP (mean) | AP (sd) | ROC-AUC (mean) | best epoch (median) |
-|---|---|---|---|---|
-| as recorded | 0.2033 | 0.0286 | 0.8369 | 8 |
-| the 2 adult BMIs below 12 set to missing | 0.1990 | 0.0263 | 0.8368 | 8 |

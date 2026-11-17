@@ -11,7 +11,6 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scipy.stats import binomtest
 from sklearn.metrics import (average_precision_score, precision_recall_curve, precision_recall_fscore_support,
                              roc_auc_score, roc_curve)
 
@@ -127,17 +126,8 @@ def paired_bootstrap(y, network_seeds, baselines):
                      for (net, name), d in diffs.items()}}
 
 
-def mcnemar(y, flag_a, flag_b):
-    """Exact McNemar test on the patients the two models classify differently: under the null both kinds of
-    disagreement are equally likely, so the count of one kind is Binomial(disagreements, 1/2)."""
-    right_a, right_b = flag_a == (y == 1), flag_b == (y == 1)
-    only_a, only_b = int(np.sum(right_a & ~right_b)), int(np.sum(~right_a & right_b))
-    p = binomtest(only_a, only_a + only_b, 0.5).pvalue if only_a + only_b else 1.0
-    return {"only_first_right": only_a, "only_second_right": only_b, "p": float(p)}
-
-
 def run(X_train, X_test, y_train, y_test, make_preprocessor, chosen, oof_baselines, best_baseline):
-    """Step 5 (Tables 8-11, Figures 3-5). Returns what step 6 analyzes: the seed-42 network, the fitted pipeline, the
+    """Step 5 (Tables 7-10, Figures 3-5). Returns what step 6 analyzes: the seed-42 network, the fitted pipeline, the
     test probabilities of every model and the network's threshold."""
     results = Results("evaluation")
 
@@ -153,7 +143,7 @@ def run(X_train, X_test, y_train, y_test, make_preprocessor, chosen, oof_baselin
         rows.append({"cost of a miss": cost, "threshold": t, "recall (1)": m["recall"][1],
                      "precision (1)": m["precision"][1], "flagged (% of patients)": 100 * m["flagged"] / len(y_train),
                      "cost per patient": m["cost_per_patient"]})
-    results.table(8, "The chosen network's threshold on the out-of-fold validation probabilities, for three costs "
+    results.table(7, "The chosen network's threshold on the out-of-fold validation probabilities, for three costs "
                      "of a miss", pd.DataFrame(rows),
                   floatfmt={"cost of a miss": "d", "flagged (% of patients)": ".2f"})
     plot_threshold(y_train, chosen["oof"], thresholds["Network"])
@@ -210,17 +200,17 @@ def run(X_train, X_test, y_train, y_test, make_preprocessor, chosen, oof_baselin
                               "macro F1": mean_over_seeds("macro_f1")})
     counts = {k: ".1f" for k in ("TN", "FP", "FN", "TP")}   # the seed mean is not a whole number of patients
     # dtype=object keeps each model's whole counts as integers next to the seed means
-    results.table(9, "The test set, used once: AP, ROC-AUC and the decisions at each model's validation threshold",
+    results.table(8, "The test set, used once: AP, ROC-AUC and the decisions at each model's validation threshold",
                   pd.DataFrame(rows, dtype=object), floatfmt=counts)
     columns = ["model", "precision (0)", "recall (0)", "F1 (0)", "precision (1)", "recall (1)", "F1 (1)", "macro F1"]
-    results.table(10, "Precision, recall and F1 per class on the test set (0 = no stroke, 1 = stroke)",
+    results.table(9, "Precision, recall and F1 per class on the test set (0 = no stroke, 1 = stroke)",
                   pd.DataFrame(per_class)[columns])
 
     seeds = pd.DataFrame([{"seed": seed, "AP": m["ap"], "ROC-AUC": m["auc"], "recall (1)": m["recall"][1],
                            "false alarms": m["FP"], "cost per patient": m["cost_per_patient"]}
                           for seed, m in per_seed.items()])
     (ap_mean, ap_sd), (auc_mean, auc_sd) = mean_sd(seeds["AP"]), mean_sd(seeds["ROC-AUC"])
-    results.table(11, f"The chosen network retrained with {len(SEEDS)} seeds, on the test set", seeds,
+    results.table(10, f"The chosen network retrained with {len(SEEDS)} seeds, on the test set", seeds,
                   floatfmt={"seed": "d"})
 
     # --- The success criterion of step 0, and how far the numbers can be trusted -----------------
@@ -228,7 +218,6 @@ def run(X_train, X_test, y_train, y_test, make_preprocessor, chosen, oof_baselin
     gain = ap_mean / base_ap - 1
     met = bool(gain >= CRITERION_GAIN and ap_mean - base_ap > ap_sd)
     bootstrap = paired_bootstrap(y_test, seed_probs, {k: probabilities[k] for k in LEARNED_BASELINES})
-    flags = {name: probabilities[name] >= thresholds[name] for name in ("Network", *LEARNED_BASELINES)}
     cost_rows = {"flag nobody": COST_MISS * y_test.sum() / len(y_test),
                  "flag everyone": (y_test == 0).sum() / len(y_test)}
     results.metrics.update({
@@ -237,7 +226,6 @@ def run(X_train, X_test, y_train, y_test, make_preprocessor, chosen, oof_baselin
                   "auc_mean": auc_mean, "auc_sd": auc_sd},
         "best_baseline": best_baseline, "best_baseline_ap": base_ap, "criterion_gain": gain, "criterion_met": met,
         "gain_vs": {k: ap_mean / metrics[k]["ap"] - 1 for k in LEARNED_BASELINES}, "bootstrap": bootstrap,
-        "mcnemar": {k: mcnemar(y_test, flags["Network"], flags[k]) for k in LEARNED_BASELINES},
         "trivial_costs": cost_rows, "test_rows": len(y_test), "test_positives": int(y_test.sum()),
         "epochs": chosen["epochs"],
     })
@@ -247,6 +235,5 @@ def run(X_train, X_test, y_train, y_test, make_preprocessor, chosen, oof_baselin
     print(seeds.to_string(index=False))
     print(f"network AP {ap_mean:.4f} ± {ap_sd:.4f} vs {best_baseline} {base_ap:.4f}: gain {gain:+.2%}, met: {met}")
     print(f"bootstrap: {json.dumps(bootstrap)}")
-    print(f"McNemar: {results.metrics['mcnemar']}")
     return {"model": seed_models[SEED], "preprocessor": preprocessor, "probabilities": probabilities,
             "threshold": thresholds["Network"]}

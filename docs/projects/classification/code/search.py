@@ -5,7 +5,6 @@ Tables 3-7, Figures 1-2.
 """
 
 import itertools
-import math
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -48,13 +47,6 @@ def regularization_name(config):
 def layers(config):
     """The hidden widths as written in the tables, e.g. "32-16"."""
     return "-".join(map(str, config["hidden"]))
-
-
-def adult_low_bmi_to_missing(X):
-    """The EDA's sensitivity check: the adult BMIs below 12, probable entry errors, set to missing."""
-    X = X.copy()
-    X.loc[(X["age"] >= 18) & (X["bmi"] < 12), "bmi"] = np.nan
-    return X
 
 
 def summary_row(cv):
@@ -176,18 +168,12 @@ def run(X_train, y_train, folds, make_preprocessor, mats, n_inputs):
 
     reg_runs = {name: cv(with_regularization(DEFAULT, name)) for name in REGULARIZATION}
     rows = []
-    steps_per_epoch = math.ceil(min(len(fold.y_train) for fold in mats) / BATCH_SIZE)
     for name, run_ in reg_runs.items():
         gap = np.mean([h["val_loss"][b - 1] - h["train_loss"][b - 1]
                        for h, b in zip(run_["histories"], run_["best_epoch"])])
-        # AdamW multiplies every weight by (1 - lr * weight_decay) at each step: the factor accumulated by the
-        # median restored epoch shows how strongly the decay acted
-        decay = (1 - DEFAULT["lr"] * REGULARIZATION[name][0]) ** (steps_per_epoch * np.median(run_["best_epoch"]))
-        rows.append({"regularization": name, **summary_row(run_), "validation − training loss": gap,
-                     "weights kept by the decay": decay})
+        rows.append({"regularization": name, **summary_row(run_), "validation − training loss": gap})
     results.table(5, f"The network of step 2 ({layers(DEFAULT)}, lr {DEFAULT['lr']:g}) with each regularization "
                      f"({N_FOLDS} validation folds; the loss gap is at the restored epoch)", pd.DataFrame(rows))
-    results.metrics["steps_per_epoch"] = steps_per_epoch
     plot_regularization(reg_runs)
 
     configs = [with_regularization({"hidden": list(h), "lr": lr, "dropout": 0.0, "weight_decay": 0.0}, reg)
@@ -215,21 +201,12 @@ def run(X_train, y_train, folds, make_preprocessor, mats, n_inputs):
     chosen = configs[pick.name]
     chosen_cv = cv(chosen)
 
-    # --- Step 4: the BMI sensitivity check of the EDA, on the chosen configuration ---------------
-    low_bmi = cv_network(chosen, fold_matrices(X_train, y_train, folds, make_preprocessor, adult_low_bmi_to_missing))
-    n_low_bmi = int(((X_train["age"] >= 18) & (X_train["bmi"] < 12)).sum())
-    results.table(7, f"The chosen configuration with the adult BMIs below 12 set to missing ({N_FOLDS} validation "
-                     "folds)",
-                  pd.DataFrame([{"data": "as recorded", **summary_row(chosen_cv)},
-                                {"data": f"the {n_low_bmi} adult BMIs below 12 set to missing",
-                                 **summary_row(low_bmi)}]))
-
     results.metrics.update({
         "n_configs": len(configs), "best_rank1": best.to_dict(), "one_se_threshold": threshold,
         "n_within_one_se": int(len(eligible)), "chosen": chosen, "chosen_rank": int(pick["rank"]),
         "chosen_params": int(pick["parameters"]), "chosen_label": f"{layers(chosen)}, {pick['regularization']}",
         "chosen_cv": {"ap": chosen_cv["ap"], "auc": chosen_cv["auc"], "best_epoch": chosen_cv["best_epoch"]},
-        "final_epochs": int(np.median(chosen_cv["best_epoch"])), "low_bmi_ap": low_bmi["ap"], "n_low_bmi": n_low_bmi,
+        "final_epochs": int(np.median(chosen_cv["best_epoch"])),
     })
     results.write()
     print(search.head(10).to_string(index=False))
