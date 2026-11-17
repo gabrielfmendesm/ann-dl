@@ -148,6 +148,7 @@ exclude_docs: |
   projects/classification/results/
   projects/eda/eda.ipynb
   projects/classification/classification.ipynb
+  projects/README.md
 
 nav:
   - Home: index.md
