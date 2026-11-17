@@ -160,6 +160,8 @@ def run(X_train, X_test, y_train, y_test, make_preprocessor, chosen, oof_baselin
     # --- Once: the final models on the test rows -------------------------------------------------
     preprocessor = make_preprocessor().fit(X_train)
     X_train_t, X_test_t = preprocessor.transform(X_train), preprocessor.transform(X_test)
+    # The seeds change only the initial weights and the order of the mini-batches: the rows, the configuration,
+    # the number of epochs and the threshold are the same for all five.
     seed_models = {seed: train(X_train_t, y_train, chosen["config"], seed, epochs=chosen["epochs"])[0]
                    for seed in SEEDS}
     seed_probs = {seed: predict_proba(model, X_test_t) for seed, model in seed_models.items()}

@@ -33,7 +33,8 @@ __all__ = ["HERE", "REPORT", "FIGURES_DIR", "RESULTS_DIR", "FEATURES", "SEED", "
            "load_raw", "load_data", "folds", "save_figure", "md_table", "Results"]
 
 # --- Step 0: fixed before any model was trained --------------------------------------------------
-MAIN_METRIC = "average precision"   # the decision of step 0, computed with sklearn's average_precision_score
+MAIN_METRIC = "average precision"   # the decision of step 0, computed with sklearn's average_precision_score;
+#                                     at a 4.87% prevalence it is read against the AP of a random ranking, 0.0487
 CRITERION_GAIN = 0.15   # the network's mean test AP (over SEEDS) must be at least 15% above the best baseline's,
 #                         and the gap must be larger than the network's standard deviation across SEEDS
 COST_MISS = 20          # a missed stroke costs as much as 20 false alarms (a false alarm costs 1)
