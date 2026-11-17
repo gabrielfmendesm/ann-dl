@@ -1,11 +1,10 @@
 """Steps 2 to 4 — the network, its training with early stopping, regularization and the configuration search.
 
 Everything here is measured on the validation folds of the training rows; the test set is not touched.
-Tables 3-7, Figures 1-2.
+Tables 3-6, Figures 1-2.
 """
 
 import itertools
-import math
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,8 +12,11 @@ import pandas as pd
 
 from common import N_FOLDS, NEUTRAL, Results, save_figure
 from network import BATCH_SIZE, DEFAULT, MAX_EPOCHS, MLP, PATIENCE
-from validation import cv_network, fold_matrices, mean_sd
+from validation import cv_network, mean_sd
 
+# Two techniques at three strengths each, against the plain network, plus one variant combining the middle
+# strengths. The dropout rates run from just below the course's range for fully connected layers (0.2-0.5) to
+# its top; the weight decays span two orders of magnitude, from barely acting to strong enough to underfit.
 REGULARIZATION = {                       # name: (weight_decay, dropout)
     "none": (0.0, 0.0),
     "weight decay 0.1": (0.1, 0.0),
@@ -25,8 +27,8 @@ REGULARIZATION = {                       # name: (weight_decay, dropout)
     "dropout 0.5": (0.0, 0.5),
     "weight decay 1 + dropout 0.3": (1.0, 0.3),
 }
-LEARNING_RATES = (1e-3, 3e-3)
-ARCHITECTURES = ([16], [32, 16], [64, 32])
+LEARNING_RATES = (1e-3, 3e-3)                # the course's starting point for Adam, and three times it
+ARCHITECTURES = ([16], [32, 16], [64, 32])   # one narrower and one wider network around the 32-16 of step 2
 NONE_COLOR = "#eb6834"
 WEIGHT_DECAY_COLORS = ["#9ec5f0", "#2a78d6", "#0d3b7a"]    # light to dark: a stronger decay
 DROPOUT_COLORS = ["#9be0c4", "#1baf7a", "#0b6b47"]         # light to dark: a higher rate
@@ -48,13 +50,6 @@ def regularization_name(config):
 def layers(config):
     """The hidden widths as written in the tables, e.g. "32-16"."""
     return "-".join(map(str, config["hidden"]))
-
-
-def adult_low_bmi_to_missing(X):
-    """The EDA's sensitivity check: the adult BMIs below 12, probable entry errors, set to missing."""
-    X = X.copy()
-    X.loc[(X["age"] >= 18) & (X["bmi"] < 12), "bmi"] = np.nan
-    return X
 
 
 def summary_row(cv):
@@ -124,8 +119,8 @@ def plot_regularization(runs):
                         "three strengths")
 
 
-def run(X_train, y_train, folds, make_preprocessor, mats, n_inputs):
-    """Steps 2 to 4 on the fold matrices `mats` (Tables 3-7, Figures 1-2). Returns the chosen configuration, its
+def run(y_train, mats, n_inputs):
+    """Steps 2 to 4 on the fold matrices `mats` (Tables 3-6, Figures 1-2). Returns the chosen configuration, its
     out-of-fold probabilities and the number of epochs of the final retraining."""
     results = Results("search")
 
@@ -176,18 +171,12 @@ def run(X_train, y_train, folds, make_preprocessor, mats, n_inputs):
 
     reg_runs = {name: cv(with_regularization(DEFAULT, name)) for name in REGULARIZATION}
     rows = []
-    steps_per_epoch = math.ceil(min(len(fold.y_train) for fold in mats) / BATCH_SIZE)
     for name, run_ in reg_runs.items():
         gap = np.mean([h["val_loss"][b - 1] - h["train_loss"][b - 1]
                        for h, b in zip(run_["histories"], run_["best_epoch"])])
-        # AdamW multiplies every weight by (1 - lr * weight_decay) at each step: the factor accumulated by the
-        # median restored epoch shows how strongly the decay acted
-        decay = (1 - DEFAULT["lr"] * REGULARIZATION[name][0]) ** (steps_per_epoch * np.median(run_["best_epoch"]))
-        rows.append({"regularization": name, **summary_row(run_), "validation − training loss": gap,
-                     "weights kept by the decay": decay})
+        rows.append({"regularization": name, **summary_row(run_), "validation − training loss": gap})
     results.table(5, f"The network of step 2 ({layers(DEFAULT)}, lr {DEFAULT['lr']:g}) with each regularization "
                      f"({N_FOLDS} validation folds; the loss gap is at the restored epoch)", pd.DataFrame(rows))
-    results.metrics["steps_per_epoch"] = steps_per_epoch
     plot_regularization(reg_runs)
 
     configs = [with_regularization({"hidden": list(h), "lr": lr, "dropout": 0.0, "weight_decay": 0.0}, reg)
@@ -215,21 +204,12 @@ def run(X_train, y_train, folds, make_preprocessor, mats, n_inputs):
     chosen = configs[pick.name]
     chosen_cv = cv(chosen)
 
-    # --- Step 4: the BMI sensitivity check of the EDA, on the chosen configuration ---------------
-    low_bmi = cv_network(chosen, fold_matrices(X_train, y_train, folds, make_preprocessor, adult_low_bmi_to_missing))
-    n_low_bmi = int(((X_train["age"] >= 18) & (X_train["bmi"] < 12)).sum())
-    results.table(7, f"The chosen configuration with the adult BMIs below 12 set to missing ({N_FOLDS} validation "
-                     "folds)",
-                  pd.DataFrame([{"data": "as recorded", **summary_row(chosen_cv)},
-                                {"data": f"the {n_low_bmi} adult BMIs below 12 set to missing",
-                                 **summary_row(low_bmi)}]))
-
     results.metrics.update({
         "n_configs": len(configs), "best_rank1": best.to_dict(), "one_se_threshold": threshold,
         "n_within_one_se": int(len(eligible)), "chosen": chosen, "chosen_rank": int(pick["rank"]),
         "chosen_params": int(pick["parameters"]), "chosen_label": f"{layers(chosen)}, {pick['regularization']}",
         "chosen_cv": {"ap": chosen_cv["ap"], "auc": chosen_cv["auc"], "best_epoch": chosen_cv["best_epoch"]},
-        "final_epochs": int(np.median(chosen_cv["best_epoch"])), "low_bmi_ap": low_bmi["ap"], "n_low_bmi": n_low_bmi,
+        "final_epochs": int(np.median(chosen_cv["best_epoch"])),
     })
     results.write()
     print(search.head(10).to_string(index=False))

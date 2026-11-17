@@ -380,18 +380,6 @@
       }
     }
   },
-  "mcnemar": {
-    "Logistic regression": {
-      "only_first_right": 20,
-      "only_second_right": 16,
-      "p": 0.617719317029696
-    },
-    "Gradient boosting": {
-      "only_first_right": 107,
-      "only_second_right": 35,
-      "p": 1.119595330625602e-09
-    }
-  },
   "trivial_costs": {
     "flag nobody": 0.9784735812133072,
     "flag everyone": 0.9510763209393346

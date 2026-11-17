@@ -28,7 +28,7 @@ def main():
     n_inputs = make_preprocessor().fit_transform(X_train).shape[1]
     mats = fold_matrices(X_train, y_train, cv_folds, make_preprocessor)
     oof_baselines, best_baseline = baselines.run(mats, y_train)                               # step 1
-    chosen = search.run(X_train, y_train, cv_folds, make_preprocessor, mats, n_inputs)        # steps 2-4
+    chosen = search.run(y_train, mats, n_inputs)                                             # steps 2-4
     final = evaluate.run(X_train, X_test, y_train, y_test, make_preprocessor, chosen,          # step 5
                          oof_baselines, best_baseline)
     errors.run(X_test, y_test, final)                                                        # step 6

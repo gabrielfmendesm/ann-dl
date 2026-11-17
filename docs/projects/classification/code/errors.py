@@ -1,6 +1,6 @@
 """Step 6 — error analysis of the chosen network (seed 42) on the test set, after the single evaluation of step 5:
-errors per subgroup, the use of the clinical flags within age bands, the worst examples and permutation importance.
-Nothing here feeds back into any choice. Tables 12-15, Figures 6-7.
+errors per subgroup, the worst examples and permutation importance.
+Nothing here feeds back into any choice. Tables 11-13, Figures 6-7.
 """
 
 import matplotlib.pyplot as plt
@@ -74,7 +74,7 @@ def clinical_flags(X):
 
 
 def run(X_test, y_test, final):
-    """Step 6 (Tables 12-15, Figures 6-7), on the seed-42 network of step 5 at its validation threshold."""
+    """Step 6 (Tables 11-13, Figures 6-7), on the seed-42 network of step 5 at its validation threshold."""
     results = Results("errors")
     p, t = final["probabilities"]["Network"], final["threshold"]
     alarm = p >= t   # the network's decisions: True flags the patient
@@ -90,30 +90,17 @@ def run(X_test, y_test, final):
                      "error rate (%)": 100 * (fn + fp) / mask.sum(),
                      "cost per patient": (COST_MISS * fn + fp) / mask.sum()})
     table = pd.DataFrame(rows)
-    results.table(12, "Errors of the network by subgroup on the test set, at the validation threshold", table,
+    results.table(11, "Errors of the network by subgroup on the test set, at the validation threshold", table,
                   floatfmt={"miss rate (%)": ".2f", "false-alarm rate (%)": ".2f", "error rate (%)": ".2f"})
     worst = table.loc[table["error rate (%)"].idxmax()]
     costliest = table.loc[table["cost per patient"].idxmax()]
     plot_subgroups(table)
 
-    # Does the network use the clinical flags, or only age? The share of non-strokes it flags, with and without each
-    # flag (and with any of them against none), inside each adult age band, with their median age: within a band the
-    # patients who carry a flag are also older, so the comparison is not at equal age.
-    age, negatives, rows = X_test["age"].to_numpy(), y_test == 0, []
+    # The subgroups the hypotheses below refer to: the adult age bands and the three clinical flags.
+    age = X_test["age"].to_numpy()
     bands = age_bands(age)
     markers = {name: has.to_numpy() for name, has in clinical_flags(X_test).items()}
     any_marker = np.any(list(markers.values()), axis=0)
-    for band in (f"{ADULT}–{OLD - 1}", f"{OLD} or more"):
-        for name, has in {**markers, "any of the three": any_marker}.items():
-            with_, without = bands[band] & negatives & has, bands[band] & negatives & ~has
-            rows.append({"age": band, "flag": name, "non-strokes with it": int(with_.sum()),
-                         "median age with it": np.median(age[with_]), "flagged with it (%)": 100 * alarm[with_].mean(),
-                         "non-strokes without it": int(without.sum()), "median age without it": np.median(age[without]),
-                         "flagged without it (%)": 100 * alarm[without].mean()})
-    results.table(13, "Share of the non-strokes the network flags, with and without each clinical flag, by age band "
-                      "(test set)", pd.DataFrame(rows),
-                  floatfmt={"median age with it": ".1f", "flagged with it (%)": ".2f", "median age without it": ".1f",
-                            "flagged without it (%)": ".2f"})
     strokes_18_59 = bands[f"{ADULT}–{OLD - 1}"] & (y_test == 1)
     old = bands[f"{OLD} or more"]
     hyper = X_test["hypertension"].to_numpy() == 1
@@ -128,7 +115,7 @@ def run(X_test, y_test, final):
     examples = pd.DataFrame([{"error": kind, "id": str(ids[X_test.index[i]]), **X_test.iloc[i][shown].to_dict(),
                               "probability": p[i]} for kind, i in picks])
     examples["bmi"] = examples["bmi"].map(lambda v: "missing" if pd.isna(v) else f"{v:.1f}")
-    results.table(14, f"The worst errors: the {N_WORST} strokes with the lowest probability and the {N_WORST} "
+    results.table(12, f"The worst errors: the {N_WORST} strokes with the lowest probability and the {N_WORST} "
                       "non-strokes with the highest", examples,
                   floatfmt={"age": "g", "avg_glucose_level": ".2f", "probability": ".4f"})
 
@@ -136,6 +123,8 @@ def run(X_test, y_test, final):
     base = average_precision_score(y_test, p)
     rng = np.random.default_rng(SEED)
     rows = []
+    # Each feature is shuffled as it was recorded and the pipeline is applied after the shuffle, so a categorical
+    # feature moves with all of its one-hot columns instead of having its importance split between them.
     for feature in FEATURES:
         drops = []
         for _ in range(N_REPEATS):
@@ -144,7 +133,7 @@ def run(X_test, y_test, final):
             drops.append(base - average_precision_score(y_test, predict_proba(model, preprocessor.transform(X))))
         rows.append({"feature": feature, "AP drop (mean)": np.mean(drops), "AP drop (sd)": np.std(drops, ddof=1)})
     importance = pd.DataFrame(rows).sort_values("AP drop (mean)", ascending=False, kind="stable").reset_index(drop=True)
-    results.table(15, f"Permutation importance on the test set ({N_REPEATS} permutations per feature; "
+    results.table(13, f"Permutation importance on the test set ({N_REPEATS} permutations per feature; "
                       f"test AP {base:.4f})", importance)
     plot_importance(importance)
 
